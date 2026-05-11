@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>Design System — 課程報告網站 · v1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-sans: "Inter", "Noto Sans TC", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Source Serif Pro", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); }
+  .swatch { width: 28px; height: 28px; border-radius: 6px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.06); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+// ─── Three accent directions to pick from ───────────────────────────────
+const ACCENTS = {
+  ink: {
+    name: 'A · 深藍墨 (Ink Blue)',
+    desc: '冷靜、學者氣。最 conservative，最像 NYT / Stripe Press。',
+    accent: '#1e3a5f',
+    accentHover: '#15294a',
+    accentSoft: '#e8edf3',
+    accentText: '#1e3a5f',
+    bgPaper: '#fafaf9',       // off-white, very slightly warm
+    bgCanvas: '#f5f5f3',
+    fg: '#1a1a1a',
+    fgMuted: '#52524e',
+    fgSubtle: '#8a8a85',
+    border: '#e5e4df',
+    borderStrong: '#d0cfc8',
+  },
+  forest: {
+    name: 'B · 暗綠苔 (Forest)',
+    desc: '溫潤、植物學筆記感。Are.na 那條路。',
+    accent: '#3a5a3a',
+    accentHover: '#2a4429',
+    accentSoft: '#ecefe8',
+    accentText: '#3a5a3a',
+    bgPaper: '#faf9f5',       // warm off-white
+    bgCanvas: '#f3f2ec',
+    fg: '#1c1d1a',
+    fgMuted: '#5a5a52',
+    fgSubtle: '#8e8d83',
+    border: '#e5e3d9',
+    borderStrong: '#cfccc1',
+  },
+  claret: {
+    name: 'C · 酒紅 (Claret)',
+    desc: '經典期刊 / Plough Quarterly 那條路。Editorial 最濃。',
+    accent: '#7a2828',
+    accentHover: '#601e1e',
+    accentSoft: '#f3e9e7',
+    accentText: '#7a2828',
+    bgPaper: '#faf8f4',       // warm paper
+    bgCanvas: '#f2efe8',
+    fg: '#1d1a17',
+    fgMuted: '#5a5550',
+    fgSubtle: '#8e887f',
+    border: '#e5e1d7',
+    borderStrong: '#cfc9bb',
+  },
+};
+
+// ─── Palette card ────────────────────────────────────────────────────────
+function PaletteCard({ t }) {
+  return (
+    <div style={{ fontFamily: 'var(--font-sans)', background: t.bgPaper, padding: 40, height: '100%', boxSizing: 'border-box', color: t.fg }}>
+      <div style={{ fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 500, marginBottom: 6, letterSpacing: '-0.01em' }}>
+        {t.name}
+      </div>
+      <div style={{ fontSize: 13, color: t.fgMuted, marginBottom: 32, lineHeight: 1.6 }}>{t.desc}</div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+        <Row label="Accent" items={[
+          { color: t.accent, name: 'accent', hex: t.accent },
+          { color: t.accentHover, name: 'accent/hover', hex: t.accentHover },
+          { color: t.accentSoft, name: 'accent/soft', hex: t.accentSoft },
+        ]} t={t} />
+        <Row label="Surface" items={[
+          { color: t.bgPaper, name: 'paper', hex: t.bgPaper },
+          { color: t.bgCanvas, name: 'canvas', hex: t.bgCanvas },
+          { color: '#ffffff', name: 'card', hex: '#ffffff' },
+        ]} t={t} />
+        <Row label="Text" items={[
+          { color: t.fg, name: 'fg', hex: t.fg },
+          { color: t.fgMuted, name: 'muted', hex: t.fgMuted },
+          { color: t.fgSubtle, name: 'subtle', hex: t.fgSubtle },
+        ]} t={t} />
+        <Row label="Border" items={[
+          { color: t.border, name: 'border', hex: t.border },
+          { color: t.borderStrong, name: 'strong', hex: t.borderStrong },
+        ]} t={t} />
+      </div>
+
+      {/* Live button samples */}
+      <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${t.border}` }}>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.fgSubtle, marginBottom: 14 }}>Buttons</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
+          <button style={{ background: t.accent, color: '#fff', border: 'none', padding: '9px 16px', borderRadius: 6, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>發布報告</button>
+          <button style={{ background: 'transparent', color: t.fg, border: `1px solid ${t.borderStrong}`, padding: '8px 15px', borderRadius: 6, fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer' }}>取消</button>
+          <button style={{ background: 'transparent', color: t.accent, border: 'none', padding: '9px 12px', fontFamily: 'inherit', fontSize: 14, fontWeight: 500, cursor: 'pointer', textDecoration: 'underline', textUnderlineOffset: 3 }}>查看 diff →</button>
+        </div>
+      </div>
+
+      {/* Link in body */}
+      <div style={{ marginTop: 28, fontFamily: 'var(--font-serif)', fontSize: 15, lineHeight: 1.75, color: t.fg }}>
+        在身體文字中，<a href="#" style={{ color: t.accent, textDecorationColor: t.accent + '60', textUnderlineOffset: 3 }}>連結會用 accent 色</a>，搭配 underline-offset 讓閱讀流暢。
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, items, t }) {
+  return (
+    <div>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.fgSubtle, marginBottom: 10 }}>{label}</div>
+      <div style={{ display: 'flex', gap: 14 }}>
+        {items.map(i => (
+          <div key={i.name} style={{ flex: 1, minWidth: 0 }}>
+            <div className="swatch" style={{ background: i.color, marginBottom: 8 }} />
+            <div style={{ fontSize: 12, color: t.fg, fontWeight: 500, fontFamily: 'var(--font-mono)' }}>{i.name}</div>
+            <div style={{ fontSize: 11, color: t.fgSubtle, fontFamily: 'var(--font-mono)' }}>{i.hex}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Typography spec ─────────────────────────────────────────────────────
+function TypeSpec({ t }) {
+  return (
+    <div style={{ fontFamily: 'var(--font-sans)', background: t.bgPaper, padding: 48, height: '100%', boxSizing: 'border-box', color: t.fg }}>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.fgSubtle, marginBottom: 32 }}>Typography · UI sans + body serif</div>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>Display / Article title — Noto Serif TC 600</Tag>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.02em', margin: '8px 0 0' }}>
+          當代社會變遷下的勞動關係研究
+        </h1>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>H2 — Serif 600 / 32px</Tag>
+        <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, lineHeight: 1.3, letterSpacing: '-0.015em', margin: '8px 0 0' }}>
+          第二章 · 理論框架
+        </h2>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>H3 — Sans 600 / 18px / uppercase tracking</Tag>
+        <h3 style={{ fontFamily: 'var(--font-sans)', fontSize: 13, fontWeight: 600, lineHeight: 1.4, letterSpacing: '0.1em', textTransform: 'uppercase', color: t.fgMuted, margin: '8px 0 0' }}>
+          已發布報告 · PUBLISHED
+        </h3>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>Body — Noto Serif TC 400 / 17px / 1.75</Tag>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 17, lineHeight: 1.8, margin: '8px 0 0', maxWidth: '38em', textWrap: 'pretty' }}>
+          本文嘗試以 Bourdieu 的場域理論為基礎，分析台灣科技業中工程師群體的勞動關係。透過深度訪談十二位資深工程師，本研究發現他們在<a href="#" style={{ color: t.accent, textDecorationColor: t.accent + '60', textUnderlineOffset: 3 }}>職涯抉擇</a>上展現出明顯的階層性思考。
+        </p>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>UI body — Noto Sans TC 400 / 14px</Tag>
+        <p style={{ fontFamily: 'var(--font-sans)', fontSize: 14, lineHeight: 1.65, margin: '8px 0 0', color: t.fgMuted }}>
+          這是 UI 文字（按鈕標籤、metadata、表單說明）。Sans-serif 在小字級下更易讀，serif 留給長文閱讀。
+        </p>
+      </section>
+
+      <section style={{ marginBottom: 40 }}>
+        <Tag t={t}>Meta — Sans 13px · Subtle</Tag>
+        <div style={{ fontFamily: 'var(--font-sans)', fontSize: 13, color: t.fgSubtle, margin: '8px 0 0' }}>
+          發布於 2026-04-15 · 12 分鐘閱讀 · 社會學研究方法
+        </div>
+      </section>
+
+      <section>
+        <Tag t={t}>Code — JetBrains Mono / 14px</Tag>
+        <code style={{ fontFamily: 'var(--font-mono)', fontSize: 14, background: t.bgCanvas, padding: '3px 7px', borderRadius: 4, display: 'inline-block', marginTop: 8, color: t.fg }}>
+          courseCode = "SOC7841"
+        </code>
+      </section>
+    </div>
+  );
+}
+
+function Tag({ children, t }) {
+  return (
+    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: t.fgSubtle, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{children}</div>
+  );
+}
+
+// ─── Sample component: ReportListItem in each accent ──────────────────────
+function ReportListItem({ t }) {
+  return (
+    <div style={{ fontFamily: 'var(--font-sans)', background: t.bgPaper, padding: 48, height: '100%', boxSizing: 'border-box' }}>
+      <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.fgSubtle, marginBottom: 6, fontFamily: 'var(--font-sans)' }}>Sample · ReportListItem (公開首頁)</div>
+      <div style={{ fontSize: 12, color: t.fgSubtle, marginBottom: 28 }}>Light surface · serif title · sans meta</div>
+
+      {/* Section heading */}
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4, paddingBottom: 12, borderBottom: `1px solid ${t.border}` }}>
+        <div style={{ fontFamily: 'var(--font-serif)', fontSize: 22, fontWeight: 600, color: t.fg, letterSpacing: '-0.01em' }}>
+          社會學研究方法 · 2026 春
+        </div>
+        <div style={{ fontSize: 12, color: t.fgSubtle, fontFamily: 'var(--font-mono)' }}>12 篇報告</div>
+      </div>
+
+      {/* List items */}
+      <div style={{ display: 'flex', flexDirection: 'column' }}>
+        {SAMPLE_REPORTS.map((r, i) => (
+          <article key={i} style={{
+            display: 'grid',
+            gridTemplateColumns: '88px 1fr auto',
+            gap: 24,
+            padding: '24px 0',
+            borderBottom: i === SAMPLE_REPORTS.length - 1 ? 'none' : `1px solid ${t.border}`,
+            cursor: 'pointer',
+            alignItems: 'start',
+          }}>
+            {/* Cover placeholder */}
+            <div style={{
+              width: 88, height: 88, borderRadius: 4, background: t.bgCanvas,
+              backgroundImage: `repeating-linear-gradient(45deg, transparent 0 6px, ${t.border} 6px 7px)`,
+              boxShadow: `inset 0 0 0 1px ${t.border}`,
+            }} />
+
+            <div style={{ minWidth: 0 }}>
+              <h3 style={{
+                fontFamily: 'var(--font-serif)',
+                fontSize: 19, fontWeight: 600,
+                color: t.fg,
+                margin: 0, marginBottom: 6,
+                letterSpacing: '-0.01em',
+                lineHeight: 1.35,
+              }}>{r.title}</h3>
+              <p style={{ fontFamily: 'var(--font-serif)', fontSize: 14.5, color: t.fgMuted, lineHeight: 1.6, margin: 0, marginBottom: 12, textWrap: 'pretty' }}>
+                {r.summary}
+              </p>
+              <div style={{ display: 'flex', gap: 14, alignItems: 'center', fontSize: 12, color: t.fgSubtle, fontFamily: 'var(--font-sans)' }}>
+                <span style={{ color: t.fgMuted, fontWeight: 500 }}>{r.author}</span>
+                <span style={{ width: 2, height: 2, background: t.fgSubtle, borderRadius: '50%' }} />
+                <span>{r.date}</span>
+                <span style={{ width: 2, height: 2, background: t.fgSubtle, borderRadius: '50%' }} />
+                <span>{r.reading}</span>
+              </div>
+            </div>
+
+            <div style={{ alignSelf: 'start' }}>
+              <span style={{
+                display: 'inline-block', fontSize: 11,
+                padding: '3px 8px', borderRadius: 4,
+                background: t.accentSoft, color: t.accentText,
+                fontFamily: 'var(--font-sans)', fontWeight: 500,
+                letterSpacing: '0.02em',
+              }}>{r.tag}</span>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* Status tag preview */}
+      <div style={{ marginTop: 40, paddingTop: 24, borderTop: `1px solid ${t.border}` }}>
+        <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: t.fgSubtle, marginBottom: 14 }}>Status tags</div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <StatusTag color={t.fgSubtle} bg={t.bgCanvas}>Unpublished</StatusTag>
+          <StatusTag color="#2d6a3a" bg="#e8f1ea">Published</StatusTag>
+          <StatusTag color="#8a5a1e" bg="#f5ebd9">Published + New</StatusTag>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusTag({ children, color, bg }) {
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 6,
+      fontSize: 12, fontWeight: 500, fontFamily: 'var(--font-sans)',
+      padding: '4px 9px', borderRadius: 4, background: bg, color,
+    }}>
+      <span style={{ width: 6, height: 6, borderRadius: '50%', background: color, opacity: 0.7 }} />
+      {children}
+    </span>
+  );
+}
+
+const SAMPLE_REPORTS = [
+  {
+    title: '當代社會變遷下的勞動關係研究：以台灣科技業為例',
+    summary: '透過深度訪談十二位資深工程師，分析職場結構轉變與階級流動之間的張力，並嘗試以 Bourdieu 場域理論加以詮釋。',
+    author: '陳沛縈',
+    date: '2026-04-15',
+    reading: '14 分鐘',
+    tag: '質性研究',
+  },
+  {
+    title: '消費社會中的身份認同：年輕世代的品牌實踐',
+    summary: '本文蒐集 32 位 22–28 歲受訪者對於日常消費的描述，探討品牌符號如何介入主體建構的過程。',
+    author: '林書緯',
+    date: '2026-04-12',
+    reading: '11 分鐘',
+    tag: '混合方法',
+  },
+  {
+    title: '社區營造的政治經濟學：北部某社造個案分析',
+    summary: '從財務報表、組織章程與田野觀察三條線索，重新檢視「居民自主」修辭背後的權力結構。',
+    author: '張庭瑜',
+    date: '2026-04-08',
+    reading: '18 分鐘',
+    tag: '個案研究',
+  },
+];
+
+// ─── Decisions / context recap card ──────────────────────────────────────
+function ContextCard() {
+  const t = ACCENTS.ink;
+  return (
+    <div style={{ fontFamily: 'var(--font-sans)', background: '#fffef9', padding: 48, height: '100%', boxSizing: 'border-box', color: '#1a1a1a' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8a85', marginBottom: 8 }}>Step 1 of 3</div>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 38, fontWeight: 600, lineHeight: 1.2, letterSpacing: '-0.02em', margin: 0, marginBottom: 20 }}>
+        Design System 方向 v1
+      </h1>
+      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 16, lineHeight: 1.75, color: '#3a3a36', margin: 0, marginBottom: 32, textWrap: 'pretty' }}>
+        在開始逐頁設計之前，我們先鎖定基調。下方是 <strong>3 個 accent 方向</strong>—— Ink Blue / Forest / Claret，搭配同一套 warm-neutral 紙感底色與 (B) UI sans + body serif 字體配對。
+      </p>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 18, fontFamily: 'var(--font-sans)', fontSize: 14, lineHeight: 1.7 }}>
+        <Fact label="Vibe">Editorial / 學術期刊。內容是主角，設計襯托。避免 SaaS landing / admin template / gamification。</Fact>
+        <Fact label="字體">Noto Serif TC （body / titles） + Noto Sans TC + Inter（UI、metadata、按鈕） + JetBrains Mono（code / course codes）。</Fact>
+        <Fact label="底色">Warm off-white #fafaf9 / paper-like canvas #f5f5f3。避免純白。</Fact>
+        <Fact label="Accent 用量">節制：CTA、links、focus ring、tag、selected state。其他地方一律 neutral。</Fact>
+        <Fact label="Radius / Shadow">Radius 4–6px（不過圓，太圓會 SaaS）。Shadow 幾乎不用——靠 1px border 切空間。</Fact>
+        <Fact label="圖片佔位">Subtle diagonal stripe placeholder（如下方 ReportListItem 縮圖）。不畫複雜 SVG。</Fact>
+      </div>
+
+      <div style={{ marginTop: 32, padding: 20, borderRadius: 6, background: '#f5f5f3', border: '1px solid #e5e4df' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#8a8a85', marginBottom: 8 }}>Your move →</div>
+        <ol style={{ fontFamily: 'var(--font-serif)', fontSize: 15, lineHeight: 1.8, margin: 0, paddingLeft: 22 }}>
+          <li>選一個 accent 方向（A / B / C）</li>
+          <li>看 Typography spec / Sample component，回饋字級或細節想調的</li>
+          <li>確認後我們進 Tier 1 第一頁：公開首頁 <code style={{ fontFamily: 'var(--font-mono)', fontSize: 13, background: '#fff', padding: '1px 6px', borderRadius: 3, border: '1px solid #e5e4df' }}>/</code></li>
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+function Fact({ label, children }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: '88px 1fr', gap: 18, alignItems: 'baseline' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: '#8a8a85', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+      <div style={{ color: '#2a2a26' }}>{children}</div>
+    </div>
+  );
+}
+
+// ─── Canvas layout ────────────────────────────────────────────────────────
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="overview" title="Overview" subtitle="課程報告網站 · Editorial design system">
+        <DCArtboard id="context" label="Context · Read me first" width={620} height={780}>
+          <ContextCard />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="accents" title="Accent directions" subtitle="同一套紙感底色，三種 accent。先選一個基調。">
+        <DCArtboard id="ink" label="A · Ink Blue" width={520} height={780}>
+          <PaletteCard t={ACCENTS.ink} />
+        </DCArtboard>
+        <DCArtboard id="forest" label="B · Forest" width={520} height={780}>
+          <PaletteCard t={ACCENTS.forest} />
+        </DCArtboard>
+        <DCArtboard id="claret" label="C · Claret" width={520} height={780}>
+          <PaletteCard t={ACCENTS.claret} />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="type" title="Typography" subtitle="UI sans + body serif (option B)">
+        <DCArtboard id="type-ink" label="Type · Ink" width={680} height={820}>
+          <TypeSpec t={ACCENTS.ink} />
+        </DCArtboard>
+        <DCArtboard id="type-forest" label="Type · Forest" width={680} height={820}>
+          <TypeSpec t={ACCENTS.forest} />
+        </DCArtboard>
+        <DCArtboard id="type-claret" label="Type · Claret" width={680} height={820}>
+          <TypeSpec t={ACCENTS.claret} />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="sample" title="Sample component · ReportListItem" subtitle="公開首頁的核心 unit，跨三個 accent 比較。">
+        <DCArtboard id="sample-ink" label="Sample · Ink" width={760} height={920}>
+          <ReportListItem t={ACCENTS.ink} />
+        </DCArtboard>
+        <DCArtboard id="sample-forest" label="Sample · Forest" width={760} height={920}>
+          <ReportListItem t={ACCENTS.forest} />
+        </DCArtboard>
+        <DCArtboard id="sample-claret" label="Sample · Claret" width={760} height={920}>
+          <ReportListItem t={ACCENTS.claret} />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

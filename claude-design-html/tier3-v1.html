@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>Tier 3 · boilerplate</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-sans: "Inter", "Noto Sans TC", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --accent: #3a5a3a; --accent-soft: #ecefe8;
+    --paper: #faf9f5; --canvas: #f3f2ec; --surface: #fff;
+    --fg: #1c1d1a; --muted: #5a5a52; --subtle: #8e8d83;
+    --border: #e5e3d9; --border-strong: #cfccc1;
+    --warning: #b8842c; --warning-soft: #faf2dd;
+    --danger: #a13c2e;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); color: var(--fg); margin: 0; }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+
+function Wordmark() {
+  return (
+    <a style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
+      <span style={{ fontFamily: 'var(--font-serif)', fontSize: 18, fontWeight: 600, letterSpacing: '-0.01em' }}>研究筆記</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--subtle)', letterSpacing: '0.06em' }}>NTU SOC</span>
+    </a>
+  );
+}
+
+function TopBar() {
+  return (
+    <header style={{
+      height: 56, background: 'var(--paper)', borderBottom: '1px solid var(--border)',
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      padding: '0 28px',
+    }}>
+      <Wordmark />
+      <a style={{ fontSize: 13, color: 'var(--muted)' }}>返回首頁</a>
+    </header>
+  );
+}
+
+function Btn({ variant = 'primary', children }) {
+  const v = variant === 'primary'
+    ? { bg: 'var(--accent)', fg: '#fff', border: 'var(--accent)' }
+    : { bg: '#fff', fg: 'var(--fg)', border: 'var(--border-strong)' };
+  return (
+    <button style={{
+      padding: '9px 16px', borderRadius: 5,
+      background: v.bg, color: v.fg, border: '1px solid ' + v.border,
+      fontSize: 13.5, fontWeight: 500, cursor: 'pointer',
+    }}>{children}</button>
+  );
+}
+
+// ─── 404 not-found ─────────────────────────────────
+function NotFound() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <TopBar />
+      <div style={{ flex: 1, display: 'grid', placeItems: 'center', padding: 32 }}>
+        <div style={{ textAlign: 'center', maxWidth: 480 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--subtle)', letterSpacing: '0.16em', marginBottom: 20 }}>ERROR · 404</div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 44, fontWeight: 600, letterSpacing: '-0.025em', margin: 0, marginBottom: 16, lineHeight: 1.15 }}>找不到這個頁面</h1>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 16, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 32, textWrap: 'pretty' }}>
+            這份報告或課程可能已被取消發布、移除，或網址有誤。
+          </p>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn variant="primary">返回首頁</Btn>
+            <Btn variant="secondary">瀏覽所有課程</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── 500 error.tsx ─────────────────────────────────
+function ErrorPage() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <TopBar />
+      <div style={{ flex: 1, display: 'grid', placeItems: 'center', padding: 32 }}>
+        <div style={{ textAlign: 'center', maxWidth: 520 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--danger)', letterSpacing: '0.16em', marginBottom: 20 }}>ERROR · UNEXPECTED</div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 38, fontWeight: 600, letterSpacing: '-0.025em', margin: 0, marginBottom: 14 }}>發生了一個問題</h1>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15.5, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 24, textWrap: 'pretty' }}>
+            系統暫時無法完成這次的請求。如果你正在編輯報告，最新的草稿已自動儲存在本機，下次回到編輯器時會被還原。
+          </p>
+          <pre style={{
+            background: 'var(--canvas)', border: '1px solid var(--border)', borderRadius: 5,
+            padding: '10px 14px', fontFamily: 'var(--font-mono)', fontSize: 11.5, color: 'var(--muted)',
+            margin: '0 0 26px', textAlign: 'left', overflow: 'hidden',
+          }}>error_id: 0c8a9f3e · 2026-05-12 14:32:18</pre>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <Btn variant="primary">重新嘗試</Btn>
+            <Btn variant="secondary">返回首頁</Btn>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── /admin/courses/new ────────────────────────────
+function NewCourse() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <TopBar />
+      <div style={{ flex: 1, overflow: 'auto', padding: '40px 32px' }}>
+        <div style={{ maxWidth: 600, margin: '0 auto' }}>
+          <a style={{ fontSize: 12.5, color: 'var(--muted)', display: 'inline-block', marginBottom: 18 }}>← 返回我的課程</a>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 6 }}>建立新課程</h1>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 14.5, color: 'var(--muted)', margin: 0, marginBottom: 28 }}>
+            建立後會自動產生 6 碼課程代碼，學生用此代碼加入。
+          </p>
+
+          {[
+            { label: '課程名稱', help: '例：社會研究方法（質性）', val: '' },
+            { label: '課程編號', help: '台大課號，例：SOC7841', val: '' },
+            { label: '學期', help: '', val: '2026 春', select: true, options: ['2026 春', '2025 秋', '2025 春'] },
+          ].map(f => (
+            <div key={f.label} style={{ marginBottom: 18 }}>
+              <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--subtle)', marginBottom: 6 }}>{f.label}</label>
+              {f.select ? (
+                <select defaultValue={f.val} style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 5, fontSize: 14, fontFamily: 'inherit', background: '#fff' }}>
+                  {f.options.map(o => <option key={o}>{o}</option>)}
+                </select>
+              ) : (
+                <input defaultValue={f.val} placeholder={f.help} style={{ width: '100%', padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 5, fontSize: 14, fontFamily: 'inherit' }} />
+              )}
+              {f.help && !f.select && <p style={{ fontSize: 12, color: 'var(--subtle)', margin: '6px 0 0' }}>{f.help}</p>}
+            </div>
+          ))}
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--subtle)', marginBottom: 6 }}>課程描述（Markdown，可選）</label>
+            <textarea placeholder="這堂課的旨趣、評分標準、報告要求……" style={{ width: '100%', minHeight: 110, padding: '9px 12px', border: '1px solid var(--border-strong)', borderRadius: 5, fontSize: 14, fontFamily: 'var(--font-mono)', resize: 'vertical' }} />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 18, borderTop: '1px solid var(--border)' }}>
+            <span style={{ fontSize: 12, color: 'var(--subtle)' }}>建立後可隨時編輯這些資訊</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <Btn variant="secondary">取消</Btn>
+              <Btn variant="primary">建立課程</Btn>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── /privacy or /tos · long-form static doc ───────
+function LegalDoc() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <TopBar />
+      <div style={{ flex: 1, overflow: 'auto', padding: '40px 32px 80px' }}>
+        <article style={{ maxWidth: 640, margin: '0 auto' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 8 }}>最後更新 · 2026-04-01</div>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 36, fontWeight: 600, letterSpacing: '-0.025em', margin: 0, marginBottom: 8, lineHeight: 1.15 }}>隱私權政策</h1>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', margin: 0, marginBottom: 36 }}>
+            本網站如何蒐集、使用、保存你的資料。
+          </p>
+
+          <section style={{ fontFamily: 'var(--font-serif)', fontSize: 16.5, lineHeight: 1.8, color: 'var(--fg)' }}>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', margin: '0 0 12px' }}>一、蒐集的資料範圍</h2>
+            <p style={{ margin: '0 0 16px', textWrap: 'pretty' }}>
+              當你以 Google 帳號登入時，我們會取得你的 email、姓名與 Google 提供的個人頭像 URL。除此之外，僅蒐集你主動輸入的內容：作者名稱、課程代碼、報告草稿與發布版本、上傳的圖片。
+            </p>
+
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', margin: '24px 0 12px' }}>二、資料的使用方式</h2>
+            <p style={{ margin: '0 0 16px', textWrap: 'pretty' }}>
+              你的 email 僅用於識別帳號身分，不會公開顯示，也不會用於任何行銷用途。已發布的報告與作者名稱會公開於本站。
+            </p>
+
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 21, fontWeight: 600, letterSpacing: '-0.01em', margin: '24px 0 12px' }}>三、資料的保存與刪除</h2>
+            <p style={{ margin: '0 0 16px', textWrap: 'pretty' }}>
+              你可以隨時在「個人設定 → 危險區」刪除帳號，所有已發布報告、上傳圖片、個人資訊會同步刪除，且無法復原。
+            </p>
+          </section>
+        </article>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="errors" title="Errors · not-found.tsx + error.tsx">
+        <DCArtboard id="404" label="not-found.tsx · /report not found" width={900} height={620}><NotFound /></DCArtboard>
+        <DCArtboard id="500" label="error.tsx · runtime error boundary" width={900} height={620}><ErrorPage /></DCArtboard>
+      </DCSection>
+      <DCSection id="forms" title="Forms · /admin/courses/new">
+        <DCArtboard id="new" label="/admin/courses/new" width={900} height={780}><NewCourse /></DCArtboard>
+      </DCSection>
+      <DCSection id="legal" title="Static docs · /privacy + /tos (same layout)">
+        <DCArtboard id="legal" label="/privacy · /tos shares this layout" width={900} height={780}><LegalDoc /></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

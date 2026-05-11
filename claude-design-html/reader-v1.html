@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>報告閱讀頁 · 3 directions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!-- KaTeX for math rendering -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+  onload="renderMathInElement(document.body, { delimiters: [{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false}] });"></script>
+<style>
+  :root {
+    --font-sans: "Inter", "Noto Sans TC", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Source Serif Pro", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --accent: #3a5a3a;
+    --accent-hover: #2a4429;
+    --accent-soft: #ecefe8;
+    --paper: #faf9f5;
+    --canvas: #f3f2ec;
+    --card: #ffffff;
+    --fg: #1c1d1a;
+    --muted: #5a5a52;
+    --subtle: #8e8d83;
+    --border: #e5e3d9;
+    --border-strong: #cfccc1;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); color: var(--fg); margin: 0; }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="homepage-data.jsx"></script>
+<script type="text/babel" src="homepage-shared.jsx"></script>
+<script type="text/babel" src="reader-content.jsx"></script>
+<script type="text/babel" src="reader-directions.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="brief" title="Report reader" subtitle="長文閱讀頁 · 3 directions · 同一份 markdown 假內容">
+        <DCArtboard id="readme" label="Read me · 設計考量" width={620} height={1100}>
+          <ReaderReadme />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir1" title="Direction 1 · Classical Article" subtitle="單欄置中、明顯 measure 卡 65–72 字元。最 Substack / 古典 essay。">
+        <DCArtboard id="r1-desktop" label="Desktop · 1440" width={1280} height={1800}>
+          <R1Desktop />
+        </DCArtboard>
+        <DCArtboard id="r1-mobile" label="Mobile · 375" width={375} height={1400}>
+          <R1Mobile />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir2" title="Direction 2 · TOC Side Rail" subtitle="左 sticky 目錄 + 中央 article。長文最容易導航的版型。">
+        <DCArtboard id="r2-desktop" label="Desktop · 1440" width={1280} height={1800}>
+          <R2Desktop />
+        </DCArtboard>
+        <DCArtboard id="r2-mobile" label="Mobile · 375" width={375} height={1400}>
+          <R2Mobile />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir3" title="Direction 3 · Margin Notes" subtitle="主欄文字 + 右邊欄放圖說 / 註腳 / 段落 anchor，最 NYT Op-Ed / Tufte。">
+        <DCArtboard id="r3-desktop" label="Desktop · 1440" width={1280} height={1800}>
+          <R3Desktop />
+        </DCArtboard>
+        <DCArtboard id="r3-mobile" label="Mobile · 375" width={375} height={1400}>
+          <R3Mobile />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+node_modules
+.next
+.next-dev
+out
+build
+coverage
+pnpm-lock.yaml
+public
+*.lock
+.env*
+claude-design-html

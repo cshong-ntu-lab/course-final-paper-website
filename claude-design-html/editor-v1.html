@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>學生編輯器 · 3 directions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-sans: "Inter", "Noto Sans TC", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", "Source Serif Pro", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --accent: #3a5a3a; --accent-hover: #2a4429; --accent-soft: #ecefe8;
+    --paper: #faf9f5; --canvas: #f3f2ec; --card: #fff;
+    --fg: #1c1d1a; --muted: #5a5a52; --subtle: #8e8d83;
+    --border: #e5e3d9; --border-strong: #cfccc1;
+    --warn-soft: #f5ebd9; --warn: #8a5a1e;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); color: var(--fg); margin: 0; }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="homepage-data.jsx"></script>
+<script type="text/babel" src="editor-shared.jsx"></script>
+<script type="text/babel" src="editor-directions.jsx"></script>
+<script type="text/babel">
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="brief" title="Student editor" subtitle="/workspace/c/{id} · 三欄編輯器 · 最複雜的 layout">
+        <DCArtboard id="readme" label="Read me · 設計考量" width={620} height={1100}>
+          <EditorReadme />
+        </DCArtboard>
+        <DCArtboard id="save" label="Save status indicator · 三態" width={480} height={420}>
+          <SaveStates />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir1" title="Direction 1 · Classic 3-column" subtitle="sidebar · editor · preview。最 HackMD，老派穩定。">
+        <DCArtboard id="e1-desktop" label="Desktop · 1440" width={1440} height={900}>
+          <E1Desktop />
+        </DCArtboard>
+        <DCArtboard id="e1-mobile-editor" label="Mobile · Edit mode" width={375} height={812}>
+          <E1MobileEdit />
+        </DCArtboard>
+        <DCArtboard id="e1-mobile-preview" label="Mobile · Preview mode" width={375} height={812}>
+          <E1MobilePreview />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir2" title="Direction 2 · Drawer Sidebar" subtitle="Sidebar 變抽屜，主區只剩 editor / preview。寫作時最專注。">
+        <DCArtboard id="e2-desktop" label="Desktop · 1440 (drawer 收起)" width={1440} height={900}>
+          <E2Desktop />
+        </DCArtboard>
+        <DCArtboard id="e2-desktop-open" label="Desktop · 1440 (drawer 展開)" width={1440} height={900}>
+          <E2DesktopOpen />
+        </DCArtboard>
+        <DCArtboard id="e2-mobile" label="Mobile · 375" width={375} height={812}>
+          <E2Mobile />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="dir3" title="Direction 3 · Focus Mode" subtitle="切 Write / Preview / Both 三種版型。最現代、最 typewriter 感。">
+        <DCArtboard id="e3-write" label="Desktop · Write mode" width={1440} height={900}>
+          <E3Write />
+        </DCArtboard>
+        <DCArtboard id="e3-both" label="Desktop · Both (split)" width={1440} height={900}>
+          <E3Both />
+        </DCArtboard>
+        <DCArtboard id="e3-mobile" label="Mobile · 375" width={375} height={812}>
+          <E3Mobile />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

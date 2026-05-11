@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<title>登入 + Onboarding · 3 directions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;600;700&family=Noto+Serif+TC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font-sans: "Inter", "Noto Sans TC", system-ui, sans-serif;
+    --font-serif: "Noto Serif TC", Georgia, serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --accent: #3a5a3a; --accent-hover: #2a4429; --accent-soft: #ecefe8;
+    --paper: #faf9f5; --canvas: #f3f2ec;
+    --fg: #1c1d1a; --muted: #5a5a52; --subtle: #8e8d83;
+    --border: #e5e3d9; --border-strong: #cfccc1;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); color: var(--fg); margin: 0; }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+const G = (s = 18) => (
+  <svg width={s} height={s} viewBox="0 0 18 18">
+    <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.91c1.7-1.57 2.69-3.88 2.69-6.62z"/>
+    <path fill="#34A853" d="M9 18c2.43 0 4.47-.81 5.96-2.18l-2.91-2.26c-.81.54-1.84.86-3.05.86-2.34 0-4.33-1.58-5.04-3.71H.96v2.33A9 9 0 0 0 9 18z"/>
+    <path fill="#FBBC05" d="M3.96 10.71A5.41 5.41 0 0 1 3.68 9c0-.6.1-1.17.28-1.71V4.96H.96A9 9 0 0 0 0 9c0 1.45.35 2.83.96 4.04l3-2.33z"/>
+    <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 0 0 9 0 9 9 0 0 0 .96 4.96l3 2.33C4.67 5.16 6.66 3.58 9 3.58z"/>
+  </svg>
+);
+
+// Editorial wordmark
+function Wordmark({ size = 'lg' }) {
+  const fs = size === 'lg' ? 28 : 20;
+  return (
+    <a style={{ display: 'inline-flex', alignItems: 'baseline', gap: 10 }}>
+      <span style={{ fontFamily: 'var(--font-serif)', fontSize: fs, fontWeight: 600, letterSpacing: '-0.01em' }}>研究筆記</span>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--subtle)', letterSpacing: '0.06em' }}>NTU SOC</span>
+    </a>
+  );
+}
+
+// ─── Read me ───
+function AuthReadme() {
+  return (
+    <div style={{ background: '#fffef9', padding: 44, height: '100%', boxSizing: 'border-box' }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--subtle)', marginBottom: 8 }}>Tier 1 · Page 4 + 5 of 5</div>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 14 }}>
+        Login + Onboarding
+      </h1>
+      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, lineHeight: 1.75, color: 'var(--muted)', margin: 0, marginBottom: 22, textWrap: 'pretty' }}>
+        兩頁串成一條 flow：訪客點 <strong>登入</strong> → Google OAuth → 第一次的人進 <strong>onboarding</strong>（輸入課程代碼 + 設定公開作者名稱）→ 完成後進 workspace。
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 13.5, lineHeight: 1.7 }}>
+        <Item label="Login" desc="2 個版本：(L1) 單張置中卡 vs (L2) 左右 split — 左側 editorial 引語、右側登入。" />
+        <Item label="Onboarding" desc="2-step wizard：① 輸入 6 碼課程代碼（mono, uppercase, auto-tab）② 設定公開作者名稱（預覽如何顯示）。可跳過、稍後設定。" />
+        <Item label="共同決定" desc="背景延用 paper 色；單卡 max-width 440px；只用 Google 一條登入路徑，無 email/password；錯誤訊息 inline 顯示在按鈕上方。" />
+      </div>
+    </div>
+  );
+}
+
+function Item({ label, desc }) {
+  return (
+    <div style={{ borderTop: '1px solid var(--border)', paddingTop: 10 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+      <p style={{ fontFamily: 'var(--font-serif)', fontSize: 13.5, color: 'var(--muted)', margin: 0, lineHeight: 1.7, textWrap: 'pretty' }}>{desc}</p>
+    </div>
+  );
+}
+
+// ─── L1 · Single card ───
+function L1() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'grid', placeItems: 'center', padding: 40 }}>
+      <div style={{ width: '100%', maxWidth: 440, textAlign: 'center' }}>
+        <div style={{ marginBottom: 40 }}><Wordmark /></div>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 12, lineHeight: 1.2 }}>
+          登入以繼續撰寫
+        </h1>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 32, textWrap: 'pretty' }}>
+          僅供台大社會所師生使用。請以你的 NTU Google 帳號登入。
+        </p>
+        <button style={{
+          width: '100%', padding: '12px 18px', borderRadius: 6,
+          background: '#fff', border: '1px solid var(--border-strong)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+          fontFamily: 'inherit', fontSize: 15, fontWeight: 500, color: 'var(--fg)', cursor: 'pointer',
+        }}>
+          {G()} 使用 Google 帳號登入
+        </button>
+        <p style={{ marginTop: 24, fontSize: 12.5, color: 'var(--subtle)', lineHeight: 1.7 }}>
+          登入即表示同意我們的 <a style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(58,90,58,0.4)' }}>使用條款</a> 與 <a style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3, textDecorationColor: 'rgba(58,90,58,0.4)' }}>隱私政策</a>。
+        </p>
+        <div style={{ marginTop: 56, paddingTop: 24, borderTop: '1px solid var(--border)', fontSize: 12, color: 'var(--subtle)' }}>
+          只是想瀏覽？<a style={{ color: 'var(--accent)', fontWeight: 500, cursor: 'pointer' }}>返回首頁 →</a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── L2 · Split ───
+function L2() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
+      {/* Left editorial column */}
+      <div style={{ padding: '64px 56px', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: 'var(--paper)' }}>
+        <Wordmark />
+        <div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.18em', color: 'var(--subtle)', marginBottom: 18 }}>Vol. 03 · 2026 春</div>
+          <blockquote style={{ margin: 0, fontFamily: 'var(--font-serif)', fontSize: 28, fontWeight: 500, letterSpacing: '-0.015em', lineHeight: 1.35, color: 'var(--fg)', textWrap: 'pretty' }}>
+            「研究筆記的目的，是讓田野的聲音能夠被聽見、被引用、被回應。」
+          </blockquote>
+          <footer style={{ marginTop: 18, fontSize: 13, color: 'var(--subtle)' }}>—— 主編語</footer>
+        </div>
+        <div style={{ fontSize: 12, color: 'var(--subtle)' }}>© 2026 NTU Sociology</div>
+      </div>
+
+      {/* Right form column */}
+      <div style={{ padding: '64px 56px', display: 'grid', placeItems: 'center', background: '#fff' }}>
+        <div style={{ width: '100%', maxWidth: 380 }}>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 32, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 10, lineHeight: 1.2 }}>登入</h1>
+          <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 28 }}>
+            僅供台大社會所師生使用。
+          </p>
+          <button style={{
+            width: '100%', padding: '12px 18px', borderRadius: 6,
+            background: '#fff', border: '1px solid var(--border-strong)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            fontFamily: 'inherit', fontSize: 15, fontWeight: 500, color: 'var(--fg)', cursor: 'pointer',
+          }}>
+            {G()} 使用 Google 帳號登入
+          </button>
+          <p style={{ marginTop: 18, fontSize: 12.5, color: 'var(--subtle)', lineHeight: 1.7 }}>
+            登入即表示同意 <a style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}>使用條款</a> 與 <a style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}>隱私政策</a>。
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Onboarding Step 1 · Course code ───
+function Ob1() {
+  const code = ['S', 'O', 'C', '7', '8', '4'];
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'grid', placeItems: 'center', padding: 40 }}>
+      <div style={{ width: '100%', maxWidth: 480 }}>
+        <Stepper step={1} />
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 10, lineHeight: 1.2, textAlign: 'center' }}>
+          輸入課程代碼
+        </h1>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 32, textAlign: 'center', textWrap: 'pretty' }}>
+          代碼由開課老師提供，共 6 碼英數字。沒有代碼？請聯絡課堂助教或直接 <a style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 3 }}>瀏覽公開頁</a>。
+        </p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 12 }}>
+          {code.map((c, i) => (
+            <div key={i} style={{
+              width: 52, height: 60, borderRadius: 6,
+              border: i === 5 ? '2px solid var(--accent)' : '1px solid var(--border-strong)',
+              background: '#fff', display: 'grid', placeItems: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 600, color: 'var(--fg)',
+            }}>{c}</div>
+          ))}
+        </div>
+        <p style={{ textAlign: 'center', fontSize: 12.5, color: 'var(--subtle)', margin: '0 0 28px' }}>
+          代碼不區分大小寫；貼上後自動格式化
+        </p>
+
+        <button style={{
+          width: '100%', padding: '12px 18px', borderRadius: 6,
+          background: 'var(--accent)', border: 'none', color: '#fff',
+          fontFamily: 'inherit', fontSize: 15, fontWeight: 500, cursor: 'pointer',
+        }}>下一步 →</button>
+        <button style={{
+          width: '100%', marginTop: 10, padding: '10px 18px', borderRadius: 6,
+          background: 'transparent', border: 'none', color: 'var(--muted)',
+          fontFamily: 'inherit', fontSize: 13, cursor: 'pointer',
+        }}>稍後設定，先瀏覽公開頁</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Onboarding Step 2 · Author name ───
+function Ob2() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'grid', placeItems: 'center', padding: 40 }}>
+      <div style={{ width: '100%', maxWidth: 480 }}>
+        <Stepper step={2} />
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 10, lineHeight: 1.2, textAlign: 'center' }}>
+          你的公開作者名稱
+        </h1>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', lineHeight: 1.7, margin: 0, marginBottom: 28, textAlign: 'center', textWrap: 'pretty' }}>
+          這是會出現在你公開報告上的署名，可與 Google 帳號名稱不同。日後可在設定變更。
+        </p>
+
+        <div style={{ marginBottom: 8 }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--subtle)' }}>作者名稱</span>
+        </div>
+        <input value="陳沛縈" readOnly style={{
+          width: '100%', padding: '12px 14px',
+          border: '1px solid var(--accent)', borderRadius: 6, background: '#fff',
+          fontFamily: 'inherit', fontSize: 16, color: 'var(--fg)',
+          outline: 'none', boxShadow: '0 0 0 3px var(--accent-soft)',
+        }} />
+        <p style={{ fontSize: 12, color: 'var(--subtle)', margin: '8px 0 24px' }}>
+          2–30 字，可含中文、英文、數字、空格
+        </p>
+
+        {/* Preview */}
+        <div style={{ padding: '14px 16px', background: '#fff', border: '1px solid var(--border)', borderRadius: 6, marginBottom: 28 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--subtle)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+            預覽 · 你的報告會這樣顯示
+          </div>
+          <div style={{ fontFamily: 'var(--font-serif)', fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', marginBottom: 4 }}>
+            當代社會變遷下的勞動關係研究
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--subtle)' }}>
+            <span style={{ color: 'var(--muted)', fontWeight: 500 }}>陳沛縈</span> · 2026-04-15 · 14 分鐘
+          </div>
+        </div>
+
+        <button style={{
+          width: '100%', padding: '12px 18px', borderRadius: 6,
+          background: 'var(--accent)', border: 'none', color: '#fff',
+          fontFamily: 'inherit', fontSize: 15, fontWeight: 500, cursor: 'pointer',
+        }}>完成設定，進入工作區</button>
+        <button style={{
+          width: '100%', marginTop: 10, padding: '10px 18px', borderRadius: 6,
+          background: 'transparent', border: 'none', color: 'var(--muted)',
+          fontFamily: 'inherit', fontSize: 13, cursor: 'pointer',
+        }}>← 上一步</button>
+      </div>
+    </div>
+  );
+}
+
+function Stepper({ step }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginBottom: 28 }}>
+      {[1, 2].map(n => (
+        <React.Fragment key={n}>
+          <div style={{
+            width: 24, height: 24, borderRadius: '50%',
+            background: n <= step ? 'var(--accent)' : 'var(--canvas)',
+            color: n <= step ? '#fff' : 'var(--subtle)',
+            border: n <= step ? 'none' : '1px solid var(--border)',
+            display: 'grid', placeItems: 'center',
+            fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 600,
+          }}>{n}</div>
+          {n === 1 && <div style={{ width: 32, height: 1, background: step >= 2 ? 'var(--accent)' : 'var(--border)' }} />}
+        </React.Fragment>
+      ))}
+      <span style={{ marginLeft: 8, fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--subtle)' }}>
+        步驟 {step} / 2
+      </span>
+    </div>
+  );
+}
+
+// ─── Error state demo ───
+function Ob1Error() {
+  return (
+    <div style={{ background: 'var(--paper)', height: '100%', display: 'grid', placeItems: 'center', padding: 40 }}>
+      <div style={{ width: '100%', maxWidth: 480 }}>
+        <Stepper step={1} />
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 30, fontWeight: 600, letterSpacing: '-0.02em', margin: 0, marginBottom: 10, textAlign: 'center' }}>
+          輸入課程代碼
+        </h1>
+        <p style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--muted)', margin: 0, marginBottom: 32, textAlign: 'center' }}>
+          代碼由開課老師提供，共 6 碼英數字。
+        </p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 10 }}>
+          {['X', 'Y', 'Z', '0', '0', '0'].map((c, i) => (
+            <div key={i} style={{
+              width: 52, height: 60, borderRadius: 6,
+              border: '1px solid #a13c2e', background: '#fcf3f1',
+              display: 'grid', placeItems: 'center',
+              fontFamily: 'var(--font-mono)', fontSize: 22, fontWeight: 600, color: '#7a2828',
+            }}>{c}</div>
+          ))}
+        </div>
+        <p style={{ textAlign: 'center', fontSize: 13, color: '#a13c2e', margin: '0 0 28px', fontWeight: 500 }}>
+          找不到此課程代碼。請與老師確認，或檢查是否輸入正確。
+        </p>
+        <button style={{ width: '100%', padding: '12px 18px', borderRadius: 6, background: 'var(--accent)', border: 'none', color: '#fff', fontFamily: 'inherit', fontSize: 15, fontWeight: 500, cursor: 'pointer', opacity: 0.5 }}>下一步 →</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="brief" title="Auth flow" subtitle="Login + Onboarding · 簡單頁，2 個 login 變體 + 2-step onboarding">
+        <DCArtboard id="readme" label="Read me" width={520} height={620}>
+          <AuthReadme />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="login" title="Login · /login" subtitle="2 個變體；右側為推薦">
+        <DCArtboard id="l1" label="L1 · Single card" width={680} height={780}>
+          <L1 />
+        </DCArtboard>
+        <DCArtboard id="l2" label="L2 · Editorial split" width={1100} height={780}>
+          <L2 />
+        </DCArtboard>
+      </DCSection>
+
+      <DCSection id="onboarding" title="Onboarding · /workspace/onboarding" subtitle="2-step wizard">
+        <DCArtboard id="ob1" label="Step 1 · Course code" width={680} height={780}>
+          <Ob1 />
+        </DCArtboard>
+        <DCArtboard id="ob2" label="Step 2 · Author name" width={680} height={780}>
+          <Ob2 />
+        </DCArtboard>
+        <DCArtboard id="ob1e" label="Step 1 · Error state" width={680} height={780}>
+          <Ob1Error />
+        </DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
