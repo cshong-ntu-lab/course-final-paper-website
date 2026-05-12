@@ -1,14 +1,18 @@
 // Firebase Admin SDK singleton — server-only.
-// Service account JSON is provided base64-encoded via FIREBASE_ADMIN_PRIVATE_KEY_JSON
-// to avoid newline-escaping pain in Cloud Run env vars.
 //
-// Emulator mode: when FIRESTORE_EMULATOR_HOST / FIREBASE_AUTH_EMULATOR_HOST /
-// FIREBASE_STORAGE_EMULATOR_HOST are set, Admin SDK auto-connects to the emulators
-// and credentials become optional. We skip service-account loading in that case.
+// Credential resolution order:
+//   1. Emulator — when FIREBASE_USE_EMULATOR=1 or *_EMULATOR_HOST env vars are set,
+//      Admin SDK auto-connects to local emulators; no creds needed.
+//   2. Explicit service account — FIREBASE_ADMIN_PRIVATE_KEY_JSON (base64-encoded
+//      JSON). Use this when running outside GCP or when org policy permits keys.
+//   3. Application Default Credentials (ADC) — picks up either:
+//        - `gcloud auth application-default login` creds (local dev)
+//        - Cloud Run / GCE attached service account via metadata server (prod)
+//      This is the recommended path; no long-lived key on disk.
 
 import "server-only";
 
-import { type App, cert, getApps, initializeApp } from "firebase-admin/app";
+import { type App, applicationDefault, cert, getApps, initializeApp } from "firebase-admin/app";
 import { type Auth, getAuth } from "firebase-admin/auth";
 import { type Firestore, getFirestore } from "firebase-admin/firestore";
 import { getStorage, type Storage } from "firebase-admin/storage";
@@ -42,20 +46,29 @@ export function getFirebaseAdmin() {
     });
   } else {
     const b64 = env.server.FIREBASE_ADMIN_PRIVATE_KEY_JSON;
-    if (!b64) {
-      throw new Error(
-        "FIREBASE_ADMIN_PRIVATE_KEY_JSON env var not set. Either set FIREBASE_USE_EMULATOR=1 for local dev, or encode service-account.json with `base64 -w0` and place in .env.local.",
-      );
+    const storageBucket = env.client.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET;
+    const projectId = env.client.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+
+    if (b64) {
+      // Explicit service account key path.
+      const sa = decodeServiceAccount(b64);
+      app = initializeApp({
+        credential: cert({
+          projectId: sa.projectId ?? sa.project_id,
+          clientEmail: sa.clientEmail ?? sa.client_email,
+          privateKey: (sa.privateKey ?? sa.private_key)?.replace(/\\n/g, "\n"),
+        }),
+        storageBucket,
+      });
+    } else {
+      // ADC path — works locally after `gcloud auth application-default login`
+      // and on Cloud Run via the attached service account / metadata server.
+      app = initializeApp({
+        credential: applicationDefault(),
+        projectId,
+        storageBucket,
+      });
     }
-    const sa = decodeServiceAccount(b64);
-    app = initializeApp({
-      credential: cert({
-        projectId: sa.projectId ?? sa.project_id,
-        clientEmail: sa.clientEmail ?? sa.client_email,
-        privateKey: (sa.privateKey ?? sa.private_key)?.replace(/\\n/g, "\n"),
-      }),
-      storageBucket: env.client.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    });
   }
 
   cached = {
