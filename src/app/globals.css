@@ -202,3 +202,250 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
 }
+
+/* ─── prose-research (design.md §4.4) ─── */
+/* Layered onto .prose from @tailwindcss/typography. Designed for long-form
+ * 中文 academic content: Noto Serif TC body, sans-serif tables/captions/UI,
+ * Forest accent for links, paper background. */
+.prose-research {
+  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-headings: hsl(var(--foreground));
+  --tw-prose-lead: hsl(var(--muted));
+  --tw-prose-links: hsl(var(--accent));
+  --tw-prose-bold: hsl(var(--foreground));
+  --tw-prose-counters: hsl(var(--subtle));
+  --tw-prose-bullets: hsl(var(--border-strong));
+  --tw-prose-hr: hsl(var(--border));
+  --tw-prose-quotes: hsl(var(--foreground));
+  --tw-prose-quote-borders: hsl(var(--accent));
+  --tw-prose-captions: hsl(var(--subtle));
+  --tw-prose-code: hsl(var(--foreground));
+  --tw-prose-pre-code: hsl(var(--foreground));
+  --tw-prose-pre-bg: hsl(var(--canvas));
+  --tw-prose-th-borders: hsl(var(--border-strong));
+  --tw-prose-td-borders: hsl(var(--border));
+
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.8;
+  max-width: none;
+}
+
+.prose-research h1 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  font-size: 2.25rem;
+  line-height: 1.2;
+  margin-top: 0;
+  margin-bottom: 1.2em;
+}
+.prose-research h2 {
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin-top: 2.2em;
+  margin-bottom: 0.7em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.prose-research h3 {
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  font-size: 1.25rem;
+  line-height: 1.4;
+  margin-top: 1.8em;
+  margin-bottom: 0.5em;
+}
+.prose-research h4 {
+  font-weight: 600;
+  font-size: 1.05rem;
+  margin-top: 1.6em;
+  margin-bottom: 0.4em;
+}
+
+.prose-research p {
+  margin-top: 0;
+  margin-bottom: 1.2em;
+  text-wrap: pretty;
+}
+.prose-research a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: hsl(var(--accent) / 0.4);
+  font-weight: 500;
+}
+.prose-research a:hover {
+  text-decoration-color: hsl(var(--accent));
+}
+.prose-research strong {
+  font-weight: 600;
+}
+
+.prose-research blockquote {
+  font-style: normal;
+  border-left-width: 3px;
+  padding-left: 1.1em;
+  margin-left: 0;
+  color: hsl(var(--muted));
+  font-family: var(--font-serif);
+}
+.prose-research blockquote p:first-of-type::before,
+.prose-research blockquote p:last-of-type::after {
+  content: none;
+}
+
+.prose-research code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  font-weight: 500;
+  background: hsl(var(--canvas));
+  border-radius: 3px;
+  padding: 0.15em 0.4em;
+}
+.prose-research code::before,
+.prose-research code::after {
+  content: none;
+}
+.prose-research pre {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  background: hsl(var(--canvas));
+  border: 1px solid hsl(var(--border));
+  border-radius: 6px;
+  padding: 1em 1.2em;
+}
+.prose-research pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-weight: 400;
+}
+
+.prose-research ul,
+.prose-research ol {
+  padding-left: 1.4em;
+  margin-top: 1em;
+  margin-bottom: 1.2em;
+}
+.prose-research li {
+  margin-top: 0.3em;
+  margin-bottom: 0.3em;
+}
+
+.prose-research table {
+  font-size: 0.9em;
+  font-family: var(--font-sans);
+  width: 100%;
+}
+.prose-research th {
+  font-weight: 600;
+  font-family: var(--font-sans);
+  background: hsl(var(--canvas));
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid hsl(var(--border-strong));
+}
+.prose-research td {
+  padding: 0.5em 0.8em;
+  border-bottom: 1px solid hsl(var(--border));
+}
+
+.prose-research img {
+  border-radius: 4px;
+  border: 1px solid hsl(var(--border));
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 100%;
+  height: auto;
+}
+.prose-research figure {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.prose-research figure img {
+  margin-bottom: 0;
+}
+.prose-research figcaption {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: hsl(var(--subtle));
+  text-align: center;
+  margin-top: 0.6em;
+  padding-top: 0.6em;
+  border-top: 1px solid hsl(var(--border));
+  max-width: 80%;
+}
+
+.prose-research hr {
+  border-color: hsl(var(--border));
+  margin-top: 2.5em;
+  margin-bottom: 2.5em;
+}
+
+/* Footnotes (remark-gfm) */
+.prose-research .footnotes {
+  margin-top: 3em;
+  padding-top: 1.5em;
+  border-top: 1px solid hsl(var(--border));
+  font-size: 14px;
+  color: hsl(var(--muted));
+}
+.prose-research .footnote-ref a,
+.prose-research .footnote-backref {
+  color: hsl(var(--accent));
+  font-family: var(--font-mono);
+  font-size: 0.75em;
+  vertical-align: super;
+  text-decoration: none;
+}
+
+/* KaTeX */
+.prose-research .math {
+  font-family: KaTeX_Main, Cambria, Cochin, serif;
+}
+.prose-research .math-display {
+  display: block;
+  margin: 1.5em 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+/* Embed wrappers — applied by MarkdownRenderer's embed components */
+.prose-research .embed {
+  margin-top: 2em;
+  margin-bottom: 2em;
+  border-radius: 6px;
+  border: 1px solid hsl(var(--border));
+  overflow: hidden;
+  background: hsl(var(--canvas));
+}
+.prose-research .embed-youtube {
+  aspect-ratio: 16 / 9;
+  padding: 0;
+}
+.prose-research .embed-youtube iframe {
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}
+.prose-research .embed-instagram,
+.prose-research .embed-facebook,
+.prose-research .embed-threads {
+  padding: 1em;
+  display: flex;
+  justify-content: center;
+  font-family: var(--font-sans);
+}
+.prose-research .embed-caption {
+  padding: 0.6em 1em;
+  font-size: 12px;
+  color: hsl(var(--subtle));
+  border-top: 1px solid hsl(var(--border));
+  font-family: var(--font-sans);
+}

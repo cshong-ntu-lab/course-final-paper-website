@@ -4,6 +4,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { AppHeader } from "@/components/AppHeader";
 import { CourseCard, type StudentCourseCardData } from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
@@ -86,6 +87,18 @@ export default async function WorkspacePage() {
 
   const courses = await loadMyCourses(user.uid);
 
+  return (
+    <div className="bg-background min-h-screen">
+      <AppHeader
+        context="student"
+        user={{ displayName: user.profileDisplayName || user.displayName, email: user.email }}
+      />
+      <Workspace courses={courses} />
+    </div>
+  );
+}
+
+function Workspace({ courses }: { courses: StudentCourseCardData[] }) {
   return (
     <main id="main" className="mx-auto max-w-4xl px-7 py-12">
       <div className="mb-8">

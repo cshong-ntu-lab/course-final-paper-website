@@ -3,6 +3,8 @@ import type { Metadata } from "next";
 import { fontVariables } from "@/lib/fonts";
 
 import "./globals.css";
+import "katex/dist/katex.min.css";
+import "highlight.js/styles/github.css";
 
 export const metadata: Metadata = {
   title: {

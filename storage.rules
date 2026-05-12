@@ -1,8 +1,27 @@
 rules_version = '2';
 
-// Placeholder — proper rules in Phase 3 (image upload).
+// Web SDK upload model: students upload directly to
+//   reports/{reportId}/{uid}/{filename}
+// gated by the user's Firebase Auth identity. The server records each upload
+// in Firestore via /api/uploads/finalize after the client confirms the PUT.
+//
+// Reads are public — image URLs are embedded in publicly-readable markdown.
+// (Token-based URLs from getDownloadURL still work either way.)
+
 service firebase.storage {
   match /b/{bucket}/o {
+    // Public read of any uploaded report asset. Tokens further gate access at
+    // the URL level for direct downloads.
+    match /reports/{reportId}/{uid}/{filename=**} {
+      allow read: if true;
+      allow write:
+        if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 10 * 1024 * 1024
+        && request.resource.contentType.matches('image/(png|jpeg|webp|gif|svg\\+xml)');
+    }
+
+    // Default deny for everything else.
     match /{allPaths=**} {
       allow read, write: if false;
     }
