@@ -71,6 +71,26 @@ If `pnpm <script>` mysteriously exits 1 after a new install, add the package her
 - `tasks/todo.md` Phase headers carry `→ design.md §X.X` references.
 - Phase 11.5 is **audit only**, not a big-bang refactor.
 
+## Debugging production
+
+When asked to debug a production issue, always start by fetching Cloud Run logs:
+
+```bash
+# All logs (recent)
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=course-final-paper-website" \
+  --project=avid-factor-496115-d6 --limit=50 --freshness=1h
+
+# Errors only
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=course-final-paper-website AND severity>=ERROR" \
+  --project=avid-factor-496115-d6 --limit=20 --freshness=2h
+
+# Filter by URL path
+gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=course-final-paper-website AND httpRequest.requestUrl:\"/api/auth\"" \
+  --project=avid-factor-496115-d6 --limit=10 --freshness=2h
+```
+
+Note: client-side errors (e.g. Firebase Auth failures before any server call) won't appear in Cloud Run logs — those need browser DevTools to diagnose.
+
 ## Workflow rules
 
 - **Never auto-start implementation** even after a plan is approved. Pause at phase boundaries and confirm before starting the next phase.
