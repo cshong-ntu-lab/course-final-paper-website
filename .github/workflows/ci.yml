@@ -31,5 +31,5 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-  # Unit tests will be added in Phase 10 (vitest not yet installed).
-  # Playwright E2E will be added in Phase 10 (requires Firebase emulator).
+      - name: Unit tests
+        run: pnpm test

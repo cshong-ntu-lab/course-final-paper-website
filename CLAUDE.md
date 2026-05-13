@@ -62,6 +62,13 @@ allowBuilds:
 
 If `pnpm <script>` mysteriously exits 1 after a new install, add the package here.
 
+## Testing
+
+- Unit tests live in `src/**/*.test.ts` and run with `pnpm test` (Vitest).
+- **Add tests whenever implementing non-trivial pure logic**: validators, parsers, generators, URL matchers, role helpers.
+- Mocks needed: `server-only` → `vi.mock("server-only", () => ({}))`, `next/headers` → mock `cookies`, Firebase Admin → mock `getFirebaseAdmin`.
+- CI (`ci.yml`) runs `pnpm test` on every push.
+
 ## Implementation strategy
 
 **Design-first** (Strategy B from the planning conversation):
