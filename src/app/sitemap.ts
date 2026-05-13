@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import { getAllCourses, getPublishedReportsByCourse } from "@/lib/server/firestore";
 import { courseSlug, reportSlug } from "@/lib/slug";
 
-export const revalidate = 300;
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
