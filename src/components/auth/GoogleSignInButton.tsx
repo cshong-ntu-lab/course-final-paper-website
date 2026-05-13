@@ -60,7 +60,10 @@ export function GoogleSignInButton() {
         const code = (e as { code?: string })?.code ?? "";
         if (code === "auth/popup-closed-by-user") setErrCode("popup_closed_by_user");
         else if (code === "auth/popup-blocked") setErrCode("popup_blocked");
-        else setErrCode("internal");
+        else {
+          console.error("[GoogleSignIn] signInWithPopup error:", code, e);
+          setErrCode("internal");
+        }
         setPending(false);
         return;
       }
