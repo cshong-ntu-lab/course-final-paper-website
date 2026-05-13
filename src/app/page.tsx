@@ -1,41 +1,23 @@
-import { Button } from "@/components/ui/button";
+// Root `/` — redirects to the first (newest) course page.
+// If no courses exist yet, shows a simple placeholder.
 
-// Phase 0 hello-world — verifies design.md tokens render correctly.
-// Will be replaced in Phase 4 with the public homepage (design.md §3.1).
-export default function Home() {
+import { redirect } from "next/navigation";
+
+import { getAllCourses } from "@/lib/server/firestore";
+import { courseSlug } from "@/lib/slug";
+
+export const dynamic = "force-dynamic";
+
+export default async function RootPage() {
+  const courses = await getAllCourses();
+  if (courses.length > 0) {
+    redirect(`/c/${courseSlug(courses[0]!)}`);
+  }
+  // No courses yet — simple placeholder so the site isn't blank.
   return (
-    <main id="main" className="mx-auto max-w-3xl px-7 py-24">
-      <p className="text-2xs text-subtle mb-3 font-mono uppercase tracking-[0.08em]">
-        Phase 0 · Design Foundation
-      </p>
-      <h1 className="text-foreground font-serif text-5xl font-semibold tracking-tight">
-        課程報告 · 台大社會所
-      </h1>
-      <p className="text-muted mt-5 max-w-prose font-serif text-xl leading-[1.8]">
-        Forest accent ·{" "}
-        <a
-          href="#"
-          className="text-accent decoration-accent/40 underline underline-offset-[3px] hover:decoration-current"
-        >
-          連結會用 accent 色
-        </a>
-        ，搭配 underline-offset 讓閱讀流暢。
-      </p>
-
-      <div className="mt-10 flex flex-wrap items-center gap-3">
-        <Button>發布報告</Button>
-        <Button variant="secondary">取消</Button>
-        <Button variant="ghost">編輯</Button>
-        <Button variant="link">查看 diff →</Button>
-        <Button variant="destructive">下架</Button>
-      </div>
-
-      <div className="border-border mt-12 border-t pt-6">
-        <p className="text-subtle text-sm">
-          這是 Phase 0 hello-world，驗證 design.md §1 tokens（Forest accent · Noto Serif TC ·
-          JetBrains Mono）已正確套用。
-        </p>
-      </div>
+    <main id="main" className="flex min-h-screen flex-col items-center justify-center px-6">
+      <h1 className="font-serif text-3xl font-semibold tracking-tight">課程報告 · 台大社會所</h1>
+      <p className="text-muted mt-4 text-sm">尚無已建立的課程。</p>
     </main>
   );
 }
