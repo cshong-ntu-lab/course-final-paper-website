@@ -1,4 +1,4 @@
-name: Auto-bump patch on PR merge
+name: auto-bump
 
 on:
   pull_request:
