@@ -58,5 +58,8 @@ AGENTS.md
 # Firebase / Firestore debug logs
 *-debug.log
 
+# Local secrets (OAuth client JSON, SA keys, etc.)
+.secrets/
+
 # Design reference HTML (kept locally, not source)
 claude-design-html/

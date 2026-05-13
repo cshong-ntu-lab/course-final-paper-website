@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { reportConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
+import { syncReportToDrive } from "@/lib/server/drive";
 import { deleteStorageObject } from "@/lib/server/storage";
 import type { Report } from "@/lib/types";
 
@@ -108,6 +109,10 @@ export async function saveReportDraftAction(
     });
 
     if (!result.ok) return result;
+    // Fire-and-forget: Drive sync failure must not surface to the student.
+    void syncReportToDrive(reportId).catch((err) =>
+      console.error("[drive-sync] saveReportDraft failed", { reportId, err }),
+    );
     return { ok: true, hasNewChanges: result.hasNewChanges, savedAt: Date.now() };
   } catch {
     return { ok: false, error: "internal" };
