@@ -174,6 +174,7 @@
   --text-6xl--letter-spacing: -0.03em;
 
   --animate-banner-slide: banner-slide 200ms ease-out;
+  --animate-saving: saving 2s ease-in-out infinite;
 }
 
 @keyframes banner-slide {
@@ -182,6 +183,16 @@
   }
   to {
     transform: translateY(0);
+  }
+}
+
+@keyframes saving {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
   }
 }
 

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Toaster } from "sonner";
 
 import { fontVariables } from "@/lib/fonts";
 
@@ -26,6 +27,20 @@ export default function RootLayout({
           跳至主要內容
         </a>
         {children}
+        <Toaster
+          position="bottom-right"
+          toastOptions={{
+            classNames: {
+              toast:
+                "bg-surface border border-border rounded-md shadow-lg text-foreground font-sans",
+              title: "font-medium text-sm",
+              description: "text-xs text-muted",
+              success: "border-success/30",
+              error: "border-destructive/40",
+              info: "border-info/40",
+            },
+          }}
+        />
       </body>
     </html>
   );

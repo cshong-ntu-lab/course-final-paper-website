@@ -77,7 +77,7 @@ export function SaveStatusIndicator({ state, since, className }: SaveStatusIndic
   if (state === "saved" && since) {
     return (
       <span className={cn(base, "text-muted", className)} aria-live="polite">
-        <span className="bg-success h-1.5 w-1.5 rounded-full" />
+        <span className="bg-success animate-saving h-1.5 w-1.5 rounded-full" />
         已儲存{mounted ? ` · ${formatAgo(secsAgo(since))}` : ""}
       </span>
     );
