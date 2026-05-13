@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
@@ -15,4 +16,17 @@ const nextConfig: NextConfig = {
   typedRoutes: false,
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  // Source maps upload — only active when SENTRY_AUTH_TOKEN is set (CI/CD)
+  silent: !process.env.CI,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  // Disable source map upload unless SENTRY_AUTH_TOKEN provided
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  // Suppress build-time Sentry warnings when DSN is not set locally
+  disableLogger: true,
+  // Avoid adding server-side Sentry auto-instrumentation noise
+  autoInstrumentServerFunctions: false,
+});
