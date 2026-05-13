@@ -460,7 +460,7 @@ export function ReportEditor({
   const effectiveSaveState: SaveState = !online ? "offline" : save.state;
 
   return (
-    <div className="bg-background flex h-screen flex-col">
+    <div id="main" className="bg-background flex h-screen flex-col">
       {/* Top bar */}
       <header className="border-border bg-background flex h-14 shrink-0 items-center justify-between gap-4 border-b px-5">
         <div className="flex min-w-0 items-center gap-3">

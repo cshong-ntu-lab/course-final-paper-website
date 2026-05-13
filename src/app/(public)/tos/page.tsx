@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "服務條款" };
 export default function TosPage() {
   return (
     <div className="bg-background min-h-screen">
-      <div className="mx-auto max-w-[640px] px-6 py-14">
+      <main id="main" className="mx-auto max-w-[640px] px-6 py-14">
         <Link
           href="/"
           className="text-muted hover:text-foreground mb-10 inline-flex items-center gap-1 text-sm transition-colors"
@@ -53,7 +53,7 @@ export default function TosPage() {
           <h2>聯絡方式</h2>
           <p>如對本服務條款有任何疑問，請透過課程管理員聯繫。</p>
         </article>
-      </div>
+      </main>
       <Footer />
     </div>
   );

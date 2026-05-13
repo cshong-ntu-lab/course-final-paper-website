@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "隱私權政策" };
 export default function PrivacyPage() {
   return (
     <div className="bg-background min-h-screen">
-      <div className="mx-auto max-w-[640px] px-6 py-14">
+      <main id="main" className="mx-auto max-w-[640px] px-6 py-14">
         <Link
           href="/"
           className="text-muted hover:text-foreground mb-10 inline-flex items-center gap-1 text-sm transition-colors"
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
           <h2>聯絡方式</h2>
           <p>如對本隱私權政策有任何疑問，請透過課程管理員聯繫。</p>
         </article>
-      </div>
+      </main>
       <Footer />
     </div>
   );

@@ -77,7 +77,7 @@ export default async function ReportPage({ params }: Props) {
         </div>
       </header>
 
-      <article className="mx-auto max-w-[680px] px-6 py-14">
+      <article id="main" className="mx-auto max-w-[680px] px-6 py-14">
         {/* Masthead */}
         <header className="mb-12">
           <div className="text-subtle mb-3 font-mono text-[0.65rem] uppercase tracking-[0.12em]">

@@ -82,7 +82,7 @@ export function OnboardingWizard({
   }
 
   return (
-    <div className="bg-background grid min-h-screen place-items-center p-6 md:p-10">
+    <main id="main" className="bg-background grid min-h-screen place-items-center p-6 md:p-10">
       <div className="w-full max-w-[480px]">
         {/* Stepper — hidden for already-onboarded users (single step) */}
         {!skipNameStep && (
@@ -219,6 +219,6 @@ export function OnboardingWizard({
           </>
         )}
       </div>
-    </div>
+    </main>
   );
 }
