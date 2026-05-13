@@ -42,3 +42,21 @@ yarn-error.log*
 next-env.d.ts
 fb-data/
 *.un~
+
+# Serena MCP cache
+.serena/
+
+# GitNexus index
+.gitnexus/
+
+# Claude Code session data
+.claude/
+
+# Agent tool configs (user-local)
+AGENTS.md
+
+# Firebase / Firestore debug logs
+*-debug.log
+
+# Design reference HTML (kept locally, not source)
+claude-design-html/

@@ -1,4 +1,4 @@
-name: Release — set version tag
+name: release
 
 on:
   workflow_dispatch:
