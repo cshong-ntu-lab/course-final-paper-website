@@ -51,6 +51,16 @@ export interface Report {
   updatedAt: Timestamp;
 }
 
+export interface PublishSnapshot {
+  contentMd: string;
+  title: string;
+  author: string;
+  summary: string;
+  coverImageUrl: string | null;
+  publishedAt: Timestamp;
+  publishedBy: string;
+}
+
 // IDs are encoded by their component pieces to enforce 1:1 uniqueness.
 export const enrollmentId = (courseId: string, uid: string) => `${courseId}_${uid}`;
 export const reportId = (courseId: string, uid: string) => `${courseId}_${uid}`;
