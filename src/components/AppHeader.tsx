@@ -70,6 +70,17 @@ export function AppHeader({ context, user, breadcrumb }: AppHeaderProps) {
             {user.displayName || user.email}
           </span>
           <span className="bg-border h-3 w-px" />
+          {context === "student" && (
+            <>
+              <Link
+                href="/workspace/settings"
+                className="hover:text-accent transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-[3px]"
+              >
+                設定
+              </Link>
+              <span className="bg-border h-3 w-px" />
+            </>
+          )}
           <form action={logoutAction}>
             <button
               type="submit"

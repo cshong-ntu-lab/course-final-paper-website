@@ -23,6 +23,18 @@ export async function getAllCourses(): Promise<CourseDoc[]> {
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 }
 
+/** All reports for a course (draft + published), newest-updated first. Used by /preview. */
+export async function getAllReportsByCourse(courseId: string): Promise<ReportDoc[]> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db
+    .collection("reports")
+    .withConverter(reportConverter)
+    .where("courseId", "==", courseId)
+    .orderBy("updatedAt", "desc")
+    .get();
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+}
+
 /** Published reports for a course, newest-published first. */
 export async function getPublishedReportsByCourse(courseId: string): Promise<ReportDoc[]> {
   const { db } = getFirebaseAdmin();
@@ -51,8 +63,33 @@ export async function getLatestSnapshot(reportId: string): Promise<SnapshotDoc |
   return { ...(doc.data() as PublishSnapshot), id: doc.id };
 }
 
+/** All report drafts, newest-updated first. Used by the staging home page. */
+export async function getAllReportDocs(): Promise<ReportDoc[]> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db
+    .collection("reports")
+    .withConverter(reportConverter)
+    .orderBy("updatedAt", "desc")
+    .get();
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+}
+
+/** Single report document by ID (latest draft). */
+export async function getReportDoc(reportId: string): Promise<ReportDoc | null> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db.collection("reports").withConverter(reportConverter).doc(reportId).get();
+  if (!snap.exists) return null;
+  return { ...snap.data()!, id: snap.id };
+}
+
 /** Find a course by its URL slug. Returns null if not found. */
 export async function getCourseBySlug(slug: string): Promise<CourseDoc | null> {
   const courses = await getAllCourses();
-  return courses.find((c) => courseSlug(c) === slug) ?? null;
+  let normalized: string;
+  try {
+    normalized = decodeURIComponent(slug);
+  } catch {
+    normalized = slug;
+  }
+  return courses.find((c) => courseSlug(c) === normalized) ?? null;
 }

@@ -13,6 +13,7 @@ import {
   getPublishedReportsByCourse,
 } from "@/lib/server/firestore";
 import { courseSlug as toCourseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
+import { Footer } from "@/components/Footer";
 import { ReportListItem } from "@/components/public/ReportListItem";
 
 export const revalidate = 60;
@@ -132,16 +133,7 @@ export default async function CoursePage({ params }: Props) {
         </section>
       </main>
 
-      <footer className="border-border mt-20 border-t py-10 text-center text-xs">
-        <span className="text-subtle">© {new Date().getFullYear()} NTU Sociology · </span>
-        <Link href="/privacy" className="text-subtle hover:underline">
-          隱私
-        </Link>
-        <span className="text-subtle"> · </span>
-        <Link href="/tos" className="text-subtle hover:underline">
-          條款
-        </Link>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -30,12 +30,23 @@ When running `gcloud` / `firebase` commands, always target `avid-factor-496115-d
 - **Forest accent** palette (`#3a5a3a`); paper neutral background
 - **Firebase**: Web SDK in `src/lib/firebase/client.ts`; Admin SDK in `src/lib/firebase/admin.ts` (base64 service account)
 
+## Architecture decisions (post-Phase 0)
+
+- **Single deployment** — one Cloud Run service only. No separate staging Cloud Run service.
+- **Preview route** — `/preview` (login-gated) shows all reports including unpublished drafts for course members to review before publishing. No `APP_MODE` env var toggle needed.
+- **Auth gates** — `src/proxy.ts` (Next.js edge proxy, replaces `middleware.ts`) gates `/workspace`, `/admin`, and `/preview`. Cookie presence check only; full verification in Server Components via `getCurrentUser()`.
+- **Firebase connection** — controlled by `.env.local`: `FIREBASE_USE_EMULATOR=1` / `NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1` for local emulator; `0` for cloud (`avid-factor-496115-d6`). Currently set to cloud (`0`).
+
 ## Dev workflow
 
 - **pnpm 11** is the package manager. Build script approvals live in `pnpm-workspace.yaml` `allowBuilds:` (NOT `package.json#pnpm.onlyBuiltDependencies`).
 - **Emulator mode** for local dev — see `tasks/emulator-dev.md`. Two-terminal workflow: `firebase emulators:start` + `pnpm dev`.
 - **Java 21+** required for Firestore emulator (firebase-tools 15.17 dropped Java 19 support).
 - **Pre-commit hook** runs `lint-staged` (eslint --fix + prettier --write on staged files).
+
+## Manual verification — after each session
+
+After each batch of changes, verify the listed features using the step-by-step procedure Claude provides at the end of the session. Record what was verified and what was skipped here if needed for continuity.
 
 ## Build scripts approval
 

@@ -24,7 +24,13 @@ const ENROLL_ERROR_COPY: Record<Exclude<EnrollResult, { ok: true }>["error"], st
   internal: "發生未預期錯誤，請稍後再試。",
 };
 
-export function OnboardingWizard({ initialName }: { initialName: string }) {
+export function OnboardingWizard({
+  initialName,
+  skipNameStep = false,
+}: {
+  initialName: string;
+  skipNameStep?: boolean;
+}) {
   const router = useRouter();
   const [step, setStep] = React.useState<Step>(1);
   const [code, setCode] = React.useState<string[]>(Array(6).fill(""));
@@ -42,12 +48,19 @@ export function OnboardingWizard({ initialName }: { initialName: string }) {
     if (!codeComplete) return;
     setPending(true);
     const res = await enrollWithCodeAction(codeJoined);
-    setPending(false);
     if (!res.ok) {
+      setPending(false);
       setErr(ENROLL_ERROR_COPY[res.error]);
       return;
     }
     courseIdRef.current = res.courseId;
+    if (skipNameStep) {
+      // Keep pending=true so the button stays disabled during navigation.
+      router.push("/workspace");
+      router.refresh();
+      return;
+    }
+    setPending(false);
     setStep(2);
   }
 
@@ -71,30 +84,42 @@ export function OnboardingWizard({ initialName }: { initialName: string }) {
   return (
     <div className="bg-background grid min-h-screen place-items-center p-6 md:p-10">
       <div className="w-full max-w-[480px]">
-        {/* Stepper */}
-        <div className="mb-7 flex items-center justify-center gap-3">
-          {([1, 2] as const).map((n) => (
-            <React.Fragment key={n}>
-              <div
-                className={cn(
-                  "grid h-6 w-6 place-items-center rounded-full font-mono text-xs font-semibold",
-                  n <= step
-                    ? "bg-accent text-accent-foreground"
-                    : "bg-canvas text-subtle border-border border",
+        {/* Stepper — hidden for already-onboarded users (single step) */}
+        {!skipNameStep && (
+          <div className="mb-7 flex items-center justify-center gap-3">
+            {([1, 2] as const).map((n) => (
+              <React.Fragment key={n}>
+                <div
+                  className={cn(
+                    "grid h-6 w-6 place-items-center rounded-full font-mono text-xs font-semibold",
+                    n <= step
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-canvas text-subtle border-border border",
+                  )}
+                >
+                  {n}
+                </div>
+                {n === 1 && (
+                  <div className={cn("h-px w-8", step >= 2 ? "bg-accent" : "bg-border")} />
                 )}
-              >
-                {n}
-              </div>
-              {n === 1 && <div className={cn("h-px w-8", step >= 2 ? "bg-accent" : "bg-border")} />}
-            </React.Fragment>
-          ))}
-          <span className="text-2xs text-subtle ml-2 font-mono uppercase tracking-[0.08em]">
-            步驟 {step} / 2
-          </span>
-        </div>
+              </React.Fragment>
+            ))}
+            <span className="text-2xs text-subtle ml-2 font-mono uppercase tracking-[0.08em]">
+              步驟 {step} / 2
+            </span>
+          </div>
+        )}
 
         {step === 1 && (
           <>
+            <div className="mb-6 text-center">
+              <Link
+                href="/workspace"
+                className="text-muted hover:text-foreground inline-flex items-center gap-1 text-sm transition-colors"
+              >
+                ← 返回工作區
+              </Link>
+            </div>
             <h1 className="mb-2 text-center font-serif text-3xl font-semibold tracking-tight">
               輸入課程代碼
             </h1>

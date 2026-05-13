@@ -172,6 +172,17 @@
   --text-6xl: 2.75rem;
   --text-6xl--line-height: 3rem;
   --text-6xl--letter-spacing: -0.03em;
+
+  --animate-banner-slide: banner-slide 200ms ease-out;
+}
+
+@keyframes banner-slide {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* ─── base resets ─── */

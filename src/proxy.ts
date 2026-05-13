@@ -1,4 +1,4 @@
-// Edge proxy (Next.js 16 — was `middleware`) — gates /workspace + /admin.
+// Edge proxy (Next.js 16 — was `middleware`) — gates /workspace, /admin, /preview.
 // Cannot use Firebase Admin SDK here (Edge runtime), so we only check cookie
 // presence. Real verification happens in server components via getCurrentUser().
 
@@ -6,7 +6,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const SESSION_COOKIE = "session";
 
-const PROTECTED_PREFIXES = ["/workspace", "/admin"];
+const PROTECTED_PREFIXES = ["/workspace", "/admin", "/preview"];
 
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -17,7 +17,6 @@ export function proxy(req: NextRequest) {
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
   if (hasSession) return NextResponse.next();
 
-  // Redirect to /login with ?from for post-login return.
   const url = req.nextUrl.clone();
   url.pathname = "/login";
   url.searchParams.set("from", pathname);
@@ -25,5 +24,5 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/workspace/:path*", "/admin/:path*"],
+  matcher: ["/workspace/:path*", "/admin/:path*", "/preview/:path*", "/preview"],
 };

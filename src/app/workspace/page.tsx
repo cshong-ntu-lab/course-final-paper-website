@@ -5,6 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppHeader } from "@/components/AppHeader";
+import { Footer } from "@/components/Footer";
 import { CourseCard, type StudentCourseCardData } from "@/components/CourseCard";
 import { Button } from "@/components/ui/button";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
@@ -94,6 +95,7 @@ export default async function WorkspacePage() {
         user={{ displayName: user.profileDisplayName || user.displayName, email: user.email }}
       />
       <Workspace courses={courses} />
+      <Footer />
     </div>
   );
 }
