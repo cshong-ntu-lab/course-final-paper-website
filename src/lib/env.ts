@@ -13,7 +13,6 @@ const serverSchema = z.object({
         .filter(Boolean),
     ),
   FIREBASE_ADMIN_PRIVATE_KEY_JSON: z.string().optional(),
-  SENTRY_DSN: z.string().optional(),
   BACKUP_BUCKET: z.string().optional(),
   GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON: z.string().optional(),
   GOOGLE_DRIVE_ROOT_FOLDER_ID: z.string().optional(),
