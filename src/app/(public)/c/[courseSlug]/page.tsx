@@ -8,8 +8,8 @@ import { notFound } from "next/navigation";
 
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import {
-  getAllCourses,
   getCourseBySlug,
+  getCoursesWithPublishedReports,
   getPublishedReportsByCourse,
 } from "@/lib/server/firestore";
 import { courseSlug as toCourseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
@@ -35,7 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CoursePage({ params }: Props) {
   const { courseSlug: slug } = await params;
 
-  const [course, allCourses] = await Promise.all([getCourseBySlug(slug), getAllCourses()]);
+  const [course, allCourses] = await Promise.all([
+    getCourseBySlug(slug),
+    getCoursesWithPublishedReports(),
+  ]);
 
   if (!course) notFound();
 
