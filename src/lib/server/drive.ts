@@ -205,15 +205,6 @@ async function ensureFolder(
 
 export async function syncReportToDrive(reportId: string): Promise<void> {
   const drive = getClient();
-  console.log("[drive-sync] getClient result", {
-    hasClient: !!drive,
-    rootFolderId: !!env.server.GOOGLE_DRIVE_ROOT_FOLDER_ID,
-    hasOAuth: !!(
-      env.server.GOOGLE_DRIVE_CLIENT_ID &&
-      env.server.GOOGLE_DRIVE_CLIENT_SECRET &&
-      env.server.GOOGLE_DRIVE_REFRESH_TOKEN
-    ),
-  });
   if (!drive) return;
 
   const rootFolderId = env.server.GOOGLE_DRIVE_ROOT_FOLDER_ID!;
