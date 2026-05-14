@@ -2,7 +2,10 @@
 
 A publishing platform for NTU graduate course final papers. Students write in Markdown, teachers review and publish — published reports become publicly accessible, SEO-indexed pages.
 
-**Live site**: https://course-final-paper-website-1092980609324.asia-east1.run.app
+|                | URL                                                                 |
+| -------------- | ------------------------------------------------------------------- |
+| **Production** | https://course-final-paper-website-1092980609324.asia-east1.run.app |
+| **Test**       | https://course-paper-test-cefyizhe7q-de.a.run.app                   |
 
 ---
 
