@@ -17,11 +17,5 @@ export default async function OnboardingPage() {
   // Admin doesn't onboard — bounce straight to admin.
   if (user.role === "admin") redirect("/admin");
 
-  // Already onboarded: skip the name step, just show the code entry.
-  return (
-    <OnboardingWizard
-      initialName={user.profileDisplayName || (user.displayName ?? "")}
-      skipNameStep={user.isOnboarded}
-    />
-  );
+  return <OnboardingWizard />;
 }

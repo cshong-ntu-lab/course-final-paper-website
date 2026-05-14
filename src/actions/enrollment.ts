@@ -44,6 +44,15 @@ export async function enrollWithCodeAction(rawCode: string): Promise<EnrollResul
   const eRef = enrollmentsCol.doc(enrollmentId(courseId, u.uid));
   const existingEnrollment = await eRef.get();
   if (existingEnrollment.exists) {
+    // Still auto-set profileDisplayName in case the user enrolled before the
+    // name step was removed and their doc still has an empty profileDisplayName.
+    if (!u.profileDisplayName) {
+      const fallbackName = u.displayName || u.email.split("@")[0] || "學生";
+      await db
+        .collection("users")
+        .doc(u.uid)
+        .set({ profileDisplayName: fallbackName }, { merge: true });
+    }
     return { ok: true, courseId, alreadyEnrolled: true };
   }
 
@@ -56,6 +65,11 @@ export async function enrollWithCodeAction(rawCode: string): Promise<EnrollResul
   // Create enrollment + report atomically.
   const rRef = reportsCol.doc(reportId(courseId, u.uid));
 
+  // Auto-populate profileDisplayName from Google name or email prefix so the
+  // user is considered "onboarded" immediately after enrolling.
+  const autoName = u.displayName || u.email.split("@")[0] || "學生";
+  const profileDisplayName = u.profileDisplayName || autoName;
+
   try {
     const batch = db.batch();
     batch.set(eRef, {
@@ -67,7 +81,7 @@ export async function enrollWithCodeAction(rawCode: string): Promise<EnrollResul
       courseId,
       uid: u.uid,
       title: "標題",
-      author: u.profileDisplayName || u.displayName || "佚名",
+      author: profileDisplayName,
       summary: "摘要",
       coverImageUrl: null,
       contentMd: DEFAULT_REPORT_TEMPLATE_MD,
@@ -76,6 +90,13 @@ export async function enrollWithCodeAction(rawCode: string): Promise<EnrollResul
       createdAt: FieldValue.serverTimestamp() as unknown as Report["createdAt"],
       updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
     });
+    if (!u.profileDisplayName) {
+      batch.set(
+        db.collection("users").doc(u.uid),
+        { profileDisplayName: autoName },
+        { merge: true },
+      );
+    }
     await batch.commit();
   } catch {
     return { ok: false, error: "internal" };
