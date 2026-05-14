@@ -5,6 +5,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { reportConverter } from "@/lib/firestore/converters";
 import { requireAdmin } from "@/lib/server/auth";
+import { syncReportToDrive } from "@/lib/server/drive";
 import type { PublishSnapshot, Report } from "@/lib/types";
 
 export type PublishResult =
@@ -56,6 +57,11 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
       return { ok: true as const, snapshotId: snapshotRef.id, publishedAt: now.toMillis() };
     });
 
+    if (result.ok) {
+      void syncReportToDrive(reportId).catch((err) =>
+        console.error("[drive-sync] publishReport failed", { reportId, err }),
+      );
+    }
     return result;
   } catch {
     return { ok: false, error: "internal" };
@@ -78,6 +84,9 @@ export async function unpublishReportAction(reportId: string): Promise<Unpublish
         updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
       } as Report,
       { merge: true },
+    );
+    void syncReportToDrive(reportId).catch((err) =>
+      console.error("[drive-sync] unpublishReport failed", { reportId, err }),
     );
     return { ok: true };
   } catch {

@@ -32,3 +32,11 @@ export async function deleteStorageObject(storagePath: string): Promise<void> {
   const { storage } = getFirebaseAdmin();
   await storage.bucket().file(storagePath).delete({ ignoreNotFound: true });
 }
+
+export async function deleteStoragePrefix(prefix: string): Promise<void> {
+  const { storage } = getFirebaseAdmin();
+  const bucket = storage.bucket();
+  const [files] = await bucket.getFiles({ prefix });
+  if (files.length === 0) return;
+  await Promise.all(files.map((f) => f.delete({ ignoreNotFound: true })));
+}

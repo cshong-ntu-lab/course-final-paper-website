@@ -71,6 +71,7 @@ export default async function CourseDetailPage({ params }: Props) {
     return {
       id: d.id,
       courseId,
+      uid: r.uid,
       title: r.title,
       author: r.author,
       status,
@@ -106,6 +107,7 @@ export default async function CourseDetailPage({ params }: Props) {
 
         <CourseDetailClient
           courseId={courseId}
+          courseName={course.name}
           code={course.code}
           enrollmentOpen={course.enrollmentOpen}
           reports={reports}

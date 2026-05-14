@@ -5,6 +5,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { userConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
+import { renameStudentFolders } from "@/lib/server/drive";
 import type { User } from "@/lib/types";
 
 const NAME_MIN = 2;
@@ -31,6 +32,9 @@ export async function setProfileNameAction(rawName: string): Promise<SetProfileN
         updatedAt: FieldValue.serverTimestamp(),
       } as Partial<User> as User,
       { merge: true },
+    );
+    void renameStudentFolders(u.uid, u.email, name).catch((err) =>
+      console.error("[drive-sync] renameStudentFolders failed", { uid: u.uid, err }),
     );
     return { ok: true };
   } catch {

@@ -29,6 +29,7 @@ export interface Course {
   ownerUid: string;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  driveFolderId?: string;
 }
 
 export interface Enrollment {
@@ -49,6 +50,7 @@ export interface Report {
   hasNewChanges: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
+  driveFolderId?: string;
 }
 
 export interface PublishSnapshot {

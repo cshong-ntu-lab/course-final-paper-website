@@ -15,6 +15,12 @@ const serverSchema = z.object({
   FIREBASE_ADMIN_PRIVATE_KEY_JSON: z.string().optional(),
   SENTRY_DSN: z.string().optional(),
   BACKUP_BUCKET: z.string().optional(),
+  GOOGLE_DRIVE_SERVICE_ACCOUNT_JSON: z.string().optional(),
+  GOOGLE_DRIVE_ROOT_FOLDER_ID: z.string().optional(),
+  // OAuth2 user credentials — preferred over SA for personal My Drive access
+  GOOGLE_DRIVE_CLIENT_ID: z.string().optional(),
+  GOOGLE_DRIVE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_DRIVE_REFRESH_TOKEN: z.string().optional(),
 });
 
 // Client-safe env vars (NEXT_PUBLIC_*). Inlined at build time.

@@ -6,6 +6,8 @@ import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter } from "@/lib/firestore/converters";
 import { generateCourseCode } from "@/lib/courseCode";
 import { requireAdmin } from "@/lib/server/auth";
+import { renameCourseFolder } from "@/lib/server/drive";
+import { deleteStorageObject, deleteStoragePrefix } from "@/lib/server/storage";
 import type { Course, Semester } from "@/lib/types";
 
 const NAME_MAX = 120;
@@ -35,6 +37,14 @@ export type ToggleEnrollmentResult =
 export type RegenerateCodeResult =
   | { ok: true; code: string }
   | { ok: false; error: "not_found" | "forbidden" | "code_conflict" | "internal" };
+
+export type DeleteCourseResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "forbidden" | "internal" };
+
+export type DeleteStudentResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
 function validateCourseInput(input: Partial<CreateCourseInput>): string | null {
   if (input.name !== undefined) {
@@ -123,6 +133,11 @@ export async function updateCourseAction(
     };
     if (patch.name !== undefined) update.name = patch.name.trim();
     await ref.set(update as Course, { merge: true });
+    if (patch.name !== undefined || patch.year !== undefined || patch.semester !== undefined) {
+      void renameCourseFolder(courseId).catch((err) =>
+        console.error("[drive-sync] renameCourseFolder failed", { courseId, err }),
+      );
+    }
     return { ok: true };
   } catch {
     return { ok: false, error: "internal" };
@@ -176,6 +191,77 @@ export async function regenerateCourseCodeAction(courseId: string): Promise<Rege
       { merge: true },
     );
     return { ok: true, code };
+  } catch {
+    return { ok: false, error: "internal" };
+  }
+}
+
+export async function deleteCourseAction(courseId: string): Promise<DeleteCourseResult> {
+  const admin = await requireAdmin();
+  const { db } = getFirebaseAdmin();
+  const ref = db.collection("courses").withConverter(courseConverter).doc(courseId);
+
+  try {
+    const snap = await ref.get();
+    if (!snap.exists) return { ok: false, error: "not_found" };
+    if (snap.data()!.ownerUid !== admin.uid) return { ok: false, error: "forbidden" };
+
+    // Delete all reports (+ subcollections: publishSnapshots, uploads docs) for this course.
+    const reportsSnap = await db.collection("reports").where("courseId", "==", courseId).get();
+    await Promise.all(reportsSnap.docs.map((d) => db.recursiveDelete(d.ref)));
+
+    // Delete all enrollment docs for this course.
+    const enrollmentsSnap = await db
+      .collection("enrollments")
+      .where("courseId", "==", courseId)
+      .get();
+    const batch = db.batch();
+    enrollmentsSnap.docs.forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+
+    // Delete Storage: all student uploads and the course cover image.
+    await Promise.all([
+      deleteStoragePrefix(`reports/${courseId}/`),
+      deleteStorageObject(`covers/courses/${courseId}`),
+    ]);
+
+    await ref.delete();
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "internal" };
+  }
+}
+
+export async function deleteStudentFromCourseAction(
+  courseId: string,
+  uid: string,
+): Promise<DeleteStudentResult> {
+  await requireAdmin();
+  const { db } = getFirebaseAdmin();
+
+  try {
+    const reportSnap = await db
+      .collection("reports")
+      .where("courseId", "==", courseId)
+      .where("uid", "==", uid)
+      .limit(1)
+      .get();
+
+    if (!reportSnap.empty) {
+      const doc = reportSnap.docs[0]!;
+      await Promise.all([
+        // Delete Storage: student's uploaded images and report cover.
+        deleteStoragePrefix(`reports/${courseId}/${uid}/`),
+        deleteStorageObject(`covers/reports/${doc.id}`),
+        // Delete report doc + publishSnapshots + uploads subcollections.
+        db.recursiveDelete(doc.ref),
+      ]);
+    }
+
+    // Delete enrollment (ID is deterministic: courseId_uid).
+    await db.collection("enrollments").doc(`${courseId}_${uid}`).delete();
+
+    return { ok: true };
   } catch {
     return { ok: false, error: "internal" };
   }
