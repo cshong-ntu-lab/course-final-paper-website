@@ -3,13 +3,13 @@
 
 import { redirect } from "next/navigation";
 
-import { getAllCourses } from "@/lib/server/firestore";
+import { getCoursesWithPublishedReports } from "@/lib/server/firestore";
 import { courseSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
 export default async function RootPage() {
-  const courses = await getAllCourses();
+  const courses = await getCoursesWithPublishedReports();
   if (courses.length > 0) {
     redirect(encodeURI(`/c/${courseSlug(courses[0]!)}`));
   }

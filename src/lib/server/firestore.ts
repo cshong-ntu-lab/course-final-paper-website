@@ -23,6 +23,19 @@ export async function getAllCourses(): Promise<CourseDoc[]> {
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
 }
 
+/** Courses that have at least one published report, ordered newest first. */
+export async function getCoursesWithPublishedReports(): Promise<CourseDoc[]> {
+  const { db } = getFirebaseAdmin();
+  const [coursesSnap, publishedSnap] = await Promise.all([
+    db.collection("courses").withConverter(courseConverter).orderBy("createdAt", "desc").get(),
+    db.collection("reports").where("publishedAt", "!=", null).select("courseId").get(),
+  ]);
+  const withContent = new Set(publishedSnap.docs.map((d) => d.get("courseId") as string));
+  return coursesSnap.docs
+    .map((d) => ({ ...d.data(), id: d.id }))
+    .filter((c) => withContent.has(c.id));
+}
+
 /** All reports for a course (draft + published), newest-updated first. Used by /preview. */
 export async function getAllReportsByCourse(courseId: string): Promise<ReportDoc[]> {
   const { db } = getFirebaseAdmin();
