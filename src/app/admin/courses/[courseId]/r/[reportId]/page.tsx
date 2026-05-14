@@ -94,6 +94,7 @@ export default async function ReportReviewPage({ params }: Props) {
             id: s.id,
             title: s.title,
             author: s.author,
+            contentMd: s.contentMd,
             publishedAtMs: s.publishedAtMs,
             publishedBy: s.publishedBy,
           }))}

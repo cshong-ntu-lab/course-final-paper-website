@@ -19,6 +19,7 @@ interface SnapshotSummary {
   id: string;
   title: string;
   author: string;
+  contentMd: string;
   publishedAtMs: number;
   publishedBy: string;
 }
@@ -60,11 +61,14 @@ export function ReportReviewClient({
   latestSnapshotContentMd,
   snapshots,
 }: Props) {
-  const hasPreviousPublish = latestSnapshotContentMd !== null;
+  const [snapshotMd, setSnapshotMd] = React.useState(latestSnapshotContentMd);
+  const [hasNewChanges, setHasNewChanges] = React.useState(report.hasNewChanges);
+  const hasPreviousPublish = snapshotMd !== null;
   const defaultTab: Tab = hasPreviousPublish && report.hasNewChanges ? "diff" : "latest";
 
   const [tab, setTab] = React.useState<Tab>(defaultTab);
   const [diffMode, setDiffMode] = React.useState<DiffMode>("source");
+  const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
   const [publishOpen, setPublishOpen] = React.useState(false);
   const [unpublishOpen, setUnpublishOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
@@ -83,6 +87,8 @@ export function ReportReviewClient({
     setPublishOpen(false);
     if (result.ok) {
       setCurrentStatus("published");
+      setHasNewChanges(false);
+      setSnapshotMd(report.contentMd);
       showToast("已發布");
     } else {
       showToast("發布失敗，請稍後再試。");
@@ -147,7 +153,7 @@ export function ReportReviewClient({
         </button>
         <button className={tabCls("diff")} onClick={() => setTab("diff")} type="button">
           Diff
-          {report.hasNewChanges && (
+          {hasNewChanges && (
             <span className="ml-1.5 inline-flex rounded border border-warning/40 bg-warning-soft px-1.5 py-0.5 font-mono text-2xs text-warning-fg">
               新
             </span>
@@ -191,7 +197,7 @@ export function ReportReviewClient({
 
                 <div className="overflow-hidden rounded-md border border-border">
                   <ReactDiffViewer
-                    oldValue={latestSnapshotContentMd ?? ""}
+                    oldValue={snapshotMd ?? ""}
                     newValue={report.contentMd}
                     splitView={false}
                     useDarkTheme={false}
@@ -214,31 +220,78 @@ export function ReportReviewClient({
             {snapshots.length === 0 ? (
               <p className="text-sm text-muted">尚無任何發布紀錄。</p>
             ) : (
-              <div className="overflow-hidden rounded-md border border-border bg-surface">
-                <div className="grid grid-cols-[1fr_160px] border-b border-border bg-canvas px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.08em] text-subtle">
-                  <div>版本</div>
-                  <div className="text-right">發布時間</div>
-                </div>
-                {snapshots.map((s, i) => (
-                  <div
-                    key={s.id}
-                    className="grid grid-cols-[1fr_160px] items-center border-b border-border px-5 py-3.5 last:border-b-0"
-                  >
-                    <div>
-                      <div className="font-serif text-sm font-medium">
-                        {s.title || "（未命名）"}
-                        {i === 0 && (
-                          <span className="ml-2 font-mono text-2xs text-subtle">（最新）</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-subtle">{s.author}</div>
-                    </div>
-                    <div className="text-right text-xs text-subtle">
-                      {formatDate(s.publishedAtMs)}
-                    </div>
+              <>
+                <div className="overflow-hidden rounded-md border border-border bg-surface">
+                  <div className="grid grid-cols-[1fr_160px_24px] border-b border-border bg-canvas px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.08em] text-subtle">
+                    <div>版本</div>
+                    <div className="text-right">發布時間</div>
+                    <div />
                   </div>
-                ))}
-              </div>
+                  {snapshots.map((s, i) => {
+                    const selected = selectedSnapshotId === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => setSelectedSnapshotId(selected ? null : s.id)}
+                        className={[
+                          "grid w-full grid-cols-[1fr_160px_24px] items-center border-b border-border px-5 py-3.5 text-left last:border-b-0 transition-colors",
+                          selected ? "bg-accent/5" : "hover:bg-canvas",
+                        ].join(" ")}
+                      >
+                        <div>
+                          <div className="font-serif text-sm font-medium">
+                            {s.title || "（未命名）"}
+                            {i === 0 && (
+                              <span className="ml-2 font-mono text-2xs text-subtle">（最新）</span>
+                            )}
+                          </div>
+                          <div className="text-xs text-subtle">{s.author}</div>
+                        </div>
+                        <div className="text-right text-xs text-subtle">
+                          {formatDate(s.publishedAtMs)}
+                        </div>
+                        <div className="flex justify-end">
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className={`text-subtle transition-transform ${selected ? "rotate-180" : ""}`}
+                          >
+                            <path d="m6 9 6 6 6-6" />
+                          </svg>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {(() => {
+                  const sel = snapshots.find((s) => s.id === selectedSnapshotId);
+                  if (!sel) return null;
+                  return (
+                    <div className="mt-4 rounded-md border border-border bg-surface">
+                      <div className="flex items-baseline justify-between border-b border-border px-5 py-3">
+                        <div className="font-serif text-sm font-semibold">
+                          {sel.title || "（未命名）"}
+                        </div>
+                        <div className="text-xs text-subtle">
+                          {sel.author} · 發布於 {formatDate(sel.publishedAtMs)}
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <MarkdownRenderer content={sel.contentMd} />
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
             )}
           </>
         )}
