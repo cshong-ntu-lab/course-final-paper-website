@@ -45,7 +45,7 @@ export default async function PreviewCoursePage({ params }: Props) {
       <header className="border-border bg-background/95 sticky top-8 z-40 border-b backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
           <Link href="/" className="inline-flex items-baseline gap-2">
-            <span className="font-serif text-xl font-semibold tracking-tight">研究筆記</span>
+            <span className="font-serif text-xl font-semibold tracking-tight">台大社會系</span>
             <span className="text-subtle font-mono text-[0.65rem] tracking-[0.06em]">NTU SOC</span>
           </Link>
           <span className="rounded border border-warning/40 bg-warning-soft px-2 py-0.5 font-mono text-2xs text-warning-fg">

@@ -27,18 +27,19 @@ export default async function LoginPage() {
       {/* Left editorial column (md+) */}
       <aside className="border-border bg-background hidden flex-col justify-between border-r p-16 md:flex">
         <Link href="/" className="inline-flex items-baseline gap-2">
-          <span className="font-serif text-xl font-semibold tracking-tight">研究筆記</span>
+          <span className="font-serif text-xl font-semibold tracking-tight">台大社會系</span>
           <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
         </Link>
 
         <div>
-          <div className="text-2xs text-subtle mb-5 font-mono uppercase tracking-[0.18em]">
-            Vol. 03 · 2026 春
-          </div>
-          <blockquote className="font-serif text-3xl leading-[1.35] font-medium tracking-tight text-pretty">
-            「研究筆記的目的，是讓田野的聲音能夠被聽見、被引用、被回應。」
+          <blockquote className="font-serif text-2xl leading-[1.45] font-medium tracking-tight text-pretty">
+            &ldquo;The future of AI research will require training models to better understand the
+            science of social relationships.&rdquo;
           </blockquote>
-          <footer className="text-subtle mt-4 text-sm">—— 主編語</footer>
+          <footer className="text-subtle mt-5 text-xs leading-relaxed">
+            —— C.A. Bail, <cite>Can Generative AI improve social science?</cite>, Proc. Natl. Acad.
+            Sci. U.S.A. 121 (21) e2314021121 (2024).
+          </footer>
         </div>
 
         <div className="text-subtle text-xs">© 2026 NTU Sociology</div>
@@ -49,7 +50,7 @@ export default async function LoginPage() {
         <div className="w-full max-w-sm">
           {/* Mobile-only wordmark at top */}
           <Link href="/" className="mb-8 inline-flex items-baseline gap-2 md:hidden">
-            <span className="font-serif text-lg font-semibold tracking-tight">研究筆記</span>
+            <span className="font-serif text-lg font-semibold tracking-tight">台大社會系</span>
             <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
           </Link>
 
