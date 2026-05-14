@@ -72,7 +72,7 @@ export default async function ReportPage({ params }: Props) {
             返回 {course.name}
           </Link>
           <Link href="/" className="font-serif text-sm font-semibold tracking-tight">
-            研究筆記
+            台大社會系
           </Link>
         </div>
       </header>

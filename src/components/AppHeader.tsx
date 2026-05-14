@@ -22,7 +22,7 @@ export function AppHeader({ context, user, breadcrumb }: AppHeaderProps) {
           href={homeHref}
           className="hover:text-accent inline-flex items-baseline gap-2 transition-colors"
         >
-          <span className="font-serif text-base font-semibold tracking-tight">研究筆記</span>
+          <span className="font-serif text-base font-semibold tracking-tight">台大社會系</span>
           <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
         </Link>
 
