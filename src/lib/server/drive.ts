@@ -26,6 +26,13 @@ export interface DriveMetadata {
   hasNewChanges: boolean;
   createdAt: string;
   updatedAt: string;
+  // v4 extended fields
+  subtitle?: string;
+  tags?: string[];
+  pullQuote?: string;
+  authorBio?: string;
+  authorAffiliation?: string;
+  coverCaption?: string;
 }
 
 export function buildCourseFolderName(year: number, semester: string, name: string): string {
@@ -57,6 +64,12 @@ export function buildMetadata(
     hasNewChanges: report.hasNewChanges,
     createdAt: report.createdAt.toDate().toISOString(),
     updatedAt: report.updatedAt.toDate().toISOString(),
+    ...(report.subtitle !== undefined && { subtitle: report.subtitle }),
+    ...(report.tags !== undefined && { tags: report.tags }),
+    ...(report.pullQuote !== undefined && { pullQuote: report.pullQuote }),
+    ...(report.authorBio !== undefined && { authorBio: report.authorBio }),
+    ...(report.authorAffiliation !== undefined && { authorAffiliation: report.authorAffiliation }),
+    ...(report.coverCaption !== undefined && { coverCaption: report.coverCaption }),
   };
 }
 

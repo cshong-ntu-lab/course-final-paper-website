@@ -3,7 +3,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
-import { reportConverter } from "@/lib/firestore/converters";
+import { reportConverter, userConverter } from "@/lib/firestore/converters";
 import { requireAdmin } from "@/lib/server/auth";
 import { syncReportToDrive } from "@/lib/server/drive";
 import type { PublishSnapshot, Report } from "@/lib/types";
@@ -23,14 +23,23 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
   const snapshotsCol = reportRef.collection("publishSnapshots");
 
   try {
+    // Pre-read to get the author's UID so we can fetch their profile in the transaction.
+    const preSnap = await reportRef.get();
+    if (!preSnap.exists) return { ok: false, error: "not_found" };
+    const authorUid = preSnap.data()!.uid;
+
     const result = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(reportRef);
+      const [snap, userSnap] = await Promise.all([
+        tx.get(reportRef),
+        tx.get(db.collection("users").withConverter(userConverter).doc(authorUid)),
+      ]);
       if (!snap.exists) return { ok: false as const, error: "not_found" as const };
 
       const report = snap.data()!;
+      const authorProfile = userSnap.data();
       const now = Timestamp.now();
 
-      // Write publish snapshot.
+      // Write publish snapshot — authorAffiliation/authorBio come from the author's profile.
       const snapshotRef = snapshotsCol.doc();
       const snapshot: PublishSnapshot = {
         contentMd: report.contentMd,
@@ -40,6 +49,12 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
         coverImageUrl: report.coverImageUrl,
         publishedAt: now,
         publishedBy: admin.uid,
+        ...(report.subtitle !== undefined && { subtitle: report.subtitle }),
+        ...(report.tags !== undefined && { tags: report.tags }),
+        ...(report.pullQuote !== undefined && { pullQuote: report.pullQuote }),
+        ...(authorProfile?.title && { authorAffiliation: authorProfile.title }),
+        ...(authorProfile?.bio && { authorBio: authorProfile.bio }),
+        ...(report.coverCaption !== undefined && { coverCaption: report.coverCaption }),
       };
       tx.set(snapshotRef, snapshot);
 

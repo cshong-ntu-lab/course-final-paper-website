@@ -17,6 +17,11 @@
 #     gcloud projects add-iam-policy-binding <TEST_PROJECT_ID> \
 #       --member="serviceAccount:course-paper-sa@avid-factor-496115-d6.iam.gserviceaccount.com" \
 #       --role="roles/firebase.admin"
+#
+#   For Firestore index deployment the Cloud Build SA also needs indexAdmin on the test project:
+#     gcloud projects add-iam-policy-binding <TEST_PROJECT_ID> \
+#       --member="serviceAccount:1092980609324@cloudbuild.gserviceaccount.com" \
+#       --role="roles/datastore.indexAdmin"
 
 substitutions:
   _REGION: asia-east1
@@ -49,7 +54,7 @@ steps:
       - push
       - "${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:test-$SHORT_SHA"
 
-  # ── 3. Deploy to test Cloud Run ──────────────────────────────────────────
+  # ── 3a. Deploy to test Cloud Run ─────────────────────────────────────────
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     id: deploy
     waitFor: [push]
@@ -69,6 +74,17 @@ steps:
       # Firebase Admin SDK connects to test Firebase project via ADC.
       # The service account must have roles/firebase.admin on the test project
       # (see one-time setup comment at the top of this file).
+
+  # ── 3b. Deploy Firestore indexes to test project (parallel with Cloud Run) ─
+  # Requires the Cloud Build SA to have roles/datastore.indexAdmin on the test project
+  # (see one-time setup comment at the top of this file).
+  - name: node:22
+    id: deploy-indexes
+    waitFor: [push]
+    entrypoint: bash
+    args:
+      - -c
+      - npx --yes firebase-tools@15 deploy --only firestore:indexes --project=${_FIREBASE_PROJECT_ID} --non-interactive
 
 images:
   - "${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:test-$SHORT_SHA"

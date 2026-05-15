@@ -43,6 +43,11 @@ export interface EditorReport {
   publishedAt: string | null;
   hasNewChanges: boolean;
   updatedAtIso: string;
+  // v4 extended fields
+  subtitle: string;
+  tags: string; // stored as comma-separated string in the editor
+  pullQuote: string;
+  coverCaption: string;
 }
 
 type Mode = "write" | "both" | "preview";
@@ -109,6 +114,10 @@ export function ReportEditor({
   const [title, setTitle] = React.useState(initial.title);
   const [author, setAuthor] = React.useState(initial.author);
   const [summary, setSummary] = React.useState(initial.summary);
+  const [subtitle, setSubtitle] = React.useState(initial.subtitle);
+  const [tags, setTags] = React.useState(initial.tags);
+  const [pullQuote, setPullQuote] = React.useState(initial.pullQuote);
+  const [coverCaption, setCoverCaption] = React.useState(initial.coverCaption);
   const [optimisticUploadCount, setOptimisticUploadCount] = React.useState(0);
 
   // After a drag/paste upload, ask the server-rendered list to refresh.
@@ -455,6 +464,26 @@ export function ReportEditor({
     setSummary(e.target.value);
     queueAutosave({ summary: e.target.value });
   };
+  const handleSubtitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSubtitle(e.target.value);
+    queueAutosave({ subtitle: e.target.value });
+  };
+  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTags(e.target.value);
+    const parsed = e.target.value
+      .split(/[,、]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+    queueAutosave({ tags: parsed });
+  };
+  const handlePullQuoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPullQuote(e.target.value);
+    queueAutosave({ pullQuote: e.target.value });
+  };
+  const handleCoverCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setCoverCaption(e.target.value);
+    queueAutosave({ coverCaption: e.target.value });
+  };
 
   // --- render -----------------------------------------------------------
   const effectiveSaveState: SaveState = !online ? "offline" : save.state;
@@ -564,15 +593,23 @@ export function ReportEditor({
         {sidebarOpen && (
           <aside className="border-border bg-canvas hidden w-72 shrink-0 overflow-y-auto border-l md:block">
             <section className="space-y-4 p-4">
-              <div className="text-2xs text-subtle font-mono uppercase tracking-[0.08em]">資訊</div>
-
               <div>
                 <Label htmlFor="meta-title">標題</Label>
                 <Input id="meta-title" value={title} onChange={handleTitleChange} />
               </div>
 
               <div>
-                <Label htmlFor="meta-author">作者名稱</Label>
+                <Label htmlFor="meta-subtitle">副標題</Label>
+                <Input
+                  id="meta-subtitle"
+                  value={subtitle}
+                  onChange={handleSubtitleChange}
+                  placeholder="選填"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="meta-author">作者</Label>
                 <Input id="meta-author" value={author} onChange={handleAuthorChange} />
               </div>
 
@@ -588,10 +625,44 @@ export function ReportEditor({
               </div>
 
               <div>
+                <Label htmlFor="meta-tags">關鍵字</Label>
+                <Input
+                  id="meta-tags"
+                  value={tags}
+                  onChange={handleTagsChange}
+                  placeholder="以逗號或、分隔，最多 5 個"
+                />
+              </div>
+
+              <div>
                 <Label>封面圖</Label>
                 <div className="text-subtle border-border bg-surface flex aspect-[3/2] w-full items-center justify-center rounded border border-dashed text-xs">
                   封面圖（任務 F：上傳支援）
                 </div>
+              </div>
+
+              {initial.coverImageUrl && (
+                <div>
+                  <Label htmlFor="meta-cover-caption">封面圖說</Label>
+                  <Input
+                    id="meta-cover-caption"
+                    value={coverCaption}
+                    onChange={handleCoverCaptionChange}
+                    placeholder="選填"
+                  />
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="meta-pull-quote">摘錄（用於卡片）</Label>
+                <textarea
+                  id="meta-pull-quote"
+                  value={pullQuote}
+                  onChange={handlePullQuoteChange}
+                  rows={2}
+                  placeholder="選填"
+                  className="border-border-strong bg-surface placeholder:text-subtle focus-visible:border-accent focus-visible:ring-accent-soft min-h-[60px] w-full resize-y rounded border px-3 py-2 font-sans text-sm leading-relaxed focus-visible:ring-2 focus-visible:outline-none"
+                />
               </div>
             </section>
 

@@ -95,6 +95,49 @@ export async function getReportDoc(reportId: string): Promise<ReportDoc | null> 
   return { ...snap.data()!, id: snap.id };
 }
 
+export interface AdjacentReports {
+  prev: { slug: string; title: string; author: string } | null;
+  next: { slug: string; title: string; author: string } | null;
+}
+
+/**
+ * Returns the report published immediately before and after the current one
+ * (ordered by publishedAt ascending) within the same course.
+ */
+export async function getAdjacentPublishedReports(
+  courseId: string,
+  currentPublishedAtMs: number,
+): Promise<AdjacentReports> {
+  const { db } = getFirebaseAdmin();
+  const col = db
+    .collection("reports")
+    .withConverter(reportConverter)
+    .where("courseId", "==", courseId)
+    .where("publishedAt", "!=", null);
+
+  const [prevSnap, nextSnap] = await Promise.all([
+    col
+      .where("publishedAt", "<", new Date(currentPublishedAtMs))
+      .orderBy("publishedAt", "desc")
+      .limit(1)
+      .get(),
+    col
+      .where("publishedAt", ">", new Date(currentPublishedAtMs))
+      .orderBy("publishedAt", "asc")
+      .limit(1)
+      .get(),
+  ]);
+
+  const toItem = (docs: typeof prevSnap.docs) => {
+    if (docs.length === 0) return null;
+    const d = docs[0]!;
+    const data = d.data();
+    return { slug: data.uid, title: data.title, author: data.author };
+  };
+
+  return { prev: toItem(prevSnap.docs), next: toItem(nextSnap.docs) };
+}
+
 /** Find a course by its URL slug. Returns null if not found. */
 export async function getCourseBySlug(slug: string): Promise<CourseDoc | null> {
   const courses = await getAllCourses();

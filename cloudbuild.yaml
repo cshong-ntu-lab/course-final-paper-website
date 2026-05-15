@@ -48,7 +48,7 @@ steps:
       - "--all-tags"
       - "${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}"
 
-  # ── 3. Deploy to Cloud Run ───────────────────────────────────────────────
+  # ── 3a. Deploy to Cloud Run ──────────────────────────────────────────────
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk
     id: deploy
     waitFor: [push]
@@ -64,6 +64,16 @@ steps:
       - "--set-env-vars=ADMIN_EMAILS=${_ADMIN_EMAILS}"
       # Firebase Admin SDK uses Application Default Credentials via the attached
       # service account — no FIREBASE_ADMIN_PRIVATE_KEY_JSON needed.
+
+  # ── 3b. Deploy Firestore indexes (runs in parallel with Cloud Run deploy) ─
+  # Requires the Cloud Build SA to have roles/datastore.indexAdmin on this project.
+  - name: node:22
+    id: deploy-indexes
+    waitFor: [push]
+    entrypoint: bash
+    args:
+      - -c
+      - npx --yes firebase-tools@15 deploy --only firestore:indexes --project=$PROJECT_ID --non-interactive
 
 images:
   - "${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA"
