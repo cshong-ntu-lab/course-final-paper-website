@@ -114,6 +114,10 @@ export default async function CourseDetailPage({ params }: Props) {
           studentCount={studentCount}
           publishedCount={publishedCount}
           pendingCount={pendingCount}
+          description={course.description ?? ""}
+          courseNo={course.courseNo ?? ""}
+          teacher={course.teacher ?? ""}
+          termRange={course.termRange ?? ""}
         />
       </main>
     </>

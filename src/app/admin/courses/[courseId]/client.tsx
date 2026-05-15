@@ -8,7 +8,11 @@ import {
   deleteStudentFromCourseAction,
   regenerateCourseCodeAction,
   toggleEnrollmentAction,
+  updateCourseAction,
 } from "@/actions/course";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { CourseCodeDisplay } from "@/components/admin/CourseCodeDisplay";
 import { ReportRow } from "@/components/admin/ReportRow";
 import type { AdminReport } from "@/components/admin/ReportRow";
@@ -22,6 +26,11 @@ interface Props {
   studentCount: number;
   publishedCount: number;
   pendingCount: number;
+  description: string;
+  // v4 extended fields
+  courseNo: string;
+  teacher: string;
+  termRange: string;
 }
 
 export function CourseDetailClient({
@@ -33,6 +42,10 @@ export function CourseDetailClient({
   studentCount,
   publishedCount,
   pendingCount,
+  description: initialDescription,
+  courseNo: initialCourseNo,
+  teacher: initialTeacher,
+  termRange: initialTermRange,
 }: Props) {
   const router = useRouter();
   const [code, setCode] = React.useState(initialCode);
@@ -40,6 +53,11 @@ export function CourseDetailClient({
   const [regenerating, setRegenerating] = React.useState(false);
   const [reports, setReports] = React.useState(initialReports);
   const [toast, setToast] = React.useState<string | null>(null);
+  const [description, setDescription] = React.useState(initialDescription);
+  const [courseNo, setCourseNo] = React.useState(initialCourseNo);
+  const [teacher, setTeacher] = React.useState(initialTeacher);
+  const [termRange, setTermRange] = React.useState(initialTermRange);
+  const [settingsPending, setSettingsPending] = React.useState(false);
 
   function showToast(msg: string) {
     setToast(msg);
@@ -105,6 +123,20 @@ export function CourseDetailClient({
     }
   }
 
+  async function handleSaveSettings(e: React.FormEvent) {
+    e.preventDefault();
+    setSettingsPending(true);
+    const result = await updateCourseAction(courseId, {
+      ...(description.trim() !== initialDescription && { description: description.trim() }),
+      ...(courseNo.trim() !== initialCourseNo && { courseNo: courseNo.trim() }),
+      ...(teacher.trim() !== initialTeacher && { teacher: teacher.trim() }),
+      ...(termRange.trim() !== initialTermRange && { termRange: termRange.trim() }),
+    });
+    setSettingsPending(false);
+    showToast(result.ok ? "課程設定已更新" : "更新失敗，請稍後再試。");
+    if (result.ok) router.refresh();
+  }
+
   return (
     <>
       <CourseCodeDisplay
@@ -142,6 +174,60 @@ export function CourseDetailClient({
           ))}
         </div>
       )}
+
+      {/* Course settings */}
+      <div className="mt-12 border-t border-border pt-8">
+        <h2 className="mb-4 font-serif text-xl font-semibold">課程設定</h2>
+        <form onSubmit={handleSaveSettings} className="max-w-lg space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-description">課程介紹（顯示於公開頁面）</Label>
+            <textarea
+              id="edit-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              maxLength={400}
+              placeholder="研究生在學期末撰寫的田野觀察、訪談筆記與個案分析…"
+              className="border-border-strong bg-surface placeholder:text-subtle focus-visible:border-accent focus-visible:ring-accent-soft min-h-[72px] w-full resize-y rounded border px-3 py-2 font-sans text-sm leading-relaxed focus-visible:ring-2 focus-visible:outline-none"
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="edit-courseNo">課號</Label>
+              <Input
+                id="edit-courseNo"
+                value={courseNo}
+                onChange={(e) => setCourseNo(e.target.value)}
+                placeholder="如：SOC7821"
+                maxLength={30}
+              />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="edit-teacher">授課教師</Label>
+              <Input
+                id="edit-teacher"
+                value={teacher}
+                onChange={(e) => setTeacher(e.target.value)}
+                placeholder="如：王大明"
+                maxLength={60}
+              />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="edit-termRange">學期時間</Label>
+            <Input
+              id="edit-termRange"
+              value={termRange}
+              onChange={(e) => setTermRange(e.target.value)}
+              placeholder="如：2026/02–2026/06"
+              maxLength={60}
+            />
+          </div>
+          <Button type="submit" disabled={settingsPending} size="sm">
+            {settingsPending ? "儲存中…" : "儲存設定"}
+          </Button>
+        </form>
+      </div>
 
       {/* Delete course — bottom of page, clearly separated */}
       <div className="mt-16 border-t border-border pt-8">

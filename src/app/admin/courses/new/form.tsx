@@ -25,6 +25,9 @@ export function NewCourseForm({ user }: Props) {
   const [year, setYear] = React.useState(String(currentRocYear()));
   const [semester, setSemester] = React.useState<"1" | "2">("1");
   const [description, setDescription] = React.useState("");
+  const [courseNo, setCourseNo] = React.useState("");
+  const [teacher, setTeacher] = React.useState("");
+  const [termRange, setTermRange] = React.useState("");
   const [pending, setPending] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -47,6 +50,9 @@ export function NewCourseForm({ user }: Props) {
       semester,
       description,
       coverImageUrl: null,
+      ...(courseNo.trim() && { courseNo: courseNo.trim() }),
+      ...(teacher.trim() && { teacher: teacher.trim() }),
+      ...(termRange.trim() && { termRange: termRange.trim() }),
     });
     setPending(false);
     if (!result.ok) {
@@ -127,16 +133,52 @@ export function NewCourseForm({ user }: Props) {
             </div>
           </div>
 
+          {/* Course number + teacher row */}
+          <div className="flex gap-4">
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="courseNo">課號</Label>
+              <Input
+                id="courseNo"
+                value={courseNo}
+                onChange={(e) => setCourseNo(e.target.value)}
+                placeholder="如：SOC7821"
+                maxLength={30}
+              />
+            </div>
+            <div className="flex-1 space-y-1.5">
+              <Label htmlFor="teacher">授課教師</Label>
+              <Input
+                id="teacher"
+                value={teacher}
+                onChange={(e) => setTeacher(e.target.value)}
+                placeholder="如：王大明"
+                maxLength={60}
+              />
+            </div>
+          </div>
+
+          {/* Term range */}
+          <div className="space-y-1.5">
+            <Label htmlFor="termRange">學期時間</Label>
+            <Input
+              id="termRange"
+              value={termRange}
+              onChange={(e) => setTermRange(e.target.value)}
+              placeholder="如：2026/02–2026/06"
+              maxLength={60}
+            />
+          </div>
+
           {/* Description */}
           <div className="space-y-1.5">
-            <Label htmlFor="description">課程介紹</Label>
+            <Label htmlFor="description">課程介紹（顯示於公開頁面副標題）</Label>
             <textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={5}
               maxLength={10000}
-              placeholder="可輸入 Markdown 格式…"
+              placeholder="一句話描述課程定位，顯示為斜體副標題"
               className="w-full resize-y rounded border border-border-strong bg-surface px-3 py-2 text-sm font-mono
                          placeholder:text-subtle leading-relaxed
                          focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent-soft"

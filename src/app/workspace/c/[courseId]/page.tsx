@@ -74,6 +74,11 @@ export default async function EditorPage({ params }: Params) {
       : null,
     hasNewChanges: report.hasNewChanges,
     updatedAtIso: (report.updatedAt as unknown as { toDate(): Date }).toDate().toISOString(),
+    // v4 extended fields
+    subtitle: report.subtitle ?? "",
+    tags: (report.tags ?? []).join(", "),
+    pullQuote: report.pullQuote ?? "",
+    coverCaption: report.coverCaption ?? "",
   };
 
   return <ReportEditor initial={initial} initialUploads={initialUploads} />;

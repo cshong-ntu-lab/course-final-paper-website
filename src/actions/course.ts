@@ -12,6 +12,9 @@ import type { Course, Semester } from "@/lib/types";
 
 const NAME_MAX = 120;
 const DESC_MAX = 10_000;
+const COURSE_NO_MAX = 30;
+const TEACHER_MAX = 60;
+const TERM_RANGE_MAX = 60;
 const MAX_CODE_RETRIES = 5;
 
 export interface CreateCourseInput {
@@ -20,6 +23,10 @@ export interface CreateCourseInput {
   semester: Semester;
   description: string;
   coverImageUrl: string | null;
+  // v4 extended fields
+  courseNo?: string;
+  teacher?: string;
+  termRange?: string;
 }
 
 export type CreateCourseResult =
@@ -60,6 +67,18 @@ function validateCourseInput(input: Partial<CreateCourseInput>): string | null {
   }
   if (input.description !== undefined) {
     if (typeof input.description !== "string" || input.description.length > DESC_MAX)
+      return "invalid_input";
+  }
+  if (input.courseNo !== undefined) {
+    if (typeof input.courseNo !== "string" || input.courseNo.length > COURSE_NO_MAX)
+      return "invalid_input";
+  }
+  if (input.teacher !== undefined) {
+    if (typeof input.teacher !== "string" || input.teacher.length > TEACHER_MAX)
+      return "invalid_input";
+  }
+  if (input.termRange !== undefined) {
+    if (typeof input.termRange !== "string" || input.termRange.length > TERM_RANGE_MAX)
       return "invalid_input";
   }
   return null;
@@ -104,6 +123,9 @@ export async function createCourseAction(input: CreateCourseInput): Promise<Crea
       ownerUid: admin.uid,
       createdAt: now,
       updatedAt: now,
+      ...(input.courseNo !== undefined && { courseNo: input.courseNo }),
+      ...(input.teacher !== undefined && { teacher: input.teacher }),
+      ...(input.termRange !== undefined && { termRange: input.termRange }),
     });
     return { ok: true, courseId: ref.id, code };
   } catch {
@@ -113,7 +135,19 @@ export async function createCourseAction(input: CreateCourseInput): Promise<Crea
 
 export async function updateCourseAction(
   courseId: string,
-  patch: Partial<Pick<Course, "name" | "year" | "semester" | "description" | "coverImageUrl">>,
+  patch: Partial<
+    Pick<
+      Course,
+      | "name"
+      | "year"
+      | "semester"
+      | "description"
+      | "coverImageUrl"
+      | "courseNo"
+      | "teacher"
+      | "termRange"
+    >
+  >,
 ): Promise<UpdateCourseResult> {
   const admin = await requireAdmin();
   const validationError = validateCourseInput(patch);
