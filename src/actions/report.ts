@@ -13,6 +13,13 @@ const TITLE_MAX = 120;
 const AUTHOR_MAX = 60;
 const SUMMARY_MAX = 400;
 const CONTENT_MAX = 200_000; // ~50K Chinese chars — plenty for a graduate paper
+const SUBTITLE_MAX = 200;
+const PULL_QUOTE_MAX = 200;
+const AUTHOR_BIO_MAX = 400;
+const AUTHOR_AFFILIATION_MAX = 100;
+const COVER_CAPTION_MAX = 200;
+const TAG_MAX_LEN = 30;
+const TAGS_MAX_COUNT = 5;
 
 export interface SaveReportPatch {
   contentMd?: string;
@@ -20,6 +27,13 @@ export interface SaveReportPatch {
   author?: string;
   summary?: string;
   coverImageUrl?: string | null;
+  // v4 extended fields
+  subtitle?: string;
+  tags?: string[];
+  pullQuote?: string;
+  authorBio?: string;
+  authorAffiliation?: string;
+  coverCaption?: string;
 }
 
 export type SaveReportResult =
@@ -59,6 +73,49 @@ function validate(patch: SaveReportPatch): SaveReportPatch | { error: SaveReport
       return { error: { ok: false, error: "invalid_input" } };
     }
     out.coverImageUrl = patch.coverImageUrl;
+  }
+  if (patch.subtitle !== undefined) {
+    if (typeof patch.subtitle !== "string" || patch.subtitle.length > SUBTITLE_MAX) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.subtitle = patch.subtitle;
+  }
+  if (patch.tags !== undefined) {
+    if (
+      !Array.isArray(patch.tags) ||
+      patch.tags.length > TAGS_MAX_COUNT ||
+      patch.tags.some((t) => typeof t !== "string" || t.length > TAG_MAX_LEN)
+    ) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.tags = patch.tags.filter((t) => t.trim().length > 0);
+  }
+  if (patch.pullQuote !== undefined) {
+    if (typeof patch.pullQuote !== "string" || patch.pullQuote.length > PULL_QUOTE_MAX) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.pullQuote = patch.pullQuote;
+  }
+  if (patch.authorBio !== undefined) {
+    if (typeof patch.authorBio !== "string" || patch.authorBio.length > AUTHOR_BIO_MAX) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.authorBio = patch.authorBio;
+  }
+  if (patch.authorAffiliation !== undefined) {
+    if (
+      typeof patch.authorAffiliation !== "string" ||
+      patch.authorAffiliation.length > AUTHOR_AFFILIATION_MAX
+    ) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.authorAffiliation = patch.authorAffiliation;
+  }
+  if (patch.coverCaption !== undefined) {
+    if (typeof patch.coverCaption !== "string" || patch.coverCaption.length > COVER_CAPTION_MAX) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.coverCaption = patch.coverCaption;
   }
   return out;
 }

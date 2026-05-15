@@ -1,12 +1,9 @@
-// design.md §3.1 — D1 Editorial Index.
-// Public course page: sticky site header, course tab nav, course description,
-// published reports list.
+// design.md §3.1 — D1 Editorial Index (v4 redesign).
 
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import {
   getCourseBySlug,
   getCoursesWithPublishedReports,
@@ -44,8 +41,6 @@ export default async function CoursePage({ params }: Props) {
 
   const reports = await getPublishedReportsByCourse(course.id);
 
-  const termLabel = `${course.year} 學年度第 ${course.semester} 學期`;
-
   const reportItems = reports.map((r) => ({
     slug: reportSlug(r.uid),
     title: r.title || "（無標題）",
@@ -54,7 +49,15 @@ export default async function CoursePage({ params }: Props) {
     coverImageUrl: r.coverImageUrl,
     publishedAt: r.publishedAt!.toDate().toISOString(),
     readingMinutes: estimateReadingMinutes(r.contentMd),
+    tags: r.tags,
+    pullQuote: r.pullQuote,
+    subtitle: r.subtitle,
+    authorAffiliation: r.authorAffiliation,
   }));
+
+  const eyebrowCode = course.courseNo ?? course.code;
+  const rocYear = course.year - 1911;
+  const termCode = course.termRange ?? `${rocYear}-${course.semester}`;
 
   return (
     <div className="bg-background min-h-screen">
@@ -83,11 +86,11 @@ export default async function CoursePage({ params }: Props) {
                       "block whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors",
                       active
                         ? "border-accent text-foreground"
-                        : "border-transparent text-muted hover:text-foreground hover:border-border-strong",
+                        : "border-transparent text-muted hover:border-border-strong hover:text-foreground",
                     ].join(" ")}
                   >
                     <span className="text-subtle mr-1.5 font-mono text-[0.65rem] tracking-[0.06em]">
-                      {c.code}
+                      {c.courseNo ?? c.code}
                     </span>
                     {c.name}
                   </Link>
@@ -98,39 +101,115 @@ export default async function CoursePage({ params }: Props) {
         </div>
       </nav>
 
-      <main id="main" className="mx-auto max-w-5xl px-6 py-10">
+      <main id="main" className="mx-auto max-w-[1180px] px-6 pt-[72px]">
         {/* Course header */}
-        <section className="mb-10">
-          <div className="text-subtle mb-2 font-mono text-[0.65rem] uppercase tracking-[0.12em]">
-            {course.code} · {termLabel}
+        <section className="animate-fade-up border-b-2 border-foreground pb-9 text-center">
+          <div className="mb-[18px] inline-flex flex-wrap items-center justify-center gap-3.5 font-mono text-[11px] uppercase tracking-[0.28em] text-subtle">
+            <span>NTU SOC</span>
+            <span className="bg-accent animate-pulse-dot inline-block h-[5px] w-[5px] rounded-full" />
+            <span>{eyebrowCode}</span>
+            <span className="bg-accent animate-pulse-dot inline-block h-[5px] w-[5px] rounded-full" />
+            <span>{reportItems.length} ARTICLES</span>
           </div>
-          <h1 className="font-serif text-4xl font-semibold tracking-tight">{course.name}</h1>
-          {course.description && (
-            <div className="prose prose-sm prose-research mt-5 max-w-prose text-pretty">
-              <MarkdownRenderer content={course.description} />
+
+          <h1 className="m-0 font-serif text-[72px] font-semibold leading-[1.02] tracking-[-0.035em]">
+            {course.name}
+          </h1>
+
+          <div className="mt-3 flex justify-center">
+            <span className="bg-accent animate-draw-line inline-block h-[2px] w-16 origin-left" />
+          </div>
+
+          <p className="text-muted mx-auto mt-[22px] max-w-[44ch] font-serif italic text-[19px] leading-[1.55] text-pretty">
+            {course.description ||
+              "研究生在學期末撰寫的田野觀察、訪談筆記與個案分析，署名公開、可供引用。"}
+          </p>
+
+          {(course.teacher || course.termRange) && (
+            <div className="text-muted mt-6 flex flex-wrap items-center justify-center gap-8 text-[12.5px]">
+              {course.teacher && (
+                <span>
+                  <span className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                    授課教師
+                  </span>
+                  <span className="text-foreground ml-2.5 font-serif font-semibold">
+                    {course.teacher}
+                  </span>
+                </span>
+              )}
+              {course.termRange && (
+                <span>
+                  <span className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                    學期
+                  </span>
+                  <span className="font-mono ml-2.5 text-[12px]">{termCode}</span>
+                </span>
+              )}
             </div>
           )}
         </section>
 
-        {/* Reports list */}
-        <section>
-          <div className="mb-4 flex items-baseline justify-between">
-            <h2 className="font-serif text-2xl font-semibold">已發布報告</h2>
-            <span className="text-subtle text-xs">{reportItems.length} 篇</span>
+        {/* Reports section */}
+        <section className="pt-[52px]">
+          <div className="border-border flex items-baseline justify-between border-b pb-[18px]">
+            <h2 className="m-0 font-serif text-[30px] font-semibold tracking-[-0.02em]">
+              本期報告
+            </h2>
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.14em] text-subtle">
+              {reportItems.length} 篇
+            </span>
           </div>
+
           {reportItems.length === 0 ? (
             <p className="text-muted py-12 text-center text-sm italic">本課程尚無已發布報告。</p>
           ) : (
-            <div className="grid gap-3">
-              {reportItems.map((r) => (
-                <ReportListItem key={r.slug} report={r} courseSlug={slug} />
-              ))}
-            </div>
+            <>
+              {/* Lead card — always shown when there are reports */}
+              <ReportListItem report={reportItems[0]!} courseSlug={slug} variant="lead" />
+
+              {/* Epigraph — only when 2+ reports */}
+              {reportItems.length >= 2 && (
+                <figure className="border-border animate-fade-up m-0 border-b py-16 text-center">
+                  <blockquote className="text-foreground m-0 mx-auto max-w-[760px] font-serif italic text-[28px] font-medium leading-[1.45] tracking-[-0.015em] text-balance">
+                    <span className="text-accent/45 mr-1 inline-block font-serif text-[1.1em] leading-none">
+                      &ldquo;
+                    </span>
+                    The future of AI research will require training models to better understand the
+                    science of social relationships.
+                    <span className="text-accent/45 ml-1 inline-block font-serif text-[1.1em] leading-none">
+                      &rdquo;
+                    </span>
+                  </blockquote>
+                  <figcaption className="text-muted mx-auto mt-[22px] max-w-[720px] font-sans text-[12.5px] leading-[1.7] text-pretty">
+                    C.A. Bail, <em className="italic">Can Generative AI improve social science?</em>
+                    , <span className="font-serif">Proc. Natl. Acad. Sci. U.S.A.</span>{" "}
+                    <strong className="text-foreground font-semibold">121</strong> (21) e2314021121
+                    (2024).
+                  </figcaption>
+                </figure>
+              )}
+
+              {/* Remaining reports grid */}
+              {reportItems.length >= 2 && (
+                <div className="grid grid-cols-1 gap-9 pt-11 md:grid-cols-3">
+                  {reportItems.slice(1).map((r, i) => (
+                    <ReportListItem
+                      key={r.slug}
+                      report={r}
+                      courseSlug={slug}
+                      variant={i % 2 === 0 ? "text-only" : "default"}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>
 
-      <Footer />
+      <div className="mt-20">
+        <Footer />
+      </div>
     </div>
   );
 }

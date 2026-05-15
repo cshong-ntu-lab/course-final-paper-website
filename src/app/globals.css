@@ -175,6 +175,9 @@
 
   --animate-banner-slide: banner-slide 200ms ease-out;
   --animate-saving: saving 2s ease-in-out infinite;
+  --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
+  --animate-draw-line: draw-line 900ms ease-out 200ms both;
+  --animate-fade-up: fade-up 600ms ease-out both;
 }
 
 @keyframes banner-slide {
@@ -193,6 +196,40 @@
   }
   50% {
     opacity: 0.35;
+  }
+}
+
+@keyframes pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.75);
+  }
+}
+
+@keyframes draw-line {
+  from {
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  to {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
