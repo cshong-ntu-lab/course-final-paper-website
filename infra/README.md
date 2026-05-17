@@ -1,8 +1,8 @@
 # GCP Infrastructure
 
 All resources below are managed by Terraform. Changes go through a PR
-(`terraform plan` posts as a comment on every push). `terraform apply` runs on PRs
-targeting `main`, or manually via workflow dispatch.
+(`terraform plan` posts as a comment on every push). `terraform apply` runs on push to
+`main` (after merge), or manually via workflow dispatch.
 
 **GCP project:** `avid-factor-496115-d6` · **Region:** `asia-east1`
 
@@ -39,14 +39,8 @@ Allows GitHub Actions to authenticate as `course-paper-sa` without a key file.
 OIDC provider: `https://token.actions.githubusercontent.com`
 Attribute condition: scoped to `cshong-ntu-lab/course-final-paper-website`
 
-GitHub Actions secrets required:
-
-| Secret         | Value                                                                                                 |
-| -------------- | ----------------------------------------------------------------------------------------------------- |
-| `WIF_PROVIDER` | `projects/1092980609324/locations/global/workloadIdentityPools/github-pool/providers/github-provider` |
-| `WIF_SA`       | `course-paper-sa@avid-factor-496115-d6.iam.gserviceaccount.com`                                       |
-
-All other configuration (project IDs, emails, service names) lives in `infra/config/terraform.tfvars`.
+All configuration (project IDs, emails, service names, WIF identifiers) is hardcoded in the
+workflow files and `infra/config/terraform.tfvars`. No GitHub Actions secrets are required.
 
 ---
 
@@ -100,20 +94,25 @@ Firebase config values are stored as secrets and injected into Cloud Build via
 
 Secrets managed:
 
-| Secret name                         | Used in    |
-| ----------------------------------- | ---------- |
-| `firebase-api-key`                  | prod build |
-| `firebase-auth-domain`              | prod build |
-| `firebase-project-id`               | prod build |
-| `firebase-storage-bucket`           | prod build |
-| `firebase-messaging-sender-id`      | prod build |
-| `firebase-app-id`                   | prod build |
-| `firebase-test-api-key`             | test build |
-| `firebase-test-auth-domain`         | test build |
-| `firebase-test-project-id`          | test build |
-| `firebase-test-storage-bucket`      | test build |
-| `firebase-test-messaging-sender-id` | test build |
-| `firebase-test-app-id`              | test build |
+| Secret name                         | Used in           |
+| ----------------------------------- | ----------------- |
+| `firebase-api-key`                  | prod build        |
+| `firebase-auth-domain`              | prod build        |
+| `firebase-project-id`               | prod build        |
+| `firebase-storage-bucket`           | prod build        |
+| `firebase-messaging-sender-id`      | prod build        |
+| `firebase-app-id`                   | prod build        |
+| `firebase-test-api-key`             | test build        |
+| `firebase-test-auth-domain`         | test build        |
+| `firebase-test-project-id`          | test build        |
+| `firebase-test-storage-bucket`      | test build        |
+| `firebase-test-messaging-sender-id` | test build        |
+| `firebase-test-app-id`              | test build        |
+| `google-drive-client-id`            | Cloud Run runtime |
+| `google-drive-client-secret`        | Cloud Run runtime |
+| `google-drive-refresh-token`        | Cloud Run runtime |
+| `google-drive-root-folder-id`       | Cloud Run runtime |
+| `google-drive-root-folder-id-test`  | Cloud Run runtime |
 
 To add or rotate a secret value:
 
@@ -121,6 +120,29 @@ To add or rotate a secret value:
 echo -n "VALUE" | gcloud secrets versions add SECRET_NAME \
   --data-file=- --project=avid-factor-496115-d6
 ```
+
+---
+
+## Cloud Scheduler
+
+| Resource                 | Console                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| `firestore-daily-backup` | [Cloud Scheduler](https://console.cloud.google.com/cloudscheduler?project=avid-factor-496115-d6) |
+
+Runs daily at 03:00 Asia/Taipei (19:00 UTC). Calls the Firestore export API to back up the
+prod database to `avid-factor-496115-d6-firestore-backups`. Authenticated as `course-paper-sa`.
+
+---
+
+## Cloud Storage
+
+| Resource                                         | Console                                                                                                                                 |
+| ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Bucket `avid-factor-496115-d6-firestore-backups` | [Cloud Storage](https://console.cloud.google.com/storage/browser/avid-factor-496115-d6-firestore-backups?project=avid-factor-496115-d6) |
+
+No lifecycle rule — all daily snapshots are kept permanently.
+
+> The TFstate bucket (`avid-factor-496115-d6-tfstate`) is NOT managed here — the backend block cannot reference variables.
 
 ---
 
