@@ -16,7 +16,7 @@ locals {
     "roles/run.admin",                         # deploy / manage Cloud Run services
     "roles/artifactregistry.writer",           # push Docker images
     "roles/cloudbuild.builds.builder",         # submit and run Cloud Build jobs
-    "roles/storage.objectAdmin",               # read/write Cloud Storage (build artifacts, logs)
+    "roles/storage.admin",                     # read/write Cloud Storage buckets + objects (build artifacts, bucket config)
     "roles/datastore.indexAdmin",              # deploy Firestore indexes
     "roles/secretmanager.secretAccessor",      # read Secret Manager secret values in Cloud Build
     "roles/iam.serviceAccountUser",            # impersonate itself when deploying Cloud Run
@@ -25,6 +25,7 @@ locals {
     "roles/iam.workloadIdentityPoolAdmin",     # read/write Workload Identity pools + providers
     "roles/secretmanager.admin",              # read/write Secret Manager secret metadata
     "roles/iam.serviceAccountAdmin",          # read/write IAM bindings on service accounts
+    "roles/cloudscheduler.admin",             # read/write Cloud Scheduler jobs (firestore backup)
   ]
 }
 
