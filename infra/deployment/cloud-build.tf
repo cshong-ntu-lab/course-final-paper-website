@@ -52,7 +52,7 @@ resource "google_cloudbuild_trigger" "test" {
     owner = split("/", var.github_repo)[0]
     name  = split("/", var.github_repo)[1]
     push {
-      branch = "^(feat|fix|docs)/.*"
+      branch = "^(feat|fix|docs|chore)/.*"
     }
   }
 

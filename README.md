@@ -1,165 +1,177 @@
-# Course Final Paper Website
+# 台大社會所課程期末報告平台
 
-A publishing platform for NTU graduate course final papers. Students write in Markdown, teachers review and publish — published reports become publicly accessible, SEO-indexed pages.
+供台灣大學社會學研究所課程使用的期末報告發布平台。學生以 Markdown 撰寫報告，教師審核後發布，已發布的報告會成為公開、可被搜尋引擎索引的網頁。
 
-|                | URL                                                                 |
-| -------------- | ------------------------------------------------------------------- |
-| **Production** | https://course-final-paper-website-1092980609324.asia-east1.run.app |
-| **Test**       | https://course-paper-test-cefyizhe7q-de.a.run.app                   |
-
----
-
-## Features
-
-### For Students
-
-- Write and edit final papers in Markdown with live preview
-- Auto-save every 30 seconds (manual save with Ctrl+S)
-- Upload images via drag-and-drop or clipboard paste; manage from a sidebar
-- Set report metadata: title, author name, summary, cover image
-- View all enrolled courses from a single workspace
-
-### For Teachers (Admin)
-
-- Create courses with auto-generated 6-character enrollment codes
-- Review student reports: Latest draft, Diff vs last published version, full publish History
-- Publish or unpublish reports with a confirmation dialog
-- Status tags per report: `未發布`, `已發布`, `已發布 + 有更新待審核`
-- Regenerate enrollment codes; open/close enrollment per course
-
-### Public Page
-
-- Tab navigation between courses; each tab lists published reports with cover image, title, author, summary
-- Individual report pages with full Markdown rendering (GFM, code highlighting, KaTeX math, footnotes, embeds)
-- Supports YouTube, Instagram, Facebook, and Threads URL auto-embeds
-- SEO metadata, Open Graph image, sitemap, `robots.txt`
-
-### Preview Mode
-
-- Login-gated `/preview` route shows all reports including unpublished drafts
-- For course members to review before publication
-
-### Google Drive Sync
-
-- Every report save and publish automatically mirrors `report.md` + `metadata.json` to a Google Drive folder
-- Folder structure: `<Root>/<course name>/<email> - <display name>/`
-- Sync is fire-and-forget; Drive errors never surface to the user
+| 環境         | 網址                                                                |
+| ------------ | ------------------------------------------------------------------- |
+| **正式環境** | https://course-final-paper-website-1092980609324.asia-east1.run.app |
+| **測試環境** | https://course-paper-test-cefyizhe7q-de.a.run.app                   |
 
 ---
 
-## Tech Stack
+## 系統架構
 
-| Layer           | Choice                                                             |
-| --------------- | ------------------------------------------------------------------ |
-| Framework       | Next.js 16 (App Router, Server Actions, RSC)                       |
-| Language        | TypeScript 5 strict                                                |
-| Styling         | Tailwind CSS 4 (CSS-first `@theme`), Forest accent palette         |
-| Auth            | Firebase Auth (Google OAuth) + HttpOnly session cookie (Admin SDK) |
-| Database        | Firestore (Native mode, `asia-east1`)                              |
-| File storage    | Firebase Storage                                                   |
-| Testing         | Vitest (unit)                                                      |
-| Package manager | pnpm 11                                                            |
+```mermaid
+graph TD
+    DEV["開發者\n推送程式碼到 GitHub"]
+    CB_PROD["Cloud Build\n正式環境 Pipeline"]
+    CB_TEST["Cloud Build\n測試環境 Pipeline"]
+    AR["Artifact Registry\nDocker 映像倉庫"]
+    CR_PROD["Cloud Run\n正式服務"]
+    CR_TEST["Cloud Run\n測試服務"]
 
----
+    FB_AUTH["Firebase Auth\nGoogle 登入驗證"]
+    FS["Firestore\n資料庫"]
+    FB_STORAGE["Firebase Storage\n圖片檔案儲存"]
+    SM["Secret Manager\n機密資訊管理"]
+    DRIVE["Google Drive\n報告備份同步"]
+    SCHED["Cloud Scheduler\n每日資料庫備份"]
+    GCS["Cloud Storage\nFirestore 備份"]
 
-## Infrastructure
+    DEV -- "push to main" --> CB_PROD
+    DEV -- "push to feat/fix branch" --> CB_TEST
+    CB_PROD -- "build & push image" --> AR
+    CB_TEST -- "build & push image" --> AR
+    AR -- "deploy" --> CR_PROD
+    AR -- "deploy" --> CR_TEST
 
-```
-GitHub (source)
-    │  push to main
-    ▼
-Cloud Build (cloudbuild.yaml)
-    │  docker build + push to Artifact Registry
-    ▼
-Cloud Run — course-final-paper-website (asia-east1)
-    │  single service, always-on, min 1 instance
-    │
-    ├── Firebase Auth       (Google sign-in)
-    ├── Firestore           (all data)
-    ├── Firebase Storage    (uploaded images)
-    ├── Secret Manager      (Drive credentials)
-    └── Google Drive API    (report sync via OAuth2)
+    CR_PROD --> FB_AUTH
+    CR_PROD --> FS
+    CR_PROD --> FB_STORAGE
+    CR_PROD --> SM
+    SM --> CR_PROD
+    CR_PROD --> DRIVE
+
+    SCHED -- "每日 03:00 台北時間" --> FS
+    FS -- "匯出備份" --> GCS
 ```
 
-**GCP project**: `avid-factor-496115-d6`  
-**Region**: `asia-east1` (locked)  
-**Service account**: `course-paper-sa@avid-factor-496115-d6.iam.gserviceaccount.com`
+---
 
-### Deployment
+## 主要功能
 
-Every push to `main` triggers Cloud Build:
+### 學生
 
-1. `docker build` — Next.js standalone image; Firebase client config injected as `--build-arg`
-2. `docker push` — tagged `:<SHORT_SHA>` and `:latest` → Artifact Registry
-3. `gcloud run deploy` — deploys the new revision with 100% traffic
+- 以 Markdown 撰寫期末報告，支援即時預覽
+- 每 30 秒自動儲存（亦可按 Ctrl+S 手動儲存）
+- 拖放或貼上剪貼簿上傳圖片，並透過側邊欄管理已上傳的圖片
+- 設定報告基本資訊：標題、作者名稱、摘要、封面圖片
+- 從統一的工作區查看所有已選修的課程
 
-The Cloud Run service uses Application Default Credentials (ADC) from the attached service account — no Firebase Admin key JSON is needed.
+### 教師（管理員）
 
-Secrets are stored in Secret Manager and mounted as env vars on the Cloud Run service:
+- 建立課程，系統自動產生 6 字元選課代碼
+- 審核學生報告：最新草稿、與上次發布版本的差異比對、完整發布歷史
+- 以確認對話框發布或取消發布報告
+- 每份報告顯示狀態標籤：`未發布`、`已發布`、`已發布 + 有更新待審核`
+- 重新產生選課代碼；開啟或關閉課程選課
 
-- `GOOGLE_DRIVE_ROOT_FOLDER_ID`, `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `GOOGLE_DRIVE_REFRESH_TOKEN`
+### 公開頁面
 
-Build-time Firebase client config is passed via Cloud Build substitution variables set in the trigger.
+- 以分頁切換課程；各課程分頁列出已發布報告（含封面圖、標題、作者、摘要）
+- 個別報告頁面完整渲染 Markdown（支援 GFM、程式碼語法標亮、KaTeX 數學公式、腳注、內嵌媒體）
+- 支援 YouTube、Instagram、Facebook、Threads 網址自動內嵌
+- SEO metadata、Open Graph 圖片、sitemap、`robots.txt`
 
-### Local Development
+### 預覽模式
+
+- 登入後的 `/preview` 路由可查看所有報告（含未發布草稿）
+- 供課程成員在正式發布前審閱
+
+### Google Drive 同步
+
+- 每次儲存草稿或發布後，自動將 `report.md` 與 `metadata.json` 同步至 Google Drive 資料夾
+- 資料夾結構：`<根目錄>/<課程名稱>/<email> - <顯示名稱>/`
+- 同步為非同步執行（fire-and-forget）；Drive 發生錯誤時不會顯示給使用者
+
+---
+
+## 技術架構
+
+| 層次     | 技術選擇                                               |
+| -------- | ------------------------------------------------------ |
+| 前端框架 | Next.js 16（App Router、Server Actions、RSC）          |
+| 程式語言 | TypeScript 5 strict                                    |
+| 樣式     | Tailwind CSS 4（CSS-first `@theme`），Forest 綠色主題  |
+| 身份驗證 | Firebase Auth（Google OAuth）+ HttpOnly session cookie |
+| 資料庫   | Firestore（Native mode，`asia-east1`）                 |
+| 檔案儲存 | Firebase Storage                                       |
+| 測試     | Vitest（單元測試）                                     |
+| 套件管理 | pnpm 11                                                |
+
+詳細技術說明請見 [src/README.md](src/README.md)。  
+基礎設施詳細說明請見 [infra/README.md](infra/README.md)。
+
+---
+
+## 本地開發快速入門
+
+### 前置需求
+
+- Node.js 20+
+- pnpm 11（`npm install -g pnpm@11`）
+- Java 21+（Firestore 模擬器需要）
+- Firebase CLI（`npm install -g firebase-tools`）
+
+### 步驟
 
 ```bash
-# Install dependencies
+# 1. 安裝相依套件
 pnpm install
 
-# Copy and fill in env vars
+# 2. 複製環境變數範本並填入設定
 cp .env.example .env.local
+# 編輯 .env.local，填入 Firebase 設定（詳見 .env.example 的說明）
 
-# Start Firebase emulator (in one terminal) — requires Java 21+
+# 3. 啟動 Firebase 模擬器（終端機一）
 firebase emulators:start
 
-# Start Next.js dev server (in another terminal)
+# 4. 啟動 Next.js 開發伺服器（終端機二）
 FIREBASE_USE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1 pnpm dev
 ```
 
-To connect to production Firebase instead (e.g. to test Drive sync), set both flags to `0` in `.env.local`.
+開啟瀏覽器前往 http://localhost:3000 即可。
+
+> 若要連接正式 Firebase（例如測試 Drive 同步功能），請在 `.env.local` 中將兩個旗標設為 `0`。
 
 ---
 
-## Repository Layout
+## 目錄結構
 
 ```
 .
-├── src/                    # Application source (see src/README.md)
-├── scripts/                # One-off utility scripts (e.g. get-drive-token.mjs)
-├── Dockerfile              # Multi-stage Next.js standalone build
-├── cloudbuild.yaml         # CI/CD pipeline (Cloud Build)
-├── firebase.json           # Firebase CLI config (emulator ports, etc.)
-├── firestore.rules         # Firestore security rules
-├── firestore.indexes.json  # Composite index definitions
-├── storage.rules           # Firebase Storage security rules
-├── .env.example            # All env var names with comments
-├── CLAUDE.md               # AI assistant instructions for this project
-└── AGENTS.md               # Agent configuration
+├── src/                    # 應用程式原始碼（詳見 src/README.md）
+├── infra/                  # GCP 基礎設施 Terraform 設定（詳見 infra/README.md）
+├── Dockerfile              # 多階段 Next.js standalone 建置
+├── cloudbuild.yaml         # 正式環境 CI/CD Pipeline（Cloud Build）
+├── cloudbuild-test.yaml    # 測試環境 CI/CD Pipeline（Cloud Build）
+├── firebase.json           # Firebase CLI 設定（模擬器 port 等）
+├── firestore.rules         # Firestore 安全規則
+├── firestore.indexes.json  # Firestore 複合索引定義
+├── storage.rules           # Firebase Storage 安全規則
+└── .env.example            # 所有環境變數名稱與說明
 ```
 
 ---
 
-## Environment Variables
+## 環境變數
 
-See `.env.example` for the full list with inline documentation. Key groups:
+完整清單與說明請見 `.env.example`。主要分類：
 
-| Group                                   | Vars                                                                                                                |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| App mode                                | `APP_MODE`                                                                                                          |
-| Admin access                            | `ADMIN_EMAILS`                                                                                                      |
-| Firebase client (build-time)            | `NEXT_PUBLIC_FIREBASE_*`                                                                                            |
-| Firebase Admin (runtime, ADC preferred) | `FIREBASE_ADMIN_PRIVATE_KEY_JSON` (optional fallback)                                                               |
-| Google Drive sync                       | `GOOGLE_DRIVE_ROOT_FOLDER_ID`, `GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`, `GOOGLE_DRIVE_REFRESH_TOKEN` |
+| 分類                        | 變數                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 管理員                      | `ADMIN_EMAILS`（逗號分隔的 email 清單）                                                                             |
+| Firebase 前端（建置時注入） | `NEXT_PUBLIC_FIREBASE_*`                                                                                            |
+| Google Drive 同步（執行期） | `GOOGLE_DRIVE_ROOT_FOLDER_ID`、`GOOGLE_DRIVE_CLIENT_ID`、`GOOGLE_DRIVE_CLIENT_SECRET`、`GOOGLE_DRIVE_REFRESH_TOKEN` |
 
 ---
 
-## Testing
+## 測試
 
 ```bash
-pnpm test          # Vitest unit tests
-pnpm typecheck     # tsc --noEmit
-pnpm lint          # ESLint
+pnpm test         # Vitest 單元測試
+pnpm typecheck    # TypeScript 型別檢查（tsc --noEmit）
+pnpm lint         # ESLint 程式碼檢查
 ```
 
-Unit tests live alongside the code they test (`*.test.ts`). Coverage targets: pure utilities, validators, URL matchers, auth role helpers, Firestore converters.
+單元測試與被測試的模組放在同一目錄（`*.test.ts`）。主要測試對象：純函式工具、驗證器、URL 匹配、授權角色判斷、Firestore 轉換器。
