@@ -1,4 +1,4 @@
-# Secret Manager — Firebase configuration.
+# Secret Manager — Firebase and Google Drive configuration.
 #
 # Terraform creates the secret SHELLS only (replication policy, IAM).
 # Values are added manually:
@@ -10,16 +10,13 @@
 # availableSecrets in cloudbuild.yaml / cloudbuild-test.yaml.
 
 locals {
-  prod_secrets = [
+  firebase_secrets = [
     "firebase-api-key",
     "firebase-auth-domain",
     "firebase-project-id",
     "firebase-storage-bucket",
     "firebase-messaging-sender-id",
     "firebase-app-id",
-  ]
-
-  test_secrets = [
     "firebase-test-api-key",
     "firebase-test-auth-domain",
     "firebase-test-project-id",
@@ -28,11 +25,17 @@ locals {
     "firebase-test-app-id",
   ]
 
-  all_secrets = concat(local.prod_secrets, local.test_secrets)
+  googledrive_secrets = [
+    "google-drive-client-id",
+    "google-drive-client-secret",
+    "google-drive-refresh-token",
+    "google-drive-root-folder-id",
+    "google-drive-root-folder-id-test",
+  ]
 }
 
 resource "google_secret_manager_secret" "firebase" {
-  for_each  = toset(local.all_secrets)
+  for_each  = toset(local.firebase_secrets)
   secret_id = each.value
   project   = var.prod_project_id
 
@@ -44,9 +47,30 @@ resource "google_secret_manager_secret" "firebase" {
 # Grant course-paper-sa access to read all firebase secrets.
 # Cloud Build uses this SA when running builds, so it can access availableSecrets.
 resource "google_secret_manager_secret_iam_member" "firebase_accessor" {
-  for_each  = toset(local.all_secrets)
+  for_each  = toset(local.firebase_secrets)
   project   = var.prod_project_id
   secret_id = google_secret_manager_secret.firebase[each.key].secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.course_paper_sa.email}"
+}
+
+# ── Google Drive secrets ──────────────────────────────────────────────────────
+# Shell only — values added manually, never overwritten by Terraform.
+
+resource "google_secret_manager_secret" "gdrive" {
+  for_each  = toset(local.googledrive_secrets)
+  secret_id = each.value
+  project   = var.prod_project_id
+
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_iam_member" "gdrive_accessor" {
+  for_each  = toset(local.googledrive_secrets)
+  project   = var.prod_project_id
+  secret_id = google_secret_manager_secret.gdrive[each.key].secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.course_paper_sa.email}"
 }
