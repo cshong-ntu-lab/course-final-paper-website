@@ -1,0 +1,76 @@
+name: terraform-diff
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  tf-plan:
+    name: Terraform plan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write      # required for Workload Identity Federation
+      pull-requests: write # to post plan as PR comment
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SA }}
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.9"
+
+      - name: Terraform init
+        run: terraform -chdir=infra/deployment init
+
+      - name: Terraform validate
+        run: terraform -chdir=infra/deployment validate
+
+      - name: Terraform plan
+        id: plan
+        run: |
+          set +e
+          terraform -chdir=infra/deployment plan \
+            -var-file=../config/terraform.tfvars \
+            -no-color 2>&1 | tee plan.txt
+          echo "exit_code=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          set -e
+
+      - name: Find associated PR
+        id: find-pr
+        run: |
+          PR=$(gh pr list --head "${{ github.ref_name }}" --json number --jq '.[0].number // empty')
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Format plan comment
+        if: steps.find-pr.outputs.number != ''
+        run: |
+          echo '<!-- terraform-plan -->' > comment.md
+          echo '```' >> comment.md
+          cat plan.txt >> comment.md
+          echo '```' >> comment.md
+
+      - name: Find existing plan comment
+        id: find-comment
+        if: steps.find-pr.outputs.number != ''
+        uses: peter-evans/find-comment@v3
+        with:
+          issue-number: ${{ steps.find-pr.outputs.number }}
+          comment-author: github-actions[bot]
+          body-includes: "<!-- terraform-plan -->"
+
+      - name: Post plan comment
+        if: steps.find-pr.outputs.number != ''
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          comment-id: ${{ steps.find-comment.outputs.comment-id }}
+          issue-number: ${{ steps.find-pr.outputs.number }}
+          body-path: comment.md
+          edit-mode: replace

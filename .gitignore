@@ -63,3 +63,10 @@ AGENTS.md
 
 # Design reference HTML (kept locally, not source)
 claude-design-html/
+
+# Terraform — provider cache and ephemeral plan files
+infra/deployment/.terraform/
+# infra/deployment/.terraform.lock.hcl is intentionally tracked (provider version pin)
+infra/deployment/terraform.tfstate
+infra/deployment/terraform.tfstate.backup
+infra/deployment/*.tfplan
