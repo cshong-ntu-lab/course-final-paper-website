@@ -7,7 +7,7 @@ import { reportConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
 import { syncReportToDrive } from "@/lib/server/drive";
 import { deleteStorageObject } from "@/lib/server/storage";
-import type { Report } from "@/lib/types";
+import type { CoAuthor, Report } from "@/lib/types";
 
 const TITLE_MAX = 120;
 const AUTHOR_MAX = 60;
@@ -25,6 +25,7 @@ export interface SaveReportPatch {
   contentMd?: string;
   title?: string;
   author?: string;
+  authorUid?: string | null;
   summary?: string;
   coverImageUrl?: string | null;
   // v4 extended fields
@@ -34,6 +35,7 @@ export interface SaveReportPatch {
   authorBio?: string;
   authorAffiliation?: string;
   coverCaption?: string;
+  coAuthors?: CoAuthor[];
 }
 
 export type SaveReportResult =
@@ -57,10 +59,16 @@ function validate(patch: SaveReportPatch): SaveReportPatch | { error: SaveReport
   }
   if (patch.author !== undefined) {
     const a = patch.author.trim();
-    if (a.length === 0 || a.length > AUTHOR_MAX) {
+    if (a.length > AUTHOR_MAX) {
       return { error: { ok: false, error: "invalid_input" } };
     }
     out.author = a;
+  }
+  if (patch.authorUid !== undefined) {
+    if (patch.authorUid !== null && typeof patch.authorUid !== "string") {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.authorUid = patch.authorUid;
   }
   if (patch.summary !== undefined) {
     if (typeof patch.summary !== "string" || patch.summary.length > SUMMARY_MAX) {
@@ -116,6 +124,22 @@ function validate(patch: SaveReportPatch): SaveReportPatch | { error: SaveReport
       return { error: { ok: false, error: "invalid_input" } };
     }
     out.coverCaption = patch.coverCaption;
+  }
+  if (patch.coAuthors !== undefined) {
+    if (
+      !Array.isArray(patch.coAuthors) ||
+      patch.coAuthors.length > 10 ||
+      patch.coAuthors.some(
+        (a) =>
+          typeof a.uid !== "string" ||
+          typeof a.name !== "string" ||
+          a.uid.length === 0 ||
+          a.name.length > AUTHOR_MAX,
+      )
+    ) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.coAuthors = patch.coAuthors;
   }
   return out;
 }

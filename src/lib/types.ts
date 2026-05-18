@@ -46,6 +46,18 @@ export interface Enrollment {
   enrolledAt: Timestamp;
 }
 
+export interface CoAuthor {
+  uid: string;
+  name: string;
+}
+
+export interface CoAuthorSnapshot {
+  uid: string;
+  name: string;
+  title?: string;
+  bio?: string;
+}
+
 export interface Report {
   courseId: string;
   uid: string;
@@ -66,6 +78,8 @@ export interface Report {
   authorBio?: string;
   authorAffiliation?: string;
   coverCaption?: string;
+  coAuthors?: CoAuthor[];
+  authorUid?: string; // UID of the selected primary author (for profile lookup at publish)
 }
 
 export interface PublishSnapshot {
@@ -83,6 +97,7 @@ export interface PublishSnapshot {
   authorBio?: string;
   authorAffiliation?: string;
   coverCaption?: string;
+  coAuthors?: CoAuthorSnapshot[];
 }
 
 // IDs are encoded by their component pieces to enforce 1:1 uniqueness.

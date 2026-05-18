@@ -100,7 +100,12 @@ async function uploadOne(file: File, opts: ImageUploadOptions): Promise<UploadRe
   // courseId from the report doc — but the WRITE path must include the
   // user's uid for storage.rules to allow. We get uid from the Firebase
   // client SDK's currentUser (the same one that minted the session).
+  //
+  // authStateReady() ensures the SDK has finished restoring auth state
+  // from localStorage before we read currentUser. Without this, the
+  // first upload after a fresh page load can race and see currentUser=null.
   const { auth, storage } = getFirebaseClient();
+  await auth.authStateReady();
   const uid = auth.currentUser?.uid;
   if (!uid) throw new Error("not_authenticated");
 
@@ -171,6 +176,89 @@ async function uploadOne(file: File, opts: ImageUploadOptions): Promise<UploadRe
   setProg({ phase: "done", result });
   return result;
 }
+
+// ── Avatar upload ─────────────────────────────────────────────────────────────
+// Uploads to avatars/{uid}/{uploadId}_{filename}. No server finalize needed —
+// the caller updates the user profile directly after getting the download URL.
+
+const AVATAR_ALLOWED_CTYPES = ["image/png", "image/jpeg", "image/webp"];
+
+export async function uploadAvatarFile(
+  file: File,
+  onProgress?: (state: UploadState) => void,
+): Promise<string> {
+  const setProg = onProgress ?? (() => undefined);
+
+  if (!AVATAR_ALLOWED_CTYPES.includes(file.type)) {
+    throw new Error(`disallowed_content_type:${file.type}`);
+  }
+
+  setProg({ phase: "compressing", filename: file.name });
+  const prepared = await compressIfNeeded(file);
+  const safeName = sanitizeFilename(prepared.name) || "avatar";
+
+  const { auth, storage } = getFirebaseClient();
+  await auth.authStateReady();
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("not_authenticated");
+
+  const uploadId =
+    typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2);
+
+  const storagePath = `avatars/${uid}/${uploadId}_${safeName}`;
+
+  setProg({ phase: "uploading", filename: prepared.name, percent: 0 });
+  const fileRef = storageRef(storage, storagePath);
+  const task = uploadBytesResumable(fileRef, prepared, { contentType: prepared.type });
+  await new Promise<void>((resolve, reject) => {
+    task.on(
+      "state_changed",
+      (snap) => {
+        const percent = snap.totalBytes
+          ? Math.round((snap.bytesTransferred / snap.totalBytes) * 100)
+          : 0;
+        setProg({ phase: "uploading", filename: prepared.name, percent });
+      },
+      (err) => reject(err),
+      () => resolve(),
+    );
+  });
+
+  const downloadUrl = await getDownloadURL(fileRef);
+  setProg({
+    phase: "done",
+    result: {
+      uploadId,
+      downloadUrl,
+      filename: prepared.name,
+      sizeBytes: prepared.size,
+      contentType: prepared.type,
+    },
+  });
+  return downloadUrl;
+}
+
+export function useAvatarUpload() {
+  const [state, setState] = React.useState<UploadState>({ phase: "idle" });
+
+  const upload = React.useCallback(async (file: File): Promise<string | null> => {
+    try {
+      return await uploadAvatarFile(file, (s) => setState(s));
+    } catch (e) {
+      const error = e instanceof Error ? e.message : "unknown";
+      setState({ phase: "error", error });
+      return null;
+    }
+  }, []);
+
+  const reset = React.useCallback(() => setState({ phase: "idle" }), []);
+
+  return { state, upload, reset };
+}
+
+// ── Report image upload ───────────────────────────────────────────────────────
 
 export function useImageUpload(opts: ImageUploadOptions) {
   const [state, setState] = React.useState<UploadState>({ phase: "idle" });

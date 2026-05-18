@@ -74,6 +74,7 @@ export default async function ReportPage({ params }: Props) {
           authorBio: snap.authorBio,
           authorAffiliation: snap.authorAffiliation,
           coverCaption: snap.coverCaption,
+          coAuthors: snap.coAuthors,
         }}
         readingMins={readingMins}
         toc={toc}

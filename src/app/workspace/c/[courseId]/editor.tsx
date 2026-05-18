@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { getAllUsersForSearchAction, type UserSearchResult } from "@/actions/user";
 import { saveReportDraftAction, type SaveReportPatch } from "@/actions/report";
 import { FilesSidebar, type UploadedFile } from "@/components/editor/FilesSidebar";
 import { SaveStatusIndicator, type SaveState } from "@/components/editor/SaveStatusIndicator";
@@ -19,6 +20,7 @@ import { Label } from "@/components/ui/label";
 import { imageMarkdown, useImageUpload } from "@/lib/client/useImageUpload";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import { cn } from "@/lib/utils";
+import type { CoAuthor } from "@/lib/types";
 
 // MDEditor is client-only + heavy → dynamic import keeps it out of the server bundle.
 const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
@@ -48,6 +50,8 @@ export interface EditorReport {
   tags: string; // stored as comma-separated string in the editor
   pullQuote: string;
   coverCaption: string;
+  coAuthors: CoAuthor[];
+  authorUid: string | null;
 }
 
 type Mode = "write" | "both" | "preview";
@@ -118,7 +122,18 @@ export function ReportEditor({
   const [tags, setTags] = React.useState(initial.tags);
   const [pullQuote, setPullQuote] = React.useState(initial.pullQuote);
   const [coverCaption, setCoverCaption] = React.useState(initial.coverCaption);
+  const [coverImageUrl, setCoverImageUrl] = React.useState<string | null>(initial.coverImageUrl);
+  const [coAuthors, setCoAuthors] = React.useState<CoAuthor[]>(initial.coAuthors);
+  const [authorUid, setAuthorUid] = React.useState<string | null>(initial.authorUid);
   const [optimisticUploadCount, setOptimisticUploadCount] = React.useState(0);
+
+  // Author / co-author search state (shared user list)
+  const [showAuthorSearch, setShowAuthorSearch] = React.useState(false);
+  const [authorQuery, setAuthorQuery] = React.useState("");
+  const [showCoAuthorSearch, setShowCoAuthorSearch] = React.useState(false);
+  const [coAuthorQuery, setCoAuthorQuery] = React.useState("");
+  const [allUsers, setAllUsers] = React.useState<UserSearchResult[] | null>(null);
+  const [loadingUsers, setLoadingUsers] = React.useState(false);
 
   // After a drag/paste upload, ask the server-rendered list to refresh.
   // initialUploads is re-fetched by the parent server component on refresh.
@@ -367,6 +382,8 @@ export function ReportEditor({
 
   // Uploader specifically for paste/drag-drop. The sidebar has its own.
   const inlineUpload = useImageUpload({ reportId: initial.id });
+  // Dedicated uploader for the cover image slot.
+  const coverUpload = useImageUpload({ reportId: initial.id });
 
   const uploadFilesAndInsert = React.useCallback(
     async (fileList: FileList | File[], dropOffset?: number) => {
@@ -456,10 +473,6 @@ export function ReportEditor({
     setTitle(e.target.value);
     queueAutosave({ title: e.target.value });
   };
-  const handleAuthorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAuthor(e.target.value);
-    queueAutosave({ author: e.target.value });
-  };
   const handleSummaryChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setSummary(e.target.value);
     queueAutosave({ summary: e.target.value });
@@ -484,6 +497,94 @@ export function ReportEditor({
     setCoverCaption(e.target.value);
     queueAutosave({ coverCaption: e.target.value });
   };
+
+  const handleCoverImageUpload = async (file: File) => {
+    const res = await coverUpload.upload(file);
+    if (res) {
+      setCoverImageUrl(res.downloadUrl);
+      queueAutosave({ coverImageUrl: res.downloadUrl });
+      refreshUploads();
+    }
+  };
+
+  const handleCoverImageRemove = () => {
+    setCoverImageUrl(null);
+    queueAutosave({ coverImageUrl: null });
+  };
+
+  const openAuthorSearch = async () => {
+    setShowAuthorSearch(true);
+    if (allUsers === null && !loadingUsers) {
+      setLoadingUsers(true);
+      const users = await getAllUsersForSearchAction();
+      setAllUsers(users);
+      setLoadingUsers(false);
+    }
+  };
+
+  const selectAuthor = (user: UserSearchResult) => {
+    setAuthor(user.name);
+    setAuthorUid(user.uid);
+    queueAutosave({ author: user.name, authorUid: user.uid });
+    setAuthorQuery("");
+    setShowAuthorSearch(false);
+  };
+
+  const clearAuthor = () => {
+    setAuthor("");
+    setAuthorUid(null);
+    queueAutosave({ author: "", authorUid: null });
+  };
+
+  const openCoAuthorSearch = async () => {
+    setShowCoAuthorSearch(true);
+    if (allUsers === null && !loadingUsers) {
+      setLoadingUsers(true);
+      const users = await getAllUsersForSearchAction();
+      setAllUsers(users);
+      setLoadingUsers(false);
+    }
+  };
+
+  const addCoAuthor = (user: UserSearchResult) => {
+    if (coAuthors.some((a) => a.uid === user.uid)) return;
+    const next = [...coAuthors, { uid: user.uid, name: user.name }];
+    setCoAuthors(next);
+    queueAutosave({ coAuthors: next });
+    setCoAuthorQuery("");
+    setShowCoAuthorSearch(false);
+  };
+
+  const removeCoAuthor = (uid: string) => {
+    const next = coAuthors.filter((a) => a.uid !== uid);
+    setCoAuthors(next);
+    queueAutosave({ coAuthors: next });
+  };
+
+  const filteredAuthorUsers = React.useMemo(() => {
+    if (!allUsers) return [];
+    const q = authorQuery.toLowerCase();
+    return allUsers
+      .filter(
+        (u) =>
+          !coAuthors.some((a) => a.uid === u.uid) &&
+          (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)),
+      )
+      .slice(0, 8);
+  }, [allUsers, authorQuery, coAuthors]);
+
+  const filteredCoAuthorUsers = React.useMemo(() => {
+    if (!allUsers) return [];
+    const q = coAuthorQuery.toLowerCase();
+    return allUsers
+      .filter(
+        (u) =>
+          u.uid !== authorUid &&
+          !coAuthors.some((a) => a.uid === u.uid) &&
+          (u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)),
+      )
+      .slice(0, 8);
+  }, [allUsers, coAuthorQuery, coAuthors, authorUid]);
 
   // --- render -----------------------------------------------------------
   const effectiveSaveState: SaveState = !online ? "offline" : save.state;
@@ -609,8 +710,154 @@ export function ReportEditor({
               </div>
 
               <div>
-                <Label htmlFor="meta-author">作者</Label>
-                <Input id="meta-author" value={author} onChange={handleAuthorChange} />
+                <Label>作者</Label>
+                {authorUid ? (
+                  <div className="border-border bg-surface mt-1 flex items-center justify-between rounded border px-2.5 py-1.5 text-[13px]">
+                    <span className="font-serif font-medium">{author || "（未署名）"}</span>
+                    <button
+                      type="button"
+                      onClick={clearAuthor}
+                      className="text-subtle hover:text-foreground ml-2 shrink-0 font-mono text-[11px]"
+                      aria-label="清除作者"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => void openAuthorSearch()}
+                    className="border-border bg-surface mt-1 flex w-full items-center justify-center rounded border border-dashed px-2.5 py-2 font-mono text-[11px] text-subtle transition-colors hover:border-accent hover:text-accent"
+                  >
+                    ＋ 選擇作者
+                  </button>
+                )}
+                {showAuthorSearch && (
+                  <div className="border-border bg-surface mt-1.5 rounded border">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="搜尋姓名或 Email…"
+                      value={authorQuery}
+                      onChange={(e) => setAuthorQuery(e.target.value)}
+                      className="w-full rounded-t bg-transparent px-2.5 py-2 font-sans text-[13px] outline-none"
+                    />
+                    <div className="border-border border-t">
+                      {loadingUsers ? (
+                        <p className="text-subtle px-2.5 py-2 font-mono text-[11px]">載入中…</p>
+                      ) : filteredAuthorUsers.length === 0 ? (
+                        <p className="text-subtle px-2.5 py-2 font-mono text-[11px]">
+                          {authorQuery ? "無符合結果" : "輸入姓名以搜尋"}
+                        </p>
+                      ) : (
+                        filteredAuthorUsers.map((u) => (
+                          <button
+                            key={u.uid}
+                            type="button"
+                            onClick={() => selectAuthor(u)}
+                            className="hover:bg-accent/10 flex w-full flex-col px-2.5 py-1.5 text-left"
+                          >
+                            <span className="font-serif text-[13px] font-medium">{u.name}</span>
+                            <span className="text-subtle text-[11px]">{u.email}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="border-border border-t px-2.5 py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowAuthorSearch(false);
+                          setAuthorQuery("");
+                        }}
+                        className="text-subtle font-mono text-[10px] hover:underline"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Co-authors */}
+              <div>
+                <div className="flex items-center justify-between">
+                  <Label>共同作者</Label>
+                  <button
+                    type="button"
+                    onClick={() => void openCoAuthorSearch()}
+                    className="text-accent border-0 bg-transparent font-mono text-[11px] hover:underline"
+                  >
+                    ＋ 新增
+                  </button>
+                </div>
+
+                {coAuthors.length > 0 && (
+                  <div className="mt-1.5 flex flex-col gap-1">
+                    {coAuthors.map((a) => (
+                      <div
+                        key={a.uid}
+                        className="border-border bg-surface flex items-center justify-between rounded border px-2.5 py-1.5 text-[13px]"
+                      >
+                        <span className="font-serif font-medium">{a.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => removeCoAuthor(a.uid)}
+                          className="text-subtle hover:text-foreground ml-2 shrink-0 font-mono text-[11px]"
+                          aria-label={`移除 ${a.name}`}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {showCoAuthorSearch && (
+                  <div className="border-border bg-surface mt-1.5 rounded border">
+                    <input
+                      autoFocus
+                      type="text"
+                      placeholder="搜尋姓名…"
+                      value={coAuthorQuery}
+                      onChange={(e) => setCoAuthorQuery(e.target.value)}
+                      className="w-full rounded-t bg-transparent px-2.5 py-2 font-sans text-[13px] outline-none"
+                    />
+                    <div className="border-border border-t">
+                      {loadingUsers ? (
+                        <p className="text-subtle px-2.5 py-2 font-mono text-[11px]">載入中…</p>
+                      ) : filteredCoAuthorUsers.length === 0 ? (
+                        <p className="text-subtle px-2.5 py-2 font-mono text-[11px]">
+                          {coAuthorQuery ? "無符合結果" : "輸入姓名以搜尋"}
+                        </p>
+                      ) : (
+                        filteredCoAuthorUsers.map((u) => (
+                          <button
+                            key={u.uid}
+                            type="button"
+                            onClick={() => addCoAuthor(u)}
+                            className="hover:bg-accent/10 flex w-full flex-col px-2.5 py-1.5 text-left"
+                          >
+                            <span className="font-serif text-[13px] font-medium">{u.name}</span>
+                            <span className="text-subtle text-[11px]">{u.email}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                    <div className="border-border border-t px-2.5 py-1.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCoAuthorSearch(false);
+                          setCoAuthorQuery("");
+                        }}
+                        className="text-subtle font-mono text-[10px] hover:underline"
+                      >
+                        取消
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -636,12 +883,57 @@ export function ReportEditor({
 
               <div>
                 <Label>封面圖</Label>
-                <div className="text-subtle border-border bg-surface flex aspect-[3/2] w-full items-center justify-center rounded border border-dashed text-xs">
-                  封面圖（任務 F：上傳支援）
-                </div>
+                {coverImageUrl ? (
+                  <div className="relative overflow-hidden rounded ring-1 ring-border-strong">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={coverImageUrl} alt="" className="aspect-[3/2] w-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={handleCoverImageRemove}
+                      className="absolute right-1.5 top-1.5 rounded bg-black/60 px-2 py-0.5 font-mono text-[10px] text-white hover:bg-black/80"
+                    >
+                      移除
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer">
+                    <div
+                      className={cn(
+                        "border-border bg-surface flex aspect-[3/2] w-full flex-col items-center justify-center gap-1.5 rounded border border-dashed text-xs transition-colors hover:border-accent hover:bg-accent/5",
+                        coverUpload.state.phase === "uploading" && "opacity-60",
+                      )}
+                    >
+                      {coverUpload.state.phase === "uploading" ? (
+                        <span className="text-subtle font-mono">{coverUpload.state.percent}%</span>
+                      ) : coverUpload.state.phase === "compressing" ||
+                        coverUpload.state.phase === "finalizing" ? (
+                        <span className="text-subtle font-mono">處理中…</span>
+                      ) : coverUpload.state.phase === "error" ? (
+                        <span className="text-warning-fg">上傳失敗，請重試</span>
+                      ) : (
+                        <>
+                          <span className="text-subtle">點擊上傳封面圖</span>
+                          <span className="text-subtle/60 font-mono text-[10px]">
+                            JPG · PNG · WebP
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) void handleCoverImageUpload(f);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
               </div>
 
-              {initial.coverImageUrl && (
+              {coverImageUrl && (
                 <div>
                   <Label htmlFor="meta-cover-caption">封面圖說</Label>
                   <Input

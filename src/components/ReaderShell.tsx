@@ -13,6 +13,12 @@ interface AdjacentReport {
   author: string;
 }
 
+interface SnapCoAuthor {
+  name: string;
+  title?: string;
+  bio?: string;
+}
+
 interface ReaderShellProps {
   courseSlug: string;
   courseName: string;
@@ -29,6 +35,7 @@ interface ReaderShellProps {
     authorBio?: string;
     authorAffiliation?: string;
     coverCaption?: string;
+    coAuthors?: SnapCoAuthor[];
   };
   readingMins: number;
   toc: TocEntry[];
@@ -168,6 +175,7 @@ export function ReaderShell({
 
             {/* Author meta */}
             <div className="mt-8 flex flex-wrap items-center gap-[18px] text-sm">
+              {/* Primary author */}
               <div className="flex items-center gap-3">
                 <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
                   {(snap.author || "？")[0]}
@@ -181,6 +189,21 @@ export function ReaderShell({
                   )}
                 </div>
               </div>
+              {/* Co-authors */}
+              {snap.coAuthors?.map((ca) => (
+                <div key={ca.name} className="flex items-center gap-3">
+                  <div className="border-border h-[30px] w-px" />
+                  <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
+                    {(ca.name || "？")[0]}
+                  </span>
+                  <div>
+                    <div className="text-foreground font-serif text-[15px] font-semibold">
+                      {ca.name}
+                    </div>
+                    {ca.title && <div className="text-subtle text-[12px]">{ca.title}</div>}
+                  </div>
+                </div>
+              ))}
               <div className="border-border h-[30px] w-px" />
               <div>
                 <div className="text-subtle font-mono text-[11px] uppercase tracking-[0.14em]">
@@ -219,28 +242,42 @@ export function ReaderShell({
           {/* Article body */}
           <MarkdownRenderer content={snap.contentMd} />
 
-          {/* Author bio card */}
-          {(snap.authorBio || snap.authorAffiliation) && (
-            <section className="border-border bg-surface mt-14 flex gap-[18px] rounded-[5px] border px-6 py-[22px]">
-              <span className="bg-accent text-background font-serif inline-grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-[24px] font-semibold">
-                {(snap.author || "？")[0]}
-              </span>
-              <div>
-                <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                  關於作者
-                </p>
-                <p className="m-0 mt-1.5 font-serif text-[18px] font-semibold">{snap.author}</p>
-                {snap.authorAffiliation && (
-                  <p className="text-subtle m-0 mt-0.5 text-[12.5px]">{snap.authorAffiliation}</p>
-                )}
-                {snap.authorBio && (
-                  <p className="text-muted m-0 mt-2.5 font-serif text-[14.5px] leading-[1.7] text-pretty">
-                    {snap.authorBio}
-                  </p>
-                )}
+          {/* Author bio cards */}
+          {(() => {
+            const allAuthors = [
+              ...(snap.authorBio || snap.authorAffiliation
+                ? [{ name: snap.author, title: snap.authorAffiliation, bio: snap.authorBio }]
+                : []),
+              ...(snap.coAuthors?.filter((ca) => ca.title || ca.bio) ?? []),
+            ];
+            if (allAuthors.length === 0) return null;
+            return (
+              <div className="mt-14 flex flex-col gap-4">
+                {allAuthors.map((a, i) => (
+                  <section
+                    key={`${a.name}-${i}`}
+                    className="border-border bg-surface flex gap-[18px] rounded-[5px] border px-6 py-[22px]"
+                  >
+                    <span className="bg-accent text-background font-serif inline-grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-[24px] font-semibold">
+                      {(a.name || "？")[0]}
+                    </span>
+                    <div>
+                      <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                        關於作者
+                      </p>
+                      <p className="m-0 mt-1.5 font-serif text-[18px] font-semibold">{a.name}</p>
+                      {a.title && <p className="text-subtle m-0 mt-0.5 text-[12.5px]">{a.title}</p>}
+                      {a.bio && (
+                        <p className="text-muted m-0 mt-2.5 font-serif text-[14.5px] leading-[1.7] text-pretty">
+                          {a.bio}
+                        </p>
+                      )}
+                    </div>
+                  </section>
+                ))}
               </div>
-            </section>
-          )}
+            );
+          })()}
 
           {/* Citation card — hidden in preview mode (draft is not citable) */}
           {!previewMode && (

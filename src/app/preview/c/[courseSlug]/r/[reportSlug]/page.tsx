@@ -6,7 +6,7 @@ import { notFound } from "next/navigation";
 import { ReaderShell } from "@/components/ReaderShell";
 import { Footer } from "@/components/Footer";
 import { extractToc } from "@/lib/markdown/extractToc";
-import { getCourseBySlug, getReportDoc } from "@/lib/server/firestore";
+import { getCourseBySlug, getReportDoc, getUsersByUids } from "@/lib/server/firestore";
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
 
@@ -32,6 +32,20 @@ export default async function PreviewReportPage({ params }: Props) {
   const readingMins = estimateReadingMinutes(report.contentMd);
   const toc = extractToc(report.contentMd);
 
+  // Fetch primary author + co-author profiles (public reader reads from enriched snapshot).
+  const primaryAuthorUid = report.authorUid ?? report.uid;
+  const coAuthorUids = (report.coAuthors ?? []).map((a) => a.uid);
+  const allUids = [primaryAuthorUid, ...coAuthorUids].filter(Boolean);
+  const profiles = await getUsersByUids(allUids);
+  const profileMap = new Map(profiles.map((u) => [u.uid, u]));
+
+  const primaryProfile = profileMap.get(primaryAuthorUid);
+  const enrichedCoAuthors = (report.coAuthors ?? []).map((a) => ({
+    name: a.name,
+    title: profileMap.get(a.uid)?.title,
+    bio: profileMap.get(a.uid)?.bio,
+  }));
+
   return (
     <>
       <ReaderShell
@@ -47,9 +61,10 @@ export default async function PreviewReportPage({ params }: Props) {
           publishedAt: updatedIso,
           subtitle: report.subtitle,
           tags: report.tags,
-          authorBio: report.authorBio,
-          authorAffiliation: report.authorAffiliation,
+          authorBio: primaryProfile?.bio,
+          authorAffiliation: primaryProfile?.title,
           coverCaption: report.coverCaption,
+          coAuthors: enrichedCoAuthors.length > 0 ? enrichedCoAuthors : undefined,
         }}
         readingMins={readingMins}
         toc={toc}

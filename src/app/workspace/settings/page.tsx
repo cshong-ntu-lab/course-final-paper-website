@@ -34,6 +34,7 @@ export default async function SettingsPage() {
             email={user.email}
             currentTitle={user.title ?? ""}
             currentBio={user.bio ?? ""}
+            currentAvatarUrl={user.avatarUrl}
           />
         </div>
 
