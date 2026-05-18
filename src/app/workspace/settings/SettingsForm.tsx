@@ -6,23 +6,39 @@ import { updateProfileAction } from "@/actions/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useAvatarUpload } from "@/lib/client/useImageUpload";
+import { cn } from "@/lib/utils";
 
 interface Props {
   currentName: string;
   email: string;
   currentTitle: string;
   currentBio: string;
+  currentAvatarUrl: string | null | undefined;
 }
 
-export function SettingsForm({ currentName, email, currentTitle, currentBio }: Props) {
+export function SettingsForm({
+  currentName,
+  email,
+  currentTitle,
+  currentBio,
+  currentAvatarUrl,
+}: Props) {
   const [name, setName] = useState(currentName);
   const [title, setTitle] = useState(currentTitle);
   const [bio, setBio] = useState(currentBio);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(currentAvatarUrl ?? null);
   const [pending, setPending] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const isDirty = name.trim() !== currentName || title !== currentTitle || bio !== currentBio;
+  const avatarUpload = useAvatarUpload();
+
+  const isDirty =
+    name.trim() !== currentName ||
+    title !== currentTitle ||
+    bio !== currentBio ||
+    avatarUrl !== (currentAvatarUrl ?? null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,6 +49,7 @@ export function SettingsForm({ currentName, email, currentTitle, currentBio }: P
       profileDisplayName: name,
       title,
       bio,
+      avatarUrl,
     });
     setPending(false);
     if (res.ok) {
@@ -44,8 +61,84 @@ export function SettingsForm({ currentName, email, currentTitle, currentBio }: P
     }
   }
 
+  const handleAvatarUpload = async (file: File) => {
+    const url = await avatarUpload.upload(file);
+    if (url) {
+      setAvatarUrl(url);
+      setSaved(false);
+    }
+  };
+
+  const handleAvatarRemove = () => {
+    setAvatarUrl(null);
+    setSaved(false);
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* Avatar */}
+      <div>
+        <Label>頭像</Label>
+        <div className="mt-1.5 flex items-center gap-4">
+          <div className="relative h-16 w-16 shrink-0">
+            {avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={avatarUrl}
+                alt="頭像"
+                className="h-16 w-16 rounded-full object-cover ring-1 ring-border"
+              />
+            ) : (
+              <div className="bg-canvas border-border flex h-16 w-16 items-center justify-center rounded-full border">
+                <span className="text-subtle text-xl font-serif font-semibold">
+                  {(currentName || "?")[0]}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="cursor-pointer">
+              <div
+                className={cn(
+                  "border-border bg-surface inline-flex items-center gap-1.5 rounded border px-3 py-1.5 font-mono text-[11px] transition-colors hover:border-accent hover:text-accent",
+                  avatarUpload.state.phase === "uploading" && "opacity-60",
+                )}
+              >
+                {avatarUpload.state.phase === "uploading"
+                  ? `${avatarUpload.state.percent}%`
+                  : avatarUpload.state.phase === "compressing" ||
+                      avatarUpload.state.phase === "finalizing"
+                    ? "處理中…"
+                    : "上傳頭像"}
+              </div>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleAvatarUpload(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {avatarUpload.state.phase === "error" && (
+              <p className="text-warning-fg font-mono text-[11px]">上傳失敗，請重試</p>
+            )}
+            {avatarUrl && (
+              <button
+                type="button"
+                onClick={handleAvatarRemove}
+                className="text-subtle hover:text-foreground text-left font-mono text-[11px] hover:underline"
+              >
+                移除頭像
+              </button>
+            )}
+            <p className="text-subtle font-mono text-[10px]">JPG · PNG · WebP，最大 5 MB</p>
+          </div>
+        </div>
+      </div>
+
       <div>
         <Label htmlFor="author-name">預設暱稱</Label>
         <Input

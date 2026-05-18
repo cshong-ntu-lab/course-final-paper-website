@@ -4,9 +4,9 @@
 import "server-only";
 
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
-import { courseConverter, reportConverter } from "@/lib/firestore/converters";
+import { courseConverter, reportConverter, userConverter } from "@/lib/firestore/converters";
 import { courseSlug } from "@/lib/slug";
-import type { Course, PublishSnapshot, Report } from "@/lib/types";
+import type { Course, PublishSnapshot, Report, User } from "@/lib/types";
 
 export type CourseDoc = Course & { id: string };
 export type ReportDoc = Report & { id: string };
@@ -136,6 +136,33 @@ export async function getAdjacentPublishedReports(
   };
 
   return { prev: toItem(prevSnap.docs), next: toItem(nextSnap.docs) };
+}
+
+export type UserDoc = User & { uid: string };
+
+/** Fetch multiple users by UID. Returns only found docs (missing UIDs are skipped). */
+export async function getUsersByUids(uids: string[]): Promise<UserDoc[]> {
+  if (uids.length === 0) return [];
+  const { db } = getFirebaseAdmin();
+  const refs = uids.map((uid) => db.collection("users").withConverter(userConverter).doc(uid));
+  const snaps = await db.getAll(...refs);
+  return snaps.filter((s) => s.exists).map((s) => ({ ...(s.data() as User), uid: s.id }));
+}
+
+/** All users, for author/co-author search. Returns lean records only. */
+export async function getAllUsersForSearch(): Promise<
+  { uid: string; name: string; email: string; title?: string }[]
+> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db.collection("users").withConverter(userConverter).get();
+  return snap.docs
+    .filter((d) => d.data().role === "student")
+    .map((d) => ({
+      uid: d.id,
+      name: d.data().profileDisplayName,
+      email: d.data().email,
+      title: d.data().title,
+    }));
 }
 
 /** Find a course by its URL slug. Returns null if not found. */

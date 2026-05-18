@@ -27,6 +27,7 @@ export interface CurrentUser {
   // v4 extended profile fields
   title: string;
   bio: string;
+  avatarUrl: string | null;
 }
 
 export function isAdminEmail(email: string | undefined | null): boolean {
@@ -66,6 +67,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     isOnboarded: Boolean(userDoc?.profileDisplayName),
     title: userDoc?.title ?? "",
     bio: userDoc?.bio ?? "",
+    avatarUrl: userDoc?.avatarUrl ?? null,
   };
 }
 

@@ -79,14 +79,14 @@ steps:
       - "--set-env-vars=ADMIN_EMAILS=${_ADMIN_EMAILS}"
       - "--update-secrets=GOOGLE_DRIVE_CLIENT_ID=google-drive-client-id:latest,GOOGLE_DRIVE_CLIENT_SECRET=google-drive-client-secret:latest,GOOGLE_DRIVE_REFRESH_TOKEN=google-drive-refresh-token:latest,GOOGLE_DRIVE_ROOT_FOLDER_ID=google-drive-root-folder-id:latest"
 
-  # ── 3b. Deploy Firestore indexes (runs in parallel with Cloud Run deploy) ─
+  # ── 3b. Deploy Firestore indexes + Storage rules (parallel with Cloud Run) ─
   - name: node:22
-    id: deploy-indexes
+    id: deploy-firebase
     waitFor: [push]
     entrypoint: bash
     args:
       - -c
-      - npx --yes firebase-tools@15 deploy --only firestore:indexes --project=$PROJECT_ID --non-interactive
+      - npx --yes firebase-tools@15 deploy --only firestore:indexes,storage --project=$PROJECT_ID --non-interactive
 
 images:
   - "${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA"

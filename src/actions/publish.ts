@@ -5,8 +5,9 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { reportConverter, userConverter } from "@/lib/firestore/converters";
 import { requireAdmin } from "@/lib/server/auth";
+import { getUsersByUids } from "@/lib/server/firestore";
 import { syncReportToDrive } from "@/lib/server/drive";
-import type { PublishSnapshot, Report } from "@/lib/types";
+import type { CoAuthorSnapshot, PublishSnapshot, Report } from "@/lib/types";
 
 export type PublishResult =
   | { ok: true; snapshotId: string; publishedAt: number }
@@ -23,10 +24,15 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
   const snapshotsCol = reportRef.collection("publishSnapshots");
 
   try {
-    // Pre-read to get the author's UID so we can fetch their profile in the transaction.
+    // Pre-read to get the author's UID + co-authors so we can fetch profiles outside the transaction.
     const preSnap = await reportRef.get();
     if (!preSnap.exists) return { ok: false, error: "not_found" };
-    const authorUid = preSnap.data()!.uid;
+    const preData = preSnap.data()!;
+    // authorUid is the selected author; fall back to the report owner (report.uid).
+    const authorUid = preData.authorUid ?? preData.uid;
+    const coAuthorUids = (preData.coAuthors ?? []).map((a) => a.uid);
+    const coAuthorProfiles = await getUsersByUids(coAuthorUids);
+    const coAuthorProfileMap = new Map(coAuthorProfiles.map((u) => [u.uid, u]));
 
     const result = await db.runTransaction(async (tx) => {
       const [snap, userSnap] = await Promise.all([
@@ -38,6 +44,20 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
       const report = snap.data()!;
       const authorProfile = userSnap.data();
       const now = Timestamp.now();
+
+      // Enrich co-authors with their profile data.
+      const enrichedCoAuthors: CoAuthorSnapshot[] | undefined =
+        report.coAuthors && report.coAuthors.length > 0
+          ? report.coAuthors.map((a) => {
+              const profile = coAuthorProfileMap.get(a.uid);
+              return {
+                uid: a.uid,
+                name: a.name,
+                ...(profile?.title && { title: profile.title }),
+                ...(profile?.bio && { bio: profile.bio }),
+              };
+            })
+          : undefined;
 
       // Write publish snapshot — authorAffiliation/authorBio come from the author's profile.
       const snapshotRef = snapshotsCol.doc();
@@ -55,6 +75,7 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
         ...(authorProfile?.title && { authorAffiliation: authorProfile.title }),
         ...(authorProfile?.bio && { authorBio: authorProfile.bio }),
         ...(report.coverCaption !== undefined && { coverCaption: report.coverCaption }),
+        ...(enrichedCoAuthors && { coAuthors: enrichedCoAuthors }),
       };
       tx.set(snapshotRef, snapshot);
 
