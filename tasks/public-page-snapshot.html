@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Public Page — Current Design Snapshot (NTU 社會系)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #f5f2ec;
+    --surface:      #faf9f7;
+    --white:        #ffffff;
+    --accent:       #3a5a3a;
+    --accent-hover: #2e4a2e;
+    --fg:           #1a1a1a;
+    --muted:        #6b6561;
+    --subtle:       #9b958f;
+    --border:       #e8e3db;
+    --border-strong:#cdc6bc;
+    --font-serif:   'Noto Serif TC', Georgia, serif;
+    --font-sans:    'Noto Sans TC', system-ui, sans-serif;
+    --font-mono:    'JetBrains Mono', 'Cascadia Code', monospace;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ─── SECTION DIVIDERS (snapshot-only labels, not part of real page) ─── */
+  .snapshot-label {
+    background: #1a1a1a;
+    color: #fff;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 6px 16px;
+    text-transform: uppercase;
+  }
+
+  /* ─── SITE HEADER ─── */
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(245, 242, 236, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .site-header-inner {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .wordmark {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .wordmark-serif {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .wordmark-mono {
+    font-family: var(--font-mono);
+    font-size: 10.4px;
+    letter-spacing: 0.06em;
+    color: var(--subtle);
+  }
+
+  /* ─── COURSE TAB NAV ─── */
+  .tab-nav {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+  }
+  .tab-nav-inner {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .tab-list {
+    display: flex;
+    gap: 28px;
+    list-style: none;
+    margin-bottom: -1px;
+    overflow-x: auto;
+  }
+  .tab-link {
+    display: block;
+    white-space: nowrap;
+    border-bottom: 2px solid transparent;
+    padding: 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: color 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  .tab-link:hover {
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .tab-link.active {
+    color: var(--fg);
+    border-color: var(--accent);
+  }
+  .tab-code {
+    font-family: var(--font-mono);
+    font-size: 10.4px;
+    letter-spacing: 0.06em;
+    color: var(--subtle);
+    margin-right: 6px;
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  .main {
+    max-width: 1024px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ─── COURSE HEADER ─── */
+  .course-header {
+    margin-bottom: 40px;
+  }
+  .course-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.4px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 8px;
+  }
+  .course-title {
+    font-family: var(--font-serif);
+    font-size: 36px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    color: var(--fg);
+  }
+  .course-desc {
+    margin-top: 20px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--muted);
+    max-width: 65ch;
+  }
+
+  /* ─── REPORTS SECTION ─── */
+  .reports-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .reports-title {
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--fg);
+  }
+  .reports-count {
+    font-size: 12px;
+    color: var(--subtle);
+  }
+  .reports-grid {
+    display: grid;
+    gap: 12px;
+  }
+
+  /* ─── REPORT CARD ─── */
+  .report-card {
+    display: block;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    padding: 20px;
+    transition: border-color 0.15s;
+    cursor: pointer;
+  }
+  .report-card:hover {
+    border-color: var(--border-strong);
+  }
+  .report-card:hover .report-card-title {
+    color: var(--accent);
+  }
+  .report-card-inner {
+    display: flex;
+    gap: 20px;
+  }
+  .report-card-cover {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    object-fit: cover;
+    background: var(--border);
+  }
+  .report-card-cover-placeholder {
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--subtle);
+  }
+  .report-card-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .report-card-title {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    color: var(--fg);
+    transition: color 0.15s;
+  }
+  .report-card-summary {
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .report-card-meta {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--subtle);
+  }
+  .report-card-author {
+    font-weight: 500;
+    color: var(--muted);
+  }
+  .meta-dot {
+    color: var(--subtle);
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    border-top: 1px solid var(--border);
+    padding: 40px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: var(--subtle);
+    margin-top: 80px;
+  }
+  .footer a {
+    color: var(--subtle);
+  }
+  .footer a:hover {
+    text-decoration: underline;
+  }
+
+  /* ════════════════════════════════════════════════════
+     PAGE 2 — REPORT READER
+     ════════════════════════════════════════════════════ */
+  .reader-wrap {
+    background: var(--bg);
+  }
+
+  .reader-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(245, 242, 236, 0.95);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  .reader-header-inner {
+    max-width: 768px;
+    margin: 0 auto;
+    padding: 0 24px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--muted);
+    transition: color 0.15s;
+  }
+  .back-link:hover { color: var(--fg); }
+  .back-arrow {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .article {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 56px 24px;
+  }
+
+  .article-header {
+    margin-bottom: 48px;
+  }
+  .article-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 10.4px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--subtle);
+    margin-bottom: 12px;
+  }
+  .article-title {
+    font-family: var(--font-serif);
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--fg);
+  }
+  .article-meta {
+    margin-top: 28px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--muted);
+  }
+  .author-avatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(58, 90, 58, 0.15);
+    color: var(--accent);
+    font-family: var(--font-serif);
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .author-name {
+    font-weight: 500;
+    color: var(--fg);
+  }
+  .article-hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin-top: 28px;
+  }
+
+  /* Fake prose body */
+  .prose-body {
+    font-family: var(--font-serif);
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--fg);
+  }
+  .prose-body p { margin-bottom: 1.4em; }
+  .prose-body h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 2em 0 0.6em;
+    letter-spacing: -0.01em;
+  }
+  .prose-body h3 {
+    font-size: 19px;
+    font-weight: 600;
+    margin: 1.6em 0 0.5em;
+  }
+  .prose-body blockquote {
+    border-left: 3px solid var(--accent);
+    padding-left: 20px;
+    margin: 1.5em 0;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .article-footer {
+    border-top: 1px solid var(--border);
+    padding-top: 40px;
+    margin-top: 80px;
+  }
+  .article-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: var(--accent);
+  }
+  .article-back-link:hover { color: var(--accent-hover); }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     PAGE 1 — COURSE LISTING  /c/[courseSlug]
+     ═══════════════════════════════════════════ -->
+<div class="snapshot-label">PAGE 1 — /c/[courseSlug] · Course Listing</div>
+
+<!-- Site header -->
+<header class="site-header">
+  <div class="site-header-inner">
+    <a href="#" class="wordmark">
+      <span class="wordmark-serif">台大社會系</span>
+      <span class="wordmark-mono">NTU SOC</span>
+    </a>
+  </div>
+</header>
+
+<!-- Course tab nav -->
+<nav class="tab-nav" aria-label="課程">
+  <div class="tab-nav-inner">
+    <ul class="tab-list">
+      <li>
+        <a href="#" class="tab-link active">
+          <span class="tab-code">SOC7821</span>質性研究方法
+        </a>
+      </li>
+      <li>
+        <a href="#" class="tab-link">
+          <span class="tab-code">SOC5312</span>社會學理論
+        </a>
+      </li>
+      <li>
+        <a href="#" class="tab-link">
+          <span class="tab-code">SOC6104</span>數位社會學
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Main content -->
+<main class="main">
+
+  <!-- Course header -->
+  <section class="course-header">
+    <div class="course-eyebrow">SOC7821 · 113 學年度第 2 學期</div>
+    <h1 class="course-title">質性研究方法</h1>
+    <div class="course-desc">
+      本課程介紹質性研究的核心方法論與實作技巧，包含深度訪談、田野觀察、
+      焦點團體及文本分析，並透過期末報告讓學生實踐完整的研究設計與寫作。
+    </div>
+  </section>
+
+  <!-- Reports section -->
+  <section>
+    <div class="reports-header">
+      <h2 class="reports-title">已發布報告</h2>
+      <span class="reports-count">4 篇</span>
+    </div>
+
+    <div class="reports-grid">
+
+      <!-- Report card with cover image -->
+      <a href="#reader" class="report-card">
+        <div class="report-card-inner">
+          <div class="report-card-cover-placeholder">封面圖</div>
+          <div class="report-card-body">
+            <h3 class="report-card-title">台灣外送平台勞動者的身份認同與抵抗策略</h3>
+            <p class="report-card-summary">
+              本研究透過深度訪談十二位外送員，探討平台算法控制下勞動者如何建構集體認同，
+              以及採取何種日常抵抗形式回應去技能化與彈性剝削。
+            </p>
+            <div class="report-card-meta">
+              <span class="report-card-author">陳雅婷</span>
+              <span class="meta-dot">·</span>
+              <time>2026年5月8日</time>
+              <span class="meta-dot">·</span>
+              <span>18 分鐘閱讀</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Report card without cover -->
+      <a href="#" class="report-card">
+        <div class="report-card-inner">
+          <div class="report-card-body">
+            <h3 class="report-card-title">高齡照護機構中的情感勞動與職業倦怠</h3>
+            <p class="report-card-summary">
+              以某北部照護機構為田野場域，觀察照服員如何在制度規範與情感期待之間協商，
+              分析倦怠的結構成因與個人因應策略。
+            </p>
+            <div class="report-card-meta">
+              <span class="report-card-author">林俊宏</span>
+              <span class="meta-dot">·</span>
+              <time>2026年5月3日</time>
+              <span class="meta-dot">·</span>
+              <span>14 分鐘閱讀</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Report card -->
+      <a href="#" class="report-card">
+        <div class="report-card-inner">
+          <div class="report-card-cover-placeholder">封面圖</div>
+          <div class="report-card-body">
+            <h3 class="report-card-title">都市原住民青年的空間實踐與族裔邊界</h3>
+            <p class="report-card-summary">
+              透過參與觀察與敘事訪談，理解原住民青年在都市中如何藉由特定空間使用維繫族裔認同，
+              並回應主流社會的文化期待與刻板印象。
+            </p>
+            <div class="report-card-meta">
+              <span class="report-card-author">吳思穎</span>
+              <span class="meta-dot">·</span>
+              <time>2026年4月28日</time>
+              <span class="meta-dot">·</span>
+              <span>22 分鐘閱讀</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      <!-- Report card -->
+      <a href="#" class="report-card">
+        <div class="report-card-inner">
+          <div class="report-card-body">
+            <h3 class="report-card-title">社區大學作為公共領域：公民學習與審議民主的在地實踐</h3>
+            <p class="report-card-summary">
+              以台北某社大課程為案例，檢視公民教育的課程設計如何促進或阻礙真實的審議對話，
+              以及成人學習者如何轉化公共議題的參與姿態。
+            </p>
+            <div class="report-card-meta">
+              <span class="report-card-author">張峻豪</span>
+              <span class="meta-dot">·</span>
+              <time>2026年4月22日</time>
+              <span class="meta-dot">·</span>
+              <span>16 分鐘閱讀</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  © 2026 NTU Sociology · 引用本文請註明出處 ·
+  <a href="#">隱私</a> · <a href="#">條款</a>
+</footer>
+
+
+<!-- ═══════════════════════════════════════════
+     PAGE 2 — REPORT READER  /c/[slug]/r/[slug]
+     ═══════════════════════════════════════════ -->
+<div id="reader" class="snapshot-label">PAGE 2 — /c/[courseSlug]/r/[reportSlug] · Report Reader</div>
+
+<div class="reader-wrap">
+
+  <!-- Minimal sticky header -->
+  <header class="reader-header">
+    <div class="reader-header-inner">
+      <a href="#" class="back-link">
+        <span class="back-arrow">←</span>
+        返回 質性研究方法
+      </a>
+      <a href="#" class="wordmark">
+        <span class="wordmark-serif" style="font-size:14px">台大社會系</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Article -->
+  <article class="article">
+
+    <!-- Masthead -->
+    <header class="article-header">
+      <div class="article-eyebrow">SOC7821 · 113 學年度第 2 學期 · 期末報告</div>
+      <h1 class="article-title">台灣外送平台勞動者的身份認同與抵抗策略</h1>
+      <div class="article-meta">
+        <span class="author-avatar">陳</span>
+        <span class="author-name">陳雅婷</span>
+        <span class="meta-dot">·</span>
+        <time>發布於 2026年5月8日</time>
+        <span class="meta-dot">·</span>
+        <span>18 分鐘閱讀</span>
+      </div>
+      <hr class="article-hr">
+    </header>
+
+    <!-- Prose body (sample) -->
+    <div class="prose-body">
+      <h2>壹、研究動機與問題意識</h2>
+      <p>
+        隨著平台資本主義的快速擴張，外送員這一職業在台灣都市空間中已成為不可忽視的勞動群體。
+        他們以摩托車穿梭於街道巷弄，在演算法的嚴密監控下完成一筆又一筆訂單，
+        表面上享有「自由工作者」的彈性，實則承受高度不確定性與系統性剝削。
+      </p>
+      <p>
+        本研究從勞動社會學與身份認同政治的理論視角出發，嘗試回答以下核心問題：
+        在平台算法的控制機制下，外送勞動者如何理解自身的工作處境？
+        他們是否發展出集體認同？又透過何種日常實踐形式表達對平台體制的抵抗？
+      </p>
+
+      <h2>貳、文獻回顧</h2>
+      <h3>一、平台資本主義與算法控制</h3>
+      <p>
+        Srnicek（2017）將當代平台企業界定為「以數據為核心商品」的特殊資本形態。
+        Rosenblat（2018）以 Uber 司機為案例，精細描繪算法如何透過資訊不對稱實現對勞動者的間接管控，
+        形成她所稱的「算法管理」。
+      </p>
+      <blockquote>
+        "Workers are managed by the algorithm, but the algorithm is managed by the company.
+        The resulting power asymmetry is invisible by design." — Rosenblat, 2018
+      </blockquote>
+
+      <h2>參、研究設計</h2>
+      <p>
+        本研究採取詮釋性質性研究取向，以深度訪談為主要資料蒐集方式，
+        輔以田野觀察與線上社群文本分析。受訪者為十二位在台北市從事外送工作六個月以上之勞動者，
+        採立意抽樣，兼顧性別、年齡與平台類型之多元性。
+      </p>
+    </div>
+
+    <!-- Article footer -->
+    <footer class="article-footer">
+      <a href="#" class="article-back-link">
+        ← 返回 質性研究方法 所有報告
+      </a>
+    </footer>
+
+  </article>
+
+  <!-- Footer -->
+  <footer class="footer">
+    © 2026 NTU Sociology · 引用本文請註明出處 ·
+    <a href="#">隱私</a> · <a href="#">條款</a>
+  </footer>
+
+</div>
+
+</body>
+</html>
