@@ -1,13 +1,14 @@
 "use client";
 // design.md §3.5 — 6-cell course code input with paste + arrow nav.
 //
-// IME safety: when a Chinese (or any) IME is active, typing produces a
-// composition sequence that fires multiple `input` events for a single
-// keystroke. We ignore `onChange` while a composition is in flight and only
-// process the finalised value in `onCompositionEnd`. Without this, typing
-// Shift+T with a Chinese IME active inserts TT into adjacent cells because
-// `onChange` fires once during composition and again on its end, with focus
-// shifting between the two events.
+// Character input is handled in onKeyDown (with preventDefault) rather than
+// onChange to avoid a React 19 controlled-input issue: the browser's
+// reconciliation of maxLength/value after a controlled update was stealing
+// focus back to the previous cell, making it impossible to type more than one
+// character at a time.
+//
+// IME safety: keydown fires key="Process" during CJK composition and cannot
+// extract the character, so we still use onCompositionEnd for that path.
 
 import * as React from "react";
 
@@ -20,9 +21,6 @@ export interface CodeInputProps {
   disabled?: boolean;
 }
 
-// Permissive at the input layer (any uppercase letter or digit). The
-// validator + course lookup may reject confusable variants like 0/O/1/I/L
-// downstream — that's fine; we'd rather show "找不到課程" than block typing.
 const ALPHA = /^[A-Z0-9]$/;
 
 export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) {
@@ -40,24 +38,37 @@ export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) 
 
   const focusAt = (i: number) => refs.current[i]?.focus();
 
-  // Process a freshly-entered character for cell i. Pulls only the first
-  // alphanumeric char of the raw value, writes it, and advances focus.
-  const commit = (i: number, rawValue: string) => {
-    const cleaned = rawValue.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (cleaned.length === 0) {
+  const handleKeyDown = (i: number) => (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Let IME composition proceed without interference.
+    if (composing.current[i]) return;
+
+    if (e.key === "Backspace") {
+      e.preventDefault();
       setAt(i, "");
+      if (i > 0) focusAt(i - 1);
       return;
     }
-    const ch = cleaned[0];
-    if (!ch || !ALPHA.test(ch)) return;
-    setAt(i, ch);
-    if (i < 5) focusAt(i + 1);
-  };
-
-  const handleChange = (i: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Ignore intermediate input events while IME composition is in flight.
-    if (composing.current[i]) return;
-    commit(i, e.target.value);
+    if (e.key === "ArrowLeft" && i > 0) {
+      e.preventDefault();
+      focusAt(i - 1);
+      return;
+    }
+    if (e.key === "ArrowRight" && i < 5) {
+      e.preventDefault();
+      focusAt(i + 1);
+      return;
+    }
+    // Printable character: prevent the browser from writing to the DOM value
+    // (which would trigger React's controlled-input reconciliation and steal
+    // focus), then commit the character ourselves.
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1) {
+      e.preventDefault();
+      const ch = e.key.toUpperCase();
+      if (ALPHA.test(ch)) {
+        setAt(i, ch);
+        if (i < 5) focusAt(i + 1);
+      }
+    }
   };
 
   const handleCompositionStart = (i: number) => () => {
@@ -66,18 +77,16 @@ export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) 
 
   const handleCompositionEnd = (i: number) => (e: React.CompositionEvent<HTMLInputElement>) => {
     composing.current[i] = false;
-    commit(i, (e.target as HTMLInputElement).value);
-  };
-
-  const handleKeyDown = (i: number) => (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !value[i] && i > 0) {
-      focusAt(i - 1);
-    } else if (e.key === "ArrowLeft" && i > 0) {
-      e.preventDefault();
-      focusAt(i - 1);
-    } else if (e.key === "ArrowRight" && i < 5) {
-      e.preventDefault();
-      focusAt(i + 1);
+    const raw = (e.target as HTMLInputElement).value;
+    const cleaned = raw.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (!cleaned) {
+      setAt(i, "");
+      return;
+    }
+    const ch = cleaned[0];
+    if (ch && ALPHA.test(ch)) {
+      setAt(i, ch);
+      if (i < 5) focusAt(i + 1);
     }
   };
 
@@ -113,7 +122,11 @@ export function CodeInput({ value, onChange, error, disabled }: CodeInputProps) 
           disabled={disabled}
           aria-label={`第 ${i + 1} 碼`}
           aria-invalid={error || undefined}
-          onChange={handleChange(i)}
+          onChange={() => {
+            // No-op: actual input is handled in onKeyDown (for regular keys) and
+            // onCompositionEnd (for IME). Required to satisfy React's controlled
+            // input contract.
+          }}
           onCompositionStart={handleCompositionStart(i)}
           onCompositionEnd={handleCompositionEnd(i)}
           onKeyDown={handleKeyDown(i)}
