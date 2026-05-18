@@ -122,6 +122,15 @@ function Workspace({ courses }: { courses: StudentCourseCardData[] }) {
           </Link>
           。
         </p>
+        {courses.length > 0 && (
+          <p className="text-muted mt-1 font-serif text-base">
+            到{" "}
+            <Link href="/preview" className="text-accent underline underline-offset-[3px]">
+              預覽頁
+            </Link>
+            看看你的報告草稿在正式網站上的樣子！
+          </p>
+        )}
       </div>
 
       {courses.length === 0 ? (
