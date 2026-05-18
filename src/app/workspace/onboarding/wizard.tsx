@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
+import { logoutAction } from "@/actions/auth";
 import { enrollWithCodeAction, type EnrollResult } from "@/actions/enrollment";
 import { CodeInput } from "@/components/CodeInput";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,15 @@ export function OnboardingWizard() {
         >
           {pending ? "驗證中..." : "加入課程 →"}
         </Button>
+
+        <form action={logoutAction} className="mt-6 text-center">
+          <button
+            type="submit"
+            className="text-muted hover:text-foreground text-sm transition-colors"
+          >
+            登出
+          </button>
+        </form>
       </div>
     </main>
   );
