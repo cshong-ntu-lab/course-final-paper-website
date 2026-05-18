@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<title>Public pages v4 · L2 trimmed</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f2ec; --surface: #faf9f7; --white: #ffffff;
+    --accent: #3a5a3a; --accent-hover: #2e4a2e;
+    --fg: #1a1a1a; --muted: #6b6561; --subtle: #9b958f;
+    --border: #e8e3db; --border-strong: #cdc6bc;
+    --font-serif: "Noto Serif TC", Georgia, serif;
+    --font-sans: "Noto Sans TC", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", monospace;
+  }
+  html, body { background: #f0eee9; font-family: var(--font-sans); color: var(--fg); margin: 0; }
+  * { box-sizing: border-box; }
+  a { color: inherit; text-decoration: none; cursor: pointer; }
+  button { font-family: inherit; cursor: pointer; }
+
+  /* Kept animations: ② v-line, ③ dot pulse, + fade-up entry, + cover hover */
+  @keyframes pulseDot { 0%, 100% { opacity: 0.45; transform: scale(1) } 50% { opacity: 1; transform: scale(1.18) } }
+  @keyframes drawLine { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
+  @keyframes growBar { from { width: 0 } }
+  .accent-dot { animation: pulseDot 2.4s ease-in-out infinite; display: inline-block; }
+  .v-line { display: inline-block; height: 2px; background: var(--accent); transform-origin: left center; animation: drawLine 900ms ease-out 200ms both; }
+  .fade-up { animation: fadeUp 600ms ease-out both; }
+  .grow-bar { animation: growBar 1100ms ease-out 250ms both; }
+
+  .cover-wrap { overflow: hidden; }
+  .cover-wrap > .cover { transition: transform 500ms cubic-bezier(.2,.7,.3,1); }
+  .card-link:hover .cover-wrap > .cover { transform: scale(1.04); }
+  .card-link:hover .card-title { color: var(--accent); }
+  .card-link .card-title { transition: color 160ms; }
+  .tag { transition: background 160ms, color 160ms, border-color 160ms; }
+  .tag:hover { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel">
+const COURSE = {
+  code: "SOC7821", vol: "Vol. III",
+  name: "質性研究方法", teacher: "黃克先 副教授",
+  schedule: "週三 2-5 節 · 社科 410", termRange: "2026.02 — 2026.06",
+};
+const REPORTS = [
+  { title: "台灣外送平台勞動者的身份認同與抵抗策略", summary: "本研究透過深度訪談十二位外送員，探討平台算法控制下勞動者如何建構集體認同，以及採取何種日常抵抗形式回應去技能化與彈性剝削。", author: "陳雅婷", date: "2026.05.08", reading: "18 分鐘", tags: ["深度訪談", "勞動社會學", "平台資本主義"], pullQuote: "演算法不只是工具，它已成為勞動者日常生活的第三方雇主。", cover: true },
+  { title: "高齡照護機構中的情感勞動與職業倦怠", summary: "以某北部照護機構為田野場域，觀察照服員如何在制度規範與情感期待之間協商，分析倦怠的結構成因與個人因應策略。", author: "林俊宏", date: "2026.05.03", reading: "14 分鐘", tags: ["田野觀察", "情感勞動"], pullQuote: "她們不只是在照顧身體，更在管理自己的情緒以維繫一個假象的家。", cover: false },
+  { title: "都市原住民青年的空間實踐與族裔邊界", summary: "透過參與觀察與敘事訪談，理解原住民青年在都市中如何藉由特定空間使用維繫族裔認同，並回應主流社會的文化期待與刻板印象。", author: "吳思穎", date: "2026.04.28", reading: "22 分鐘", tags: ["參與觀察", "族裔研究"], pullQuote: "他們的部落從未消失，只是換了一個地址。", cover: true },
+  { title: "社區大學作為公共領域：公民學習與審議民主的在地實踐", summary: "以台北某社大課程為案例，檢視公民教育的課程設計如何促進或阻礙真實的審議對話，以及成人學習者如何轉化公共議題的參與姿態。", author: "張峻豪", date: "2026.04.22", reading: "16 分鐘", tags: ["個案研究", "公共社會學"], pullQuote: "公民並不是教出來的，是練出來的；社大正是這樣的練習場。", cover: false },
+];
+const TABS = [
+  { code: "SOC7821", name: "質性研究方法", active: true },
+  { code: "SOC5312", name: "社會學理論" },
+  { code: "SOC6104", name: "數位社會學" },
+];
+
+// ─── shared chrome ───
+function Cover({ aspect = "4/3", label = "封面" }) {
+  return (
+    <div className="cover-wrap" style={{ width: "100%", aspectRatio: aspect, background: "var(--border)", boxShadow: "inset 0 0 0 1px var(--border-strong)" }}>
+      <div className="cover" style={{ width: "100%", height: "100%", backgroundImage: "repeating-linear-gradient(45deg, rgba(0,0,0,0.04) 0 6px, transparent 6px 12px)", display: "grid", placeItems: "center", fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--subtle)", letterSpacing: "0.06em" }}>{label}</div>
+    </div>
+  );
+}
+function Tag({ children, accent }) {
+  return (
+    <span className="tag" style={{
+      display: "inline-flex", alignItems: "center", fontFamily: "var(--font-sans)", fontSize: 11,
+      color: accent ? "var(--accent)" : "var(--muted)",
+      background: accent ? "rgba(58,90,58,0.08)" : "var(--bg)",
+      border: `1px solid ${accent ? "rgba(58,90,58,0.3)" : "var(--border)"}`,
+      borderRadius: 2, padding: "2px 8px", letterSpacing: "0.02em",
+    }}>{children}</span>
+  );
+}
+function Dot() { return <span style={{ color: "var(--subtle)" }}>·</span>; }
+function Eyebrow({ children, accent, withDots }) {
+  return (
+    <span style={{ display: "inline-flex", alignItems: "center", gap: 10, fontFamily: "var(--font-mono)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: withDots ? "0.18em" : "0.14em", color: accent ? "var(--accent)" : "var(--subtle)" }}>
+      {children}
+    </span>
+  );
+}
+function Initials({ name, size = 28 }) {
+  return <span style={{ width: size, height: size, borderRadius: "50%", background: "var(--accent)", color: "var(--bg)", display: "grid", placeItems: "center", fontFamily: "var(--font-serif)", fontSize: size * 0.46, fontWeight: 600, flexShrink: 0 }}>{name[0]}</span>;
+}
+
+function SiteHeader() {
+  return (
+    <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(245,242,236,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid var(--border)" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <a style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+          <span style={{ fontFamily: "var(--font-serif)", fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em" }}>台大社會系</span>
+          <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.4, color: "var(--subtle)", letterSpacing: "0.06em" }}>NTU SOC</span>
+        </a>
+      </div>
+    </header>
+  );
+}
+
+function TabNav() {
+  return (
+    <nav aria-label="課程" style={{ background: "var(--white)", borderBottom: "1px solid var(--border)" }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px" }}>
+        <ul style={{ display: "flex", gap: 28, listStyle: "none", marginBottom: -1, padding: 0, overflowX: "auto" }}>
+          {TABS.map(t => (
+            <li key={t.code}>
+              <a style={{ display: "block", whiteSpace: "nowrap", borderBottom: t.active ? "2px solid var(--accent)" : "2px solid transparent", padding: "16px 0", fontSize: 14, fontWeight: 500, color: t.active ? "var(--fg)" : "var(--muted)" }}>
+                <span style={{ fontFamily: "var(--font-mono)", fontSize: 10.4, letterSpacing: "0.06em", color: "var(--subtle)", marginRight: 6 }}>{t.code}</span>
+                {t.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+  );
+}
+
+// ⑬ Footer · 3-col
+function Footer() {
+  return (
+    <footer style={{ borderTop: "1px solid var(--border)", marginTop: 80 }}>
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "44px 24px 28px", display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 40 }}>
+        <div>
+          <div style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+            <span style={{ fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>台大社會系</span>
+            <span style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--subtle)", letterSpacing: "0.08em" }}>NTU SOC · RESEARCH NOTES</span>
+          </div>
+          <p style={{ marginTop: 10, maxWidth: 480, fontSize: 13, lineHeight: 1.65, color: "var(--muted)" }}>
+            國立臺灣大學社會學系研究生課程之期末報告公開站。報告內容由作者保留著作權，引用請註明出處。
+          </p>
+        </div>
+        <div>
+          <Eyebrow>關於</Eyebrow>
+          <ul style={{ listStyle: "none", padding: 0, margin: "10px 0 0", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+            <li><a style={{ color: "var(--muted)" }}>編輯方針</a></li>
+            <li><a style={{ color: "var(--muted)" }}>引用規範</a></li>
+            <li><a style={{ color: "var(--muted)" }}>RSS</a></li>
+          </ul>
+        </div>
+        <div>
+          <Eyebrow>條款</Eyebrow>
+          <ul style={{ listStyle: "none", padding: 0, margin: "10px 0 0", display: "flex", flexDirection: "column", gap: 6, fontSize: 13 }}>
+            <li><a style={{ color: "var(--muted)" }}>隱私</a></li>
+            <li><a style={{ color: "var(--muted)" }}>使用條款</a></li>
+            <li><a style={{ color: "var(--muted)" }}>聯絡</a></li>
+          </ul>
+        </div>
+      </div>
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "16px 24px", borderTop: "1px solid var(--border)", display: "flex", justifyContent: "space-between", fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: "0.08em", color: "var(--subtle)" }}>
+        <span>© 2026 NTU SOCIOLOGY</span><span>VOL. III · ISSUE OF SPRING 2026</span>
+      </div>
+    </footer>
+  );
+}
+
+// ═══════════════════════════════════════════
+// LISTING · trimmed L2
+// ═══════════════════════════════════════════
+function Listing() {
+  return (
+    <div style={{ background: "var(--bg)", minHeight: "100%" }}>
+      <SiteHeader />
+      <TabNav />
+
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "72px 24px 0" }}>
+
+        {/* Masthead — ② v-line + ③ pulse dot */}
+        <section className="fade-up" style={{ textAlign: "center", paddingBottom: 36, borderBottom: "2px solid var(--fg)" }}>
+          <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.28em", textTransform: "uppercase", color: "var(--subtle)", marginBottom: 18, display: "inline-flex", alignItems: "center", gap: 14, justifyContent: "center" }}>
+            <span>{COURSE.vol}</span>
+            <span className="accent-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)" }} />
+            <span>{COURSE.code} · 113-2</span>
+            <span className="accent-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)" }} />
+            <span>{REPORTS.length} ARTICLES</span>
+          </div>
+          <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 72, fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 1.02, margin: 0 }}>{COURSE.name}</h1>
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "center" }}>
+            <span className="v-line" style={{ width: 64 }} />
+          </div>
+          <p style={{ marginTop: 22, fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 19, lineHeight: 1.55, color: "var(--muted)", maxWidth: "44ch", margin: "22px auto 0", textWrap: "pretty" }}>
+            研究生在學期末撰寫的田野觀察、訪談筆記與個案分析，署名公開、可供引用。
+          </p>
+          <div style={{ marginTop: 24, display: "flex", justifyContent: "center", gap: 32, fontSize: 12.5, color: "var(--muted)", flexWrap: "wrap" }}>
+            <span><Eyebrow>授課教師</Eyebrow><span style={{ marginLeft: 10, fontFamily: "var(--font-serif)", fontWeight: 600, color: "var(--fg)" }}>{COURSE.teacher}</span></span>
+            <span><Eyebrow>學期</Eyebrow><span style={{ marginLeft: 10, fontFamily: "var(--font-mono)", fontSize: 12 }}>{COURSE.termRange}</span></span>
+          </div>
+        </section>
+
+        {/* Articles · ⑦ magazine grid + ⑧ pull quote bar */}
+        <section style={{ padding: "52px 0 0" }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", paddingBottom: 18, borderBottom: "1px solid var(--border)" }}>
+            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em", margin: 0 }}>本期報告</h2>
+            <Eyebrow>{REPORTS.length} 篇</Eyebrow>
+          </div>
+
+          {/* Lead — full width side-by-side */}
+          <article className="card-link fade-up" style={{ display: "grid", gridTemplateColumns: "1.1fr 1fr", gap: 48, padding: "40px 0 44px", borderBottom: "1px solid var(--border)", cursor: "pointer", alignItems: "center" }}>
+            <Cover aspect="4/3" />
+            <div>
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 16 }}>
+                {REPORTS[0].tags.map(t => <Tag key={t}>{t}</Tag>)}
+              </div>
+              <h3 className="card-title" style={{ fontFamily: "var(--font-serif)", fontSize: 40, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15, margin: 0, textWrap: "pretty", color: "var(--fg)" }}>{REPORTS[0].title}</h3>
+              <p style={{ marginTop: 16, fontFamily: "var(--font-serif)", fontSize: 16.5, lineHeight: 1.75, color: "var(--muted)", textWrap: "pretty" }}>{REPORTS[0].summary}</p>
+              <div style={{ marginTop: 22, display: "flex", alignItems: "center", gap: 12, fontSize: 13, color: "var(--subtle)" }}>
+                <Initials name={REPORTS[0].author} size={28} />
+                <span style={{ fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 600, color: "var(--fg)" }}>{REPORTS[0].author}</span>
+                <Dot /><time>{REPORTS[0].date}</time><Dot /><span>{REPORTS[0].reading}</span>
+              </div>
+            </div>
+          </article>
+
+          {/* ⑧ Epigraph · academic pull quote with citation */}
+          <figure className="fade-up" style={{ margin: 0, padding: "64px 0", borderBottom: "1px solid var(--border)", textAlign: "center" }}>
+            <blockquote style={{ margin: 0, maxWidth: 760, marginInline: "auto", fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 28, lineHeight: 1.45, fontWeight: 500, letterSpacing: "-0.015em", color: "var(--fg)", textWrap: "balance" }}>
+              <span style={{ display: "inline-block", marginRight: 4, color: "rgba(58,90,58,0.45)", fontSize: "1.1em", fontFamily: "var(--font-serif)", lineHeight: 1 }}>“</span>
+              The future of AI research will require training models to better understand the science of social relationships.
+              <span style={{ display: "inline-block", marginLeft: 4, color: "rgba(58,90,58,0.45)", fontSize: "1.1em", fontFamily: "var(--font-serif)", lineHeight: 1 }}>”</span>
+            </blockquote>
+            <figcaption style={{ marginTop: 22, maxWidth: 720, marginInline: "auto", fontFamily: "var(--font-sans)", fontSize: 12.5, lineHeight: 1.7, color: "var(--muted)", textWrap: "pretty" }}>
+              C.A. Bail, <em style={{ fontStyle: "italic" }}>Can Generative AI improve social science?</em>,{" "}
+              <span style={{ fontFamily: "var(--font-serif)" }}>Proc. Natl. Acad. Sci. U.S.A.</span>{" "}
+              <strong style={{ fontWeight: 600, color: "var(--fg)" }}>121</strong> (21) e2314021121 (2024).
+              <br />
+              <a href="https://doi.org/10.1073/pnas.2314021121" style={{ marginTop: 4, display: "inline-block", fontFamily: "var(--font-mono)", fontSize: 11.5, color: "var(--accent)", borderBottom: "1px solid rgba(58,90,58,0.35)", paddingBottom: 1 }}>doi.org/10.1073/pnas.2314021121</a>
+            </figcaption>
+          </figure>
+
+          {/* 3-col row · 3 remaining reports · 中間為 text-only-with-pullquote 增加韻律 */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 36, paddingTop: 44 }}>
+            <ArticleCard r={REPORTS[1]} textOnly />
+            <ArticleCard r={REPORTS[2]} />
+            <ArticleCard r={REPORTS[3]} textOnly />
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function ArticleCard({ r, textOnly = false }) {
+  return (
+    <a className="card-link fade-up" style={{ display: "flex", flexDirection: "column", cursor: "pointer" }}>
+      {!textOnly ? <Cover aspect="3/2" /> : (
+        <div style={{ aspectRatio: "3/2", display: "flex", alignItems: "center", justifyContent: "center", border: "1px solid var(--border)", background: "var(--surface)", padding: "20px 24px" }}>
+          <p style={{ margin: 0, fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 17, lineHeight: 1.55, color: "var(--fg)", textWrap: "balance", textAlign: "center" }}>
+            「{r.pullQuote}」
+          </p>
+        </div>
+      )}
+      <div style={{ marginTop: 14, display: "flex", gap: 6, flexWrap: "wrap" }}>
+        {r.tags.slice(0, 2).map(t => <Tag key={t}>{t}</Tag>)}
+      </div>
+      <h3 className="card-title" style={{ marginTop: 10, fontFamily: "var(--font-serif)", fontSize: 21, fontWeight: 600, letterSpacing: "-0.005em", lineHeight: 1.3, textWrap: "pretty", color: "var(--fg)" }}>{r.title}</h3>
+      <p style={{ marginTop: 8, fontFamily: "var(--font-serif)", fontSize: 14.5, lineHeight: 1.7, color: "var(--muted)", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", textWrap: "pretty" }}>{r.summary}</p>
+      <div style={{ marginTop: "auto", paddingTop: 14, borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 10, fontSize: 12.5, color: "var(--subtle)" }}>
+        <Initials name={r.author} size={22} />
+        <span style={{ fontFamily: "var(--font-serif)", fontSize: 13, fontWeight: 600, color: "var(--fg)" }}>{r.author}</span>
+        <span style={{ marginLeft: "auto", fontFamily: "var(--font-mono)", fontSize: 11 }}>{r.date}</span>
+      </div>
+    </a>
+  );
+}
+
+// ═══════════════════════════════════════════
+// READER · trimmed R1 enriched
+// ═══════════════════════════════════════════
+function Reader() {
+  const r = REPORTS[0];
+  const TOC = [
+    { id: "motivation", title: "壹、研究動機與問題意識", level: 2, active: true },
+    { id: "lit-review", title: "貳、文獻回顧", level: 2 },
+    { id: "lit-1", title: "一、平台資本主義與算法控制", level: 3 },
+    { id: "method", title: "參、研究設計", level: 2 },
+    { id: "findings", title: "肆、初步發現", level: 2 },
+  ];
+  return (
+    <div style={{ background: "var(--bg)", minHeight: "100%" }}>
+      {/* Reader header · with progress sliver */}
+      <header style={{ position: "sticky", top: 0, zIndex: 40, background: "rgba(245,242,236,0.95)", backdropFilter: "blur(8px)", borderBottom: "1px solid var(--border)" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "0 24px", height: 56, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <a style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--muted)" }}>← 返回 {COURSE.name}</a>
+          <a style={{ fontFamily: "var(--font-serif)", fontSize: 15, fontWeight: 600 }}>台大社會系</a>
+        </div>
+        <div style={{ height: 2, background: "rgba(205,198,188,0.3)" }}>
+          <div className="grow-bar" style={{ width: "38%", height: "100%", background: "var(--accent)" }} />
+        </div>
+      </header>
+
+      <div style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 24px 80px", display: "grid", gridTemplateColumns: "minmax(0,720px) 200px", columnGap: 64, justifyContent: "center" }}>
+        <article>
+          {/* Masthead — ⑭ subtitle ⑮ tag chips ⑯ meta (no method) */}
+          <header className="fade-up" style={{ marginBottom: 40 }}>
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 12, fontFamily: "var(--font-mono)", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--subtle)", marginBottom: 16 }}>
+              <span>{COURSE.code}</span>
+              <span className="accent-dot" style={{ width: 5, height: 5, borderRadius: "50%", background: "var(--accent)" }} />
+              <span>113-2 · 期末報告</span>
+            </div>
+            <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 58, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.05, margin: 0, textWrap: "balance" }}>{r.title}</h1>
+            <p style={{ marginTop: 22, fontFamily: "var(--font-serif)", fontStyle: "italic", fontSize: 21, color: "var(--muted)", lineHeight: 1.5, maxWidth: "32em", margin: "22px 0 0", textWrap: "pretty" }}>
+              透過深度訪談十二位外送員，重新審視平台算法控制下的勞動主體性。
+            </p>
+
+            <div style={{ marginTop: 20, display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {r.tags.map(t => <Tag key={t} accent>{t}</Tag>)}
+            </div>
+
+            {/* Meta row · author + 發布 + 閱讀 (no method) */}
+            <div style={{ marginTop: 32, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 18, fontSize: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <Initials name={r.author} size={40} />
+                <div>
+                  <div style={{ fontFamily: "var(--font-serif)", fontSize: 15, fontWeight: 600, color: "var(--fg)" }}>{r.author}</div>
+                  <div style={{ fontSize: 12, color: "var(--subtle)" }}>社會學系碩二</div>
+                </div>
+              </div>
+              <div style={{ height: 30, width: 1, background: "var(--border)" }} />
+              <div>
+                <Eyebrow>發布</Eyebrow>
+                <div style={{ marginTop: 4, fontSize: 13.5 }}>{r.date}</div>
+              </div>
+              <div>
+                <Eyebrow>閱讀</Eyebrow>
+                <div style={{ marginTop: 4, fontSize: 13.5 }}>{r.reading}</div>
+              </div>
+            </div>
+            <hr style={{ border: "none", borderTop: "1px solid var(--border-strong)", marginTop: 32 }} />
+          </header>
+
+          {/* ⑰ Cover figure + caption */}
+          <figure style={{ margin: "0 0 36px" }}>
+            <Cover aspect="16/9" label="封面圖" />
+            <figcaption style={{ marginTop: 10, fontFamily: "var(--font-sans)", fontSize: 12, color: "var(--subtle)", textAlign: "center" }}>
+              本研究於 2025–2026 年間進行十二場深度訪談，受訪者涵蓋 Uber Eats、foodpanda 兩平台外送員。
+            </figcaption>
+          </figure>
+
+          {/* Prose body */}
+          <div style={{ fontFamily: "var(--font-serif)", fontSize: 18, lineHeight: 1.9, color: "var(--fg)" }}>
+            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", margin: "0 0 0.6em" }}>壹、研究動機與問題意識</h2>
+            <p style={{ margin: "0 0 1.3em", textWrap: "pretty" }}>隨著平台資本主義的快速擴張，外送員這一職業在台灣都市空間中已成為不可忽視的勞動群體。他們以摩托車穿梭於街道巷弄，在演算法的嚴密監控下完成一筆又一筆訂單，表面上享有「自由工作者」的彈性，實則承受高度不確定性與系統性剝削。</p>
+            <p style={{ margin: "0 0 1.3em", textWrap: "pretty" }}>本研究從勞動社會學與身份認同政治的理論視角出發，嘗試回答以下核心問題：在平台算法的控制機制下，外送勞動者如何理解自身的工作處境？他們是否發展出集體認同？又透過何種日常實踐形式表達對平台體制的抵抗？</p>
+
+            <h2 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", margin: "1.8em 0 0.6em" }}>貳、文獻回顧</h2>
+            <h3 style={{ fontFamily: "var(--font-serif)", fontSize: 21, fontWeight: 600, margin: "1.5em 0 0.5em" }}>一、平台資本主義與算法控制</h3>
+            <p style={{ margin: "0 0 1.3em", textWrap: "pretty" }}>Srnicek（2017）將當代平台企業界定為「以數據為核心商品」的特殊資本形態。Rosenblat（2018）以 Uber 司機為案例，精細描繪算法如何透過資訊不對稱實現對勞動者的間接管控，形成她所稱的「算法管理」。</p>
+
+            <blockquote style={{ position: "relative", margin: "2em 0", padding: "10px 0 10px 28px", borderLeft: "2px solid var(--accent)", fontFamily: "var(--font-serif)", fontSize: 24, fontStyle: "italic", lineHeight: 1.5, color: "var(--fg)" }}>
+              <span style={{ position: "absolute", left: -2, top: -16, fontSize: 60, color: "rgba(58,90,58,0.25)", fontFamily: "var(--font-serif)", lineHeight: 1 }}>"</span>
+              Workers are managed by the algorithm, but the algorithm is managed by the company.
+              <footer style={{ marginTop: 10, fontSize: 13, fontStyle: "normal", color: "var(--subtle)", fontFamily: "var(--font-sans)" }}>— Rosenblat, 2018</footer>
+            </blockquote>
+
+            <p style={{ margin: "0 0 1.3em", textWrap: "pretty" }}>本研究採取詮釋性質性研究取向，以深度訪談為主要資料蒐集方式，輔以田野觀察與線上社群文本分析。受訪者為十二位在台北市從事外送工作六個月以上之勞動者，採立意抽樣，兼顧性別、年齡與平台類型之多元性。</p>
+          </div>
+
+          {/* ⑱ Author bio */}
+          <section style={{ marginTop: 56, padding: "22px 24px", background: "var(--surface)", border: "1px solid var(--border)", borderRadius: 5, display: "flex", gap: 18 }}>
+            <Initials name={r.author} size={52} />
+            <div>
+              <Eyebrow>關於作者</Eyebrow>
+              <div style={{ marginTop: 6, fontFamily: "var(--font-serif)", fontSize: 18, fontWeight: 600 }}>{r.author}</div>
+              <div style={{ fontSize: 12.5, color: "var(--subtle)", marginTop: 2 }}>社會學系碩二</div>
+              <p style={{ margin: "10px 0 0", fontFamily: "var(--font-serif)", fontSize: 14.5, lineHeight: 1.7, color: "var(--muted)", textWrap: "pretty" }}>
+                研究關注勞動社會學、平台經濟與都市青年文化。本文為碩士論文先導研究之一部分。
+              </p>
+            </div>
+          </section>
+
+          {/* Citation card */}
+          <section style={{ marginTop: 24, border: "1px solid var(--border)", background: "var(--surface)", borderRadius: 5, padding: "22px 24px" }}>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+              <Eyebrow>引用格式 · APA</Eyebrow>
+              <button style={{ background: "none", border: "none", fontSize: 13, color: "var(--accent)", textDecoration: "underline", textUnderlineOffset: 3 }}>複製</button>
+            </div>
+            <p style={{ fontFamily: "var(--font-serif)", fontSize: 15, lineHeight: 1.75, margin: 0, textWrap: "pretty" }}>
+              {r.author} (2026). 〈{r.title}〉. 《台大社會系研究筆記》, {COURSE.vol}, {COURSE.code}.
+            </p>
+          </section>
+
+          {/* Prev / Next */}
+          <nav style={{ marginTop: 28, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+            <a style={{ display: "block", border: "1px solid var(--border)", borderRadius: 5, padding: "18px 22px" }}>
+              <Eyebrow>← 較早一篇</Eyebrow>
+              <div style={{ marginTop: 8, fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 600, lineHeight: 1.35, textWrap: "pretty" }}>{REPORTS[1].title}</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: "var(--subtle)" }}>{REPORTS[1].author}</div>
+            </a>
+            <a style={{ display: "block", border: "1px solid var(--border)", borderRadius: 5, padding: "18px 22px", textAlign: "right" }}>
+              <Eyebrow>較新一篇 →</Eyebrow>
+              <div style={{ marginTop: 8, fontFamily: "var(--font-serif)", fontSize: 16, fontWeight: 600, lineHeight: 1.35, textWrap: "pretty" }}>{REPORTS[2].title}</div>
+              <div style={{ marginTop: 6, fontSize: 12, color: "var(--subtle)" }}>{REPORTS[2].author}</div>
+            </a>
+          </nav>
+        </article>
+
+        {/* ⑲ Right rail — TOC + progress + tools (no method facts, no keywords) */}
+        <aside style={{ position: "sticky", top: 80, alignSelf: "start", marginTop: 80, display: "flex", flexDirection: "column", gap: 24 }}>
+          <nav>
+            <Eyebrow>本文目錄</Eyebrow>
+            <ol style={{ listStyle: "none", margin: "12px 0 0", padding: 0, display: "flex", flexDirection: "column", gap: 10, borderTop: "1px solid var(--border)", paddingTop: 12 }}>
+              {TOC.map(h => (
+                <li key={h.id}><a style={{
+                  display: "block", fontSize: h.level === 3 ? 12.5 : 13.5, lineHeight: 1.4,
+                  paddingLeft: h.level === 3 ? 16 : 10, marginLeft: -1,
+                  borderLeft: h.active ? "2px solid var(--accent)" : "2px solid transparent",
+                  color: h.active ? "var(--accent)" : "var(--muted)",
+                  fontWeight: h.active ? 600 : 400,
+                  fontFamily: "var(--font-sans)",
+                }}>{h.title}</a></li>
+              ))}
+            </ol>
+          </nav>
+
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+            <Eyebrow>閱讀進度</Eyebrow>
+            <div style={{ marginTop: 8, display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+              <span style={{ fontFamily: "var(--font-serif)", fontSize: 24, fontWeight: 600, color: "var(--accent)" }}>38<span style={{ fontSize: 14, color: "var(--subtle)", fontWeight: 400 }}>%</span></span>
+              <span style={{ fontSize: 11, color: "var(--subtle)" }}>還 11 分鐘</span>
+            </div>
+          </div>
+
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14, display: "flex", flexDirection: "column", gap: 8 }}>
+            <Eyebrow>工具</Eyebrow>
+            <a style={{ marginTop: 4, fontSize: 13, color: "var(--muted)" }}>複製連結</a>
+            <a style={{ fontSize: 13, color: "var(--muted)" }}>複製引用</a>
+            <a style={{ fontSize: 13, color: "var(--muted)" }}>列印 / PDF</a>
+          </div>
+        </aside>
+      </div>
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="confirmed" title="留下的元素清單">
+        <DCArtboard id="confirmed" label="留下的功能" width={520} height={780}>
+          <div style={{ background: "#fffef9", padding: 40, height: "100%", boxSizing: "border-box", fontFamily: "var(--font-sans)" }}>
+            <Eyebrow>v4 · 你選定的版本</Eyebrow>
+            <h1 style={{ fontFamily: "var(--font-serif)", fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", margin: "10px 0 18px" }}>留下的 11 項</h1>
+            <p style={{ fontFamily: "var(--font-serif)", fontSize: 14, lineHeight: 1.75, color: "var(--muted)", margin: "0 0 20px", textWrap: "pretty" }}>
+              拿掉所有 stat strip / editor's note / method bar / keyword cell / past issues / extra card meta。版面結構縮回 listing 三層（masthead → lead → 金句 → 3-col），reader 兩層（content + right rail）。
+            </p>
+            <H>動態</H>
+            <Tick n="②">Masthead 標題下 v-line 入場縮放</Tick>
+            <Tick n="③">Mono eyebrow 中 accent dot 慢呼吸</Tick>
+            <H>Listing 結構</H>
+            <Tick n="⑦">雜誌式 grid（lead 大卡 + 3-col with 中間 text-only-with-pullquote）</Tick>
+            <Tick n="⑧">中間 pull-quote 橫條</Tick>
+            <Tick n="⑬">三欄 footer · 編輯部感</Tick>
+            <H>Reader 加料</H>
+            <Tick n="⑭">標題下 italic 副標</Tick>
+            <Tick n="⑮">accent 顏色的 tag chips</Tick>
+            <Tick n="⑯">Meta：頭像 + 系所 / 發布 / 閱讀（無方法）</Tick>
+            <Tick n="⑰">Cover figure + sans caption</Tick>
+            <Tick n="⑱">文末 作者 bio 卡</Tick>
+            <Tick n="⑲">Right rail · 只留工具列（複製連結 / 引用 / PDF）</Tick>
+          </div>
+        </DCArtboard>
+      </DCSection>
+      <DCSection id="listing" title="Course listing · L2 trimmed">
+        <DCArtboard id="listing" label="Desktop · 1440" width={1440} height={2200}><Listing /></DCArtboard>
+      </DCSection>
+      <DCSection id="reader" title="Report reader · R1 trimmed">
+        <DCArtboard id="reader" label="Desktop · 1440" width={1440} height={2400}><Reader /></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+function H({ children }) {
+  return <div style={{ marginTop: 14, marginBottom: 6, fontFamily: "var(--font-serif)", fontSize: 14, fontWeight: 600, borderBottom: "1px solid var(--border)", paddingBottom: 4 }}>{children}</div>;
+}
+function Tick({ n, children }) {
+  return (
+    <div style={{ marginTop: 6, display: "grid", gridTemplateColumns: "28px 1fr", gap: 8, alignItems: "baseline" }}>
+      <span style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>{n}</span>
+      <span style={{ fontFamily: "var(--font-serif)", fontSize: 13.5, color: "var(--fg)", lineHeight: 1.6 }}>{children}</span>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

@@ -65,6 +65,7 @@ AGENTS.md
 claude-design-html/
 
 # Terraform — provider cache and ephemeral plan files
+infra/.terraform/
 infra/deployment/.terraform/
 # infra/deployment/.terraform.lock.hcl is intentionally tracked (provider version pin)
 infra/deployment/terraform.tfstate

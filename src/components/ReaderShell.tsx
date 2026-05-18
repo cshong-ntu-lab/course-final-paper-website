@@ -34,6 +34,9 @@ interface ReaderShellProps {
   toc: TocEntry[];
   prev: AdjacentReport | null;
   next: AdjacentReport | null;
+  // Preview-mode options
+  basePath?: string; // default "/c"
+  previewMode?: boolean; // shows draft badge, hides citation, adjusts sticky offset
 }
 
 function formatDate(iso: string): string {
@@ -53,6 +56,8 @@ export function ReaderShell({
   toc,
   prev,
   next,
+  basePath = "/c",
+  previewMode = false,
 }: ReaderShellProps) {
   const progress = useScrollProgress();
   const [activeId, setActiveId] = useState<string>("");
@@ -90,20 +95,33 @@ export function ReaderShell({
     return () => observer.disconnect();
   }, [toc]);
 
+  // sticky top offset: preview pages sit below a PreviewBanner
+  const stickyTop = previewMode ? "top-8" : "top-0";
+  const tocStickyTop = previewMode ? "top-[88px]" : "top-20";
+
   return (
     <div className="bg-background min-h-screen">
       {/* Sticky reader header */}
-      <header className="border-border bg-background/95 sticky top-0 z-40 border-b backdrop-blur">
+      <header
+        className={`border-border bg-background/95 sticky ${stickyTop} z-40 border-b backdrop-blur`}
+      >
         <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-6">
           <Link
-            href={`/c/${courseSlug}`}
+            href={`${basePath}/${courseSlug}`}
             className="text-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
           >
             ← 返回 {courseName}
           </Link>
-          <Link href="/" className="font-serif text-sm font-semibold tracking-tight">
-            台大社會系
-          </Link>
+          <div className="flex items-center gap-3">
+            {previewMode && (
+              <span className="rounded border border-warning/40 bg-warning-soft px-2 py-0.5 font-mono text-2xs text-warning-fg">
+                草稿
+              </span>
+            )}
+            <Link href="/" className="font-serif text-sm font-semibold tracking-tight">
+              台大社會系
+            </Link>
+          </div>
         </div>
         {/* Progress sliver */}
         <div className="bg-border-strong/30 h-[2px]">
@@ -166,7 +184,7 @@ export function ReaderShell({
               <div className="border-border h-[30px] w-px" />
               <div>
                 <div className="text-subtle font-mono text-[11px] uppercase tracking-[0.14em]">
-                  發布
+                  {previewMode ? "更新" : "發布"}
                 </div>
                 <div className="text-foreground mt-1 text-[13.5px]">
                   {formatDate(snap.publishedAt)}
@@ -224,28 +242,32 @@ export function ReaderShell({
             </section>
           )}
 
-          {/* Citation card */}
-          <section className="border-border bg-surface mt-6 rounded-[5px] border px-6 py-[22px]">
-            <div className="mb-3 flex items-baseline justify-between">
-              <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                引用格式 · APA
+          {/* Citation card — hidden in preview mode (draft is not citable) */}
+          {!previewMode && (
+            <section className="border-border bg-surface mt-6 rounded-[5px] border px-6 py-[22px]">
+              <div className="mb-3 flex items-baseline justify-between">
+                <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
+                  引用格式 · APA
+                </p>
+                <button
+                  onClick={copyCitation}
+                  className="text-accent border-0 bg-transparent text-[13px] underline underline-offset-[3px]"
+                >
+                  複製
+                </button>
+              </div>
+              <p className="m-0 font-serif text-[15px] leading-[1.75] text-pretty">
+                {citationText}
               </p>
-              <button
-                onClick={copyCitation}
-                className="text-accent border-0 bg-transparent text-[13px] underline underline-offset-[3px]"
-              >
-                複製
-              </button>
-            </div>
-            <p className="m-0 font-serif text-[15px] leading-[1.75] text-pretty">{citationText}</p>
-          </section>
+            </section>
+          )}
 
-          {/* Prev / Next nav */}
-          {(prev || next) && (
+          {/* Prev / Next nav — not shown in preview (drafts have no adjacent order) */}
+          {!previewMode && (prev || next) && (
             <nav className="mt-7 grid grid-cols-1 gap-3.5 md:grid-cols-2">
               {prev && (
                 <Link
-                  href={`/c/${courseSlug}/r/${prev.slug}`}
+                  href={`${basePath}/${courseSlug}/r/${prev.slug}`}
                   className="border-border hover:border-accent block rounded-[5px] border px-[22px] py-[18px] transition-colors"
                 >
                   <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
@@ -259,7 +281,7 @@ export function ReaderShell({
               )}
               {next && (
                 <Link
-                  href={`/c/${courseSlug}/r/${next.slug}`}
+                  href={`${basePath}/${courseSlug}/r/${next.slug}`}
                   className="border-border hover:border-accent block rounded-[5px] border px-[22px] py-[18px] text-right transition-colors"
                 >
                   <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
@@ -276,7 +298,7 @@ export function ReaderShell({
 
           {/* Back link */}
           <Link
-            href={`/c/${courseSlug}`}
+            href={`${basePath}/${courseSlug}`}
             className="border-accent/40 text-accent hover:border-accent mt-7 inline-flex items-center gap-1.5 border-b pb-[1px] text-[14px]"
           >
             ← 返回 {courseName} 所有報告
@@ -285,7 +307,7 @@ export function ReaderShell({
 
         {/* Right rail */}
         {toc.length > 0 && (
-          <aside className="sticky top-20 mt-20 hidden h-fit flex-col gap-6 lg:flex">
+          <aside className={`sticky ${tocStickyTop} mt-20 hidden h-fit flex-col gap-6 lg:flex`}>
             <nav aria-label="目錄">
               <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
                 本文目錄
@@ -333,12 +355,14 @@ export function ReaderShell({
               >
                 複製連結
               </button>
-              <button
-                onClick={copyCitation}
-                className="text-muted hover:text-accent text-left text-[13px] transition-colors"
-              >
-                複製引用
-              </button>
+              {!previewMode && (
+                <button
+                  onClick={copyCitation}
+                  className="text-muted hover:text-accent text-left text-[13px] transition-colors"
+                >
+                  複製引用
+                </button>
+              )}
               <button
                 onClick={print}
                 className="text-muted hover:text-accent text-left text-[13px] transition-colors"

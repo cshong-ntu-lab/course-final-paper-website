@@ -19,6 +19,8 @@ export interface ReportListItemProps {
   report: ReportItem;
   courseSlug: string;
   variant?: "lead" | "default" | "text-only";
+  basePath?: string; // default "/c"
+  badgeLabel?: string; // optional status badge shown in the card footer
 }
 
 function formatDate(iso: string): string {
@@ -48,7 +50,7 @@ function Avatar({ name, size = 28 }: { name: string; size?: number }) {
   );
 }
 
-function CardBody({ report }: { report: ReportItem }) {
+function CardBody({ report, badgeLabel }: { report: ReportItem; badgeLabel?: string }) {
   return (
     <>
       <div className="mt-3.5 flex flex-wrap gap-1.5">
@@ -63,14 +65,26 @@ function CardBody({ report }: { report: ReportItem }) {
       <div className="border-border text-subtle mt-auto flex items-center gap-2.5 border-t pt-3.5 text-[12.5px]">
         <Avatar name={report.author} size={22} />
         <span className="text-foreground font-serif text-[13px] font-semibold">{report.author}</span>
-        <span className="font-mono ml-auto text-[11px]">{formatDate(report.publishedAt)}</span>
+        {badgeLabel ? (
+          <span className="ml-auto rounded border border-warning/40 bg-warning-soft px-1.5 py-0.5 font-mono text-[10px] text-warning-fg">
+            {badgeLabel}
+          </span>
+        ) : (
+          <span className="font-mono ml-auto text-[11px]">{formatDate(report.publishedAt)}</span>
+        )}
       </div>
     </>
   );
 }
 
-export function ReportListItem({ report, courseSlug, variant = "default" }: ReportListItemProps) {
-  const href = `/c/${courseSlug}/r/${report.slug}`;
+export function ReportListItem({
+  report,
+  courseSlug,
+  variant = "default",
+  basePath = "/c",
+  badgeLabel,
+}: ReportListItemProps) {
+  const href = `${basePath}/${courseSlug}/r/${report.slug}`;
 
   // ─── Lead · full-width side-by-side ─────────────────────────────────────────
   if (variant === "lead") {
@@ -106,8 +120,16 @@ export function ReportListItem({ report, courseSlug, variant = "default" }: Repo
           <div className="text-subtle mt-5 flex items-center gap-3 text-[13px]">
             <Avatar name={report.author} size={28} />
             <span className="text-foreground font-serif text-[14px] font-semibold">{report.author}</span>
-            <span>·</span>
-            <time dateTime={report.publishedAt}>{formatDate(report.publishedAt)}</time>
+            {badgeLabel ? (
+              <span className="rounded border border-warning/40 bg-warning-soft px-1.5 py-0.5 font-mono text-[10px] text-warning-fg">
+                {badgeLabel}
+              </span>
+            ) : (
+              <>
+                <span>·</span>
+                <time dateTime={report.publishedAt}>{formatDate(report.publishedAt)}</time>
+              </>
+            )}
             <span>·</span>
             <span>{report.readingMinutes} 分鐘閱讀</span>
           </div>
@@ -125,7 +147,7 @@ export function ReportListItem({ report, courseSlug, variant = "default" }: Repo
             {report.pullQuote ? `「${report.pullQuote}」` : `「${report.summary.slice(0, 60)}…」`}
           </p>
         </div>
-        <CardBody report={report} />
+        <CardBody report={report} badgeLabel={badgeLabel} />
       </Link>
     );
   }
@@ -145,7 +167,7 @@ export function ReportListItem({ report, courseSlug, variant = "default" }: Repo
           <div className="aspect-[3/2] w-full bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.04)_0_6px,transparent_6px_12px)]" />
         )}
       </div>
-      <CardBody report={report} />
+      <CardBody report={report} badgeLabel={badgeLabel} />
     </Link>
   );
 }

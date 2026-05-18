@@ -13,7 +13,7 @@ import {
 } from "@/lib/server/firestore";
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
-import { ReaderShell } from "./ReaderShell";
+import { ReaderShell } from "@/components/ReaderShell";
 
 export const revalidate = 60;
 
