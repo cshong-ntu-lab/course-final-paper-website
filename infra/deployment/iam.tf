@@ -27,6 +27,7 @@ locals {
     "roles/iam.serviceAccountAdmin",          # read/write IAM bindings on service accounts
     "roles/cloudscheduler.admin",             # read/write Cloud Scheduler jobs (firestore backup)
     "roles/firebaserules.admin",              # deploy / validate Firestore security rules via firebase-tools
+    "roles/firebasestorage.admin",           # deploy Firebase Storage security rules via firebase-tools
   ]
 }
 
