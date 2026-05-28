@@ -33,8 +33,12 @@ availableSecrets:
 
 steps:
   # ── 1. Build image ───────────────────────────────────────────────────────
+  # entrypoint:bash is required so that $$VAR (Cloud Build → $VAR → bash env
+  # expansion) injects the actual secret values as Docker build-args.
+  # Without bash, Docker receives the literal string "$FIREBASE_PROJECT_ID".
   - name: gcr.io/cloud-builders/docker
     id: build
+    entrypoint: bash
     secretEnv:
       - FIREBASE_API_KEY
       - FIREBASE_AUTH_DOMAIN
@@ -43,16 +47,18 @@ steps:
       - FIREBASE_MESSAGING_SENDER_ID
       - FIREBASE_APP_ID
     args:
-      - build
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_API_KEY=$$FIREBASE_API_KEY"
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$$FIREBASE_AUTH_DOMAIN"
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_PROJECT_ID=$$FIREBASE_PROJECT_ID"
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$$FIREBASE_STORAGE_BUCKET"
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$$FIREBASE_MESSAGING_SENDER_ID"
-      - "--build-arg=NEXT_PUBLIC_FIREBASE_APP_ID=$$FIREBASE_APP_ID"
-      - "-t=${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA"
-      - "-t=${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:latest"
-      - "."
+      - -c
+      - |
+        docker build \
+          --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=$$FIREBASE_API_KEY \
+          --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=$$FIREBASE_AUTH_DOMAIN \
+          --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=$$FIREBASE_PROJECT_ID \
+          --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=$$FIREBASE_STORAGE_BUCKET \
+          --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$$FIREBASE_MESSAGING_SENDER_ID \
+          --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=$$FIREBASE_APP_ID \
+          -t ${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA \
+          -t ${_REGISTRY}/$PROJECT_ID/${_REPO}/${_IMAGE}:latest \
+          .
 
   # ── 2. Push image ────────────────────────────────────────────────────────
   - name: gcr.io/cloud-builders/docker
