@@ -68,19 +68,23 @@ const components: Components = {
   // both do this consistently so there is no hydration mismatch.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   img: ({ src, alt, title }: any) => {
-    const imgEl = (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src ?? ""} alt={alt ?? ""} {...(title ? { title } : {})} />
-    );
     if (title) {
       return (
-        <figure>
-          {imgEl}
+        <figure style={{ width: "85%", margin: "0 auto" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={src ?? ""} alt={alt ?? ""} title={title} style={{ width: "100%" }} />
           <figcaption>{title}</figcaption>
         </figure>
       );
     }
-    return imgEl;
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={src ?? ""}
+        alt={alt ?? ""}
+        style={{ width: "85%", margin: "0 auto", display: "block" }}
+      />
+    );
   },
   // @ts-expect-error react-markdown's Components map doesn't know our custom tags
   "youtube-embed": (props) => (
