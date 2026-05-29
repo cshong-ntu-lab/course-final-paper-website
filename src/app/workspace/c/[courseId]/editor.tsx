@@ -306,6 +306,16 @@ export function ReportEditor({
 
   // --- editor area ref for paste / drag-drop / cursor-insert -----------
   const editorContainerRef = React.useRef<HTMLDivElement>(null);
+  const previewPanelRef = React.useRef<HTMLDivElement>(null);
+
+  // Pin body scroll so the editor viewport is always fixed.
+  React.useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   // Drop indicator state. When the user drags an image over the editor pane,
   // we compute the line they're hovering over and show a horizontal accent
@@ -502,7 +512,11 @@ export function ReportEditor({
     const res = await coverUpload.upload(file);
     if (res) {
       setCoverImageUrl(res.downloadUrl);
+      // Immediately flush so the URL reaches Firestore before any navigation.
+      // queueAutosave alone has a 30s debounce that would lose the URL if the
+      // user clicks to the preview page right after uploading.
       queueAutosave({ coverImageUrl: res.downloadUrl });
+      void flush();
       refreshUploads();
     }
   };
@@ -510,6 +524,7 @@ export function ReportEditor({
   const handleCoverImageRemove = () => {
     setCoverImageUrl(null);
     queueAutosave({ coverImageUrl: null });
+    void flush();
   };
 
   const openAuthorSearch = async () => {
@@ -590,7 +605,7 @@ export function ReportEditor({
   const effectiveSaveState: SaveState = !online ? "offline" : save.state;
 
   return (
-    <div id="main" className="bg-background flex h-screen flex-col">
+    <div id="main" className="bg-background flex h-screen flex-col overflow-hidden">
       {/* Top bar */}
       <header className="border-border bg-background flex h-14 shrink-0 items-center justify-between gap-4 border-b px-5">
         <div className="flex min-w-0 items-center gap-3">
@@ -652,6 +667,20 @@ export function ReportEditor({
                 "relative min-w-0",
                 mode === "both" ? "border-border flex-1 border-r" : "flex-1",
               )}
+              onPointerEnter={() => {
+                const ta = editorContainerRef.current?.querySelector("textarea");
+                ta?.focus({ preventScroll: true });
+              }}
+              onWheel={(e) => {
+                // Forward wheel events to the MDEditor's scrollable content area
+                // so hovering over the toolbar still scrolls the editor body.
+                const content = editorContainerRef.current?.querySelector(
+                  ".w-md-editor-content",
+                ) as HTMLElement | null;
+                if (content && !content.contains(e.target as Node)) {
+                  content.scrollTop += e.deltaY;
+                }
+              }}
               onPaste={(e) => {
                 const imageItems = Array.from(e.clipboardData?.items ?? []).filter((it) =>
                   it.type.startsWith("image/"),
@@ -683,7 +712,12 @@ export function ReportEditor({
             </div>
           )}
           {(mode === "preview" || mode === "both") && (
-            <div className="bg-background min-w-0 flex-1 overflow-auto">
+            <div
+              ref={previewPanelRef}
+              tabIndex={-1}
+              className="bg-background min-w-0 flex-1 overflow-auto focus:outline-none"
+              onPointerEnter={() => previewPanelRef.current?.focus({ preventScroll: true })}
+            >
               <div className="mx-auto max-w-[680px] px-10 py-12">
                 <MarkdownRenderer content={draft} />
               </div>

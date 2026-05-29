@@ -34,6 +34,7 @@ interface ReaderShellProps {
     tags?: string[];
     authorBio?: string;
     authorAffiliation?: string;
+    authorAvatarUrl?: string | null;
     coverCaption?: string;
     coAuthors?: SnapCoAuthor[];
   };
@@ -177,9 +178,18 @@ export function ReaderShell({
             <div className="mt-8 flex flex-wrap items-center gap-[18px] text-sm">
               {/* Primary author */}
               <div className="flex items-center gap-3">
-                <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
-                  {(snap.author || "？")[0]}
-                </span>
+                {snap.authorAvatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={snap.authorAvatarUrl}
+                    alt=""
+                    className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
+                    {(snap.author || "？")[0]}
+                  </span>
+                )}
                 <div>
                   <div className="text-foreground font-serif text-[15px] font-semibold">
                     {snap.author || "（未署名）"}
@@ -244,9 +254,21 @@ export function ReaderShell({
 
           {/* Author bio cards */}
           {(() => {
-            const allAuthors = [
+            const allAuthors: {
+              name: string;
+              title?: string;
+              bio?: string;
+              avatarUrl?: string | null;
+            }[] = [
               ...(snap.authorBio || snap.authorAffiliation
-                ? [{ name: snap.author, title: snap.authorAffiliation, bio: snap.authorBio }]
+                ? [
+                    {
+                      name: snap.author,
+                      title: snap.authorAffiliation,
+                      bio: snap.authorBio,
+                      avatarUrl: snap.authorAvatarUrl,
+                    },
+                  ]
                 : []),
               ...(snap.coAuthors?.filter((ca) => ca.title || ca.bio) ?? []),
             ];
@@ -258,9 +280,18 @@ export function ReaderShell({
                     key={`${a.name}-${i}`}
                     className="border-border bg-surface flex gap-[18px] rounded-[5px] border px-6 py-[22px]"
                   >
-                    <span className="bg-accent text-background font-serif inline-grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-[24px] font-semibold">
-                      {(a.name || "？")[0]}
-                    </span>
+                    {a.avatarUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={a.avatarUrl}
+                        alt=""
+                        className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
+                      />
+                    ) : (
+                      <span className="bg-accent text-background font-serif inline-grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-[24px] font-semibold">
+                        {(a.name || "？")[0]}
+                      </span>
+                    )}
                     <div>
                       <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
                         關於作者

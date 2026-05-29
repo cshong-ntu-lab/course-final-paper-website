@@ -10,6 +10,8 @@ import {
   getCourseBySlug,
   getAdjacentPublishedReports,
   getLatestSnapshot,
+  getReportDoc,
+  getUsersByUids,
 } from "@/lib/server/firestore";
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
@@ -56,6 +58,11 @@ export default async function ReportPage({ params }: Props) {
 
   const adjacent = await getAdjacentPublishedReports(course.id, publishedMs);
 
+  const reportDoc = await getReportDoc(rid);
+  const authorUid = reportDoc?.authorUid ?? reportDoc?.uid;
+  const authorProfiles = authorUid ? await getUsersByUids([authorUid]) : [];
+  const authorAvatarUrl = authorProfiles[0]?.avatarUrl ?? null;
+
   return (
     <>
       <ReaderShell
@@ -73,6 +80,7 @@ export default async function ReportPage({ params }: Props) {
           tags: snap.tags,
           authorBio: snap.authorBio,
           authorAffiliation: snap.authorAffiliation,
+          authorAvatarUrl,
           coverCaption: snap.coverCaption,
           coAuthors: snap.coAuthors,
         }}

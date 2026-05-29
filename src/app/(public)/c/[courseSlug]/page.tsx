@@ -6,10 +6,10 @@ import { notFound } from "next/navigation";
 
 import {
   getCourseBySlug,
-  getCoursesWithPublishedReports,
   getPublishedReportsByCourse,
+  getUsersByUids,
 } from "@/lib/server/firestore";
-import { courseSlug as toCourseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
+import { estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { Footer } from "@/components/Footer";
 import { ReportListItem } from "@/components/public/ReportListItem";
 
@@ -32,14 +32,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CoursePage({ params }: Props) {
   const { courseSlug: slug } = await params;
 
-  const [course, allCourses] = await Promise.all([
-    getCourseBySlug(slug),
-    getCoursesWithPublishedReports(),
-  ]);
-
+  const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
   const reports = await getPublishedReportsByCourse(course.id);
+
+  const termCode = course.termRange ?? `${course.year}-${course.semester}`;
+  const courseTag = `${course.year}-${course.semester} ${course.name}`;
+
+  const authorUids = [...new Set(reports.map((r) => r.authorUid ?? r.uid))];
+  const authorProfiles = await getUsersByUids(authorUids);
+  const profileMap = new Map(authorProfiles.map((u) => [u.uid, u]));
 
   const reportItems = reports.map((r) => ({
     slug: reportSlug(r.uid),
@@ -53,11 +56,11 @@ export default async function CoursePage({ params }: Props) {
     pullQuote: r.pullQuote,
     subtitle: r.subtitle,
     authorAffiliation: r.authorAffiliation,
+    authorAvatarUrl: profileMap.get(r.authorUid ?? r.uid)?.avatarUrl ?? null,
+    courseTag,
   }));
 
   const eyebrowCode = course.courseNo ?? course.code;
-  const rocYear = course.year - 1911;
-  const termCode = course.termRange ?? `${rocYear}-${course.semester}`;
 
   return (
     <div className="bg-background min-h-screen">
@@ -70,36 +73,6 @@ export default async function CoursePage({ params }: Props) {
           </Link>
         </div>
       </header>
-
-      {/* Course tab nav */}
-      <nav aria-label="課程" className="border-border border-b bg-white">
-        <div className="mx-auto max-w-5xl px-6">
-          <ul className="scrollbar-thin -mb-px flex gap-7 overflow-x-auto">
-            {allCourses.map((c) => {
-              const cSlug = toCourseSlug(c);
-              const active = cSlug === slug;
-              return (
-                <li key={c.id}>
-                  <Link
-                    href={`/c/${cSlug}`}
-                    className={[
-                      "block whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors",
-                      active
-                        ? "border-accent text-foreground"
-                        : "border-transparent text-muted hover:border-border-strong hover:text-foreground",
-                    ].join(" ")}
-                  >
-                    <span className="text-subtle mr-1.5 font-mono text-[0.65rem] tracking-[0.06em]">
-                      {c.courseNo ?? c.code}
-                    </span>
-                    {c.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </nav>
 
       <main id="main" className="mx-auto max-w-[1180px] px-6 pt-[72px]">
         {/* Course header */}
