@@ -63,6 +63,7 @@ export default async function PreviewReportPage({ params }: Props) {
           tags: report.tags,
           authorBio: primaryProfile?.bio,
           authorAffiliation: primaryProfile?.title,
+          authorAvatarUrl: primaryProfile?.avatarUrl ?? null,
           coverCaption: report.coverCaption,
           coAuthors: enrichedCoAuthors.length > 0 ? enrichedCoAuthors : undefined,
         }}

@@ -6,8 +6,8 @@ import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/Footer";
 import { ReportListItem } from "@/components/public/ReportListItem";
-import { getAllCourses, getAllReportsByCourse, getCourseBySlug } from "@/lib/server/firestore";
-import { courseSlug as toCourseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
+import { getAllReportsByCourse, getCourseBySlug, getUsersByUids } from "@/lib/server/firestore";
+import { estimateReadingMinutes, reportSlug } from "@/lib/slug";
 
 export const dynamic = "force-dynamic";
 
@@ -18,10 +18,17 @@ interface Props {
 export default async function PreviewCoursePage({ params }: Props) {
   const { courseSlug: slug } = await params;
 
-  const [course, allCourses] = await Promise.all([getCourseBySlug(slug), getAllCourses()]);
+  const course = await getCourseBySlug(slug);
   if (!course) notFound();
 
   const reports = await getAllReportsByCourse(course.id);
+
+  const termCode = course.termRange ?? `${course.year}-${course.semester}`;
+  const courseTag = `${course.year}-${course.semester} ${course.name}`;
+
+  const authorUids = [...new Set(reports.map((r) => r.authorUid ?? r.uid))];
+  const authorProfiles = await getUsersByUids(authorUids);
+  const profileMap = new Map(authorProfiles.map((u) => [u.uid, u]));
 
   const reportItems = reports.map((r) => {
     const updatedTs = r.updatedAt as unknown as { toDate?: () => Date } | null;
@@ -43,13 +50,13 @@ export default async function PreviewCoursePage({ params }: Props) {
       pullQuote: r.pullQuote,
       subtitle: r.subtitle,
       authorAffiliation: r.authorAffiliation,
+      authorAvatarUrl: profileMap.get(r.authorUid ?? r.uid)?.avatarUrl ?? null,
+      courseTag,
       badgeLabel: status,
     };
   });
 
   const eyebrowCode = course.courseNo ?? course.code;
-  const rocYear = course.year - 1911;
-  const termCode = course.termRange ?? `${rocYear}-${course.semester}`;
 
   return (
     <div className="bg-background min-h-screen">
@@ -60,38 +67,14 @@ export default async function PreviewCoursePage({ params }: Props) {
             <span className="font-serif text-xl font-semibold tracking-tight">台大社會系</span>
             <span className="text-subtle font-mono text-[0.65rem] tracking-[0.06em]">NTU SOC</span>
           </Link>
+          <Link
+            href="/workspace"
+            className="border-border text-muted hover:border-accent hover:text-accent rounded border px-3 py-1.5 font-mono text-[11px] transition-colors"
+          >
+            ← 工作區
+          </Link>
         </div>
       </header>
-
-      {/* Course tab nav */}
-      <nav aria-label="課程" className="border-border border-b bg-white">
-        <div className="mx-auto max-w-5xl px-6">
-          <ul className="scrollbar-thin -mb-px flex gap-7 overflow-x-auto">
-            {allCourses.map((c) => {
-              const cSlug = toCourseSlug(c);
-              const active = cSlug === slug;
-              return (
-                <li key={c.id}>
-                  <Link
-                    href={`/preview/c/${cSlug}`}
-                    className={[
-                      "block whitespace-nowrap border-b-2 py-4 text-sm font-medium transition-colors",
-                      active
-                        ? "border-accent text-foreground"
-                        : "border-transparent text-muted hover:border-border-strong hover:text-foreground",
-                    ].join(" ")}
-                  >
-                    <span className="text-subtle mr-1.5 font-mono text-[0.65rem] tracking-[0.06em]">
-                      {c.courseNo ?? c.code}
-                    </span>
-                    {c.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </nav>
 
       <main id="main" className="mx-auto max-w-[1180px] px-6 pt-[72px]">
         {/* Course header */}

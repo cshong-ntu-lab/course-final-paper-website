@@ -13,6 +13,8 @@ export interface ReportItem {
   pullQuote?: string;
   subtitle?: string;
   authorAffiliation?: string;
+  authorAvatarUrl?: string | null;
+  courseTag?: string; // e.g. "114-2 計算社會學"
 }
 
 export interface ReportListItemProps {
@@ -39,7 +41,34 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Avatar({ name, size = 28 }: { name: string; size?: number }) {
+function CourseTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="border-accent/35 bg-accent/8 text-accent inline-flex items-center rounded-[2px] border px-2 py-[2px] font-mono text-[10px] tracking-[0.04em]">
+      {children}
+    </span>
+  );
+}
+
+function Avatar({
+  name,
+  avatarUrl,
+  size = 28,
+}: {
+  name: string;
+  avatarUrl?: string | null;
+  size?: number;
+}) {
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt=""
+        className="shrink-0 rounded-full object-cover"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
   return (
     <span
       className="bg-accent text-background font-serif font-semibold inline-grid shrink-0 place-items-center rounded-full"
@@ -54,6 +83,7 @@ function CardBody({ report, badgeLabel }: { report: ReportItem; badgeLabel?: str
   return (
     <>
       <div className="mt-3.5 flex flex-wrap gap-1.5">
+        {report.courseTag && <CourseTag>{report.courseTag}</CourseTag>}
         {report.tags?.slice(0, 2).map((t) => <Tag key={t}>{t}</Tag>)}
       </div>
       <h3 className="text-foreground group-hover:text-accent mt-2.5 font-serif text-[21px] font-semibold leading-[1.3] tracking-[-0.005em] text-pretty transition-colors">
@@ -63,7 +93,7 @@ function CardBody({ report, badgeLabel }: { report: ReportItem; badgeLabel?: str
         {report.summary}
       </p>
       <div className="border-border text-subtle mt-auto flex items-center gap-2.5 border-t pt-3.5 text-[12.5px]">
-        <Avatar name={report.author} size={22} />
+        <Avatar name={report.author} avatarUrl={report.authorAvatarUrl} size={22} />
         <span className="text-foreground font-serif text-[13px] font-semibold">{report.author}</span>
         {badgeLabel ? (
           <span className="ml-auto rounded border border-warning/40 bg-warning-soft px-1.5 py-0.5 font-mono text-[10px] text-warning-fg">
@@ -106,9 +136,10 @@ export function ReportListItem({
           )}
         </div>
         <div>
-          {report.tags && report.tags.length > 0 && (
+          {(report.courseTag || (report.tags && report.tags.length > 0)) && (
             <div className="mb-4 flex flex-wrap gap-1.5">
-              {report.tags.map((t) => <Tag key={t}>{t}</Tag>)}
+              {report.courseTag && <CourseTag>{report.courseTag}</CourseTag>}
+              {report.tags?.map((t) => <Tag key={t}>{t}</Tag>)}
             </div>
           )}
           <h3 className="text-foreground group-hover:text-accent font-serif text-[40px] font-semibold leading-[1.15] tracking-[-0.025em] text-pretty transition-colors">
@@ -118,7 +149,7 @@ export function ReportListItem({
             {report.summary}
           </p>
           <div className="text-subtle mt-5 flex items-center gap-3 text-[13px]">
-            <Avatar name={report.author} size={28} />
+            <Avatar name={report.author} avatarUrl={report.authorAvatarUrl} size={28} />
             <span className="text-foreground font-serif text-[14px] font-semibold">{report.author}</span>
             {badgeLabel ? (
               <span className="rounded border border-warning/40 bg-warning-soft px-1.5 py-0.5 font-mono text-[10px] text-warning-fg">
