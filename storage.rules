@@ -18,7 +18,11 @@ service firebase.storage {
         if request.auth != null
         && request.auth.uid == uid
         && request.resource.size < 10 * 1024 * 1024
-        && request.resource.contentType.matches('image/(png|jpeg|webp|gif|svg\\+xml)');
+        && (
+          request.resource.contentType.matches('image/(png|jpeg|webp|gif|svg\\+xml)')
+          || request.resource.contentType == 'text/csv'
+          || request.resource.contentType == 'application/json'
+        );
     }
 
     // User avatar images — each user can only write under their own uid.
