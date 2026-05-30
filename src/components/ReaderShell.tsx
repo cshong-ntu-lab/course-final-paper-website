@@ -40,6 +40,7 @@ interface ReaderShellProps {
   };
   readingMins: number;
   toc: TocEntry[];
+  courseTag?: string; // e.g. "114-2 計算社會學"
   prev: AdjacentReport | null;
   next: AdjacentReport | null;
   // Preview-mode options
@@ -59,6 +60,7 @@ export function ReaderShell({
   courseSlug,
   courseName,
   courseCode,
+  courseTag,
   snap,
   readingMins,
   toc,
@@ -161,9 +163,14 @@ export function ReaderShell({
               </p>
             )}
 
-            {snap.tags && snap.tags.length > 0 && (
+            {(courseTag || (snap.tags && snap.tags.length > 0)) && (
               <div className="mt-5 flex flex-wrap gap-1.5">
-                {snap.tags.map((t) => (
+                {courseTag && (
+                  <span className="border-accent/35 bg-accent/[0.08] text-accent inline-flex items-center rounded-[2px] border px-2 py-[2px] font-mono text-[10px] tracking-[0.04em]">
+                    {courseTag}
+                  </span>
+                )}
+                {snap.tags?.map((t) => (
                   <span
                     key={t}
                     className="border-accent/30 bg-accent/[0.08] text-accent hover:bg-accent hover:text-background inline-flex items-center rounded-[2px] border px-2 py-[2px] text-[11px] tracking-[0.02em] transition-colors"

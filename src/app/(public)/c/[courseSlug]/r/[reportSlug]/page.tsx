@@ -69,6 +69,7 @@ export default async function ReportPage({ params }: Props) {
         courseSlug={courseSlug}
         courseName={course.name}
         courseCode={course.courseNo ?? course.code}
+        courseTag={`${course.year}-${course.semester} ${course.name}`}
         snap={{
           title: snap.title || "（無標題）",
           author: snap.author || "（未署名）",
