@@ -77,8 +77,6 @@ export default async function EditorPage({ params }: Params) {
     // v4 extended fields
     subtitle: report.subtitle ?? "",
     tags: (report.tags ?? []).join(", "),
-    pullQuote: report.pullQuote ?? "",
-    coverCaption: report.coverCaption ?? "",
     coAuthors: report.coAuthors ?? [],
     // Default to the report owner so the chip shows immediately on first edit.
     authorUid: report.authorUid ?? user.uid,

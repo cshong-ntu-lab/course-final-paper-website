@@ -248,11 +248,6 @@ export function ReaderShell({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={snap.coverImageUrl} alt="" className="aspect-video w-full object-cover" />
               </div>
-              {snap.coverCaption && (
-                <figcaption className="text-subtle mt-2.5 text-center font-sans text-[12px]">
-                  {snap.coverCaption}
-                </figcaption>
-              )}
             </figure>
           )}
 

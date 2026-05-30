@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { AppHeader } from "@/components/AppHeader";
 import { Footer } from "@/components/Footer";
 import { CourseCard, type StudentCourseCardData } from "@/components/CourseCard";
+import { MarkdownCheatsheet } from "@/components/workspace/MarkdownCheatsheet";
 import { Button } from "@/components/ui/button";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter, enrollmentConverter, reportConverter } from "@/lib/firestore/converters";
@@ -71,7 +72,7 @@ async function loadMyCourses(uid: string): Promise<StudentCourseCardData[]> {
         code: course.code,
         name: course.name,
         term: termLabel(course),
-        teacher: "老師", // placeholder; teacher.displayName lookup in Phase 5
+        teacher: course.teacher ? `${course.teacher} 老師` : "老師",
         mine: status,
       } satisfies StudentCourseCardData;
     }),
@@ -127,7 +128,7 @@ function Workspace({ courses }: { courses: StudentCourseCardData[] }) {
             到{" "}
             <Link href="/preview" className="text-accent underline underline-offset-[3px]">
               預覽頁
-            </Link>
+            </Link>{" "}
             看看你的報告草稿在正式網站上的樣子！
           </p>
         )}
@@ -156,6 +157,10 @@ function Workspace({ courses }: { courses: StudentCourseCardData[] }) {
           </Link>
         </div>
       )}
+
+      <div className="mt-16 border-t border-border pt-12">
+        <MarkdownCheatsheet />
+      </div>
     </main>
   );
 }

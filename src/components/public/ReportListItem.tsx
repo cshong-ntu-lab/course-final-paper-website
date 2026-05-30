@@ -175,7 +175,7 @@ export function ReportListItem({
       <Link href={href} className="group animate-fade-up flex flex-col">
         <div className="border-border bg-surface flex aspect-[3/2] items-center justify-center border px-6 py-5">
           <p className="text-foreground m-0 text-center font-serif italic text-[17px] leading-[1.55] text-balance">
-            {report.pullQuote ? `「${report.pullQuote}」` : `「${report.summary.slice(0, 60)}…」`}
+            {`「${report.summary.slice(0, 60)}…」`}
           </p>
         </div>
         <CardBody report={report} badgeLabel={badgeLabel} />
