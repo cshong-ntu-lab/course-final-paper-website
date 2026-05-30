@@ -17,7 +17,9 @@ const Body = z.object({
   uploadId: z.string().min(1),
   storagePath: z.string().min(1),
   filename: z.string().min(1).max(200),
-  contentType: z.string().regex(/^image\/(png|jpeg|webp|gif|svg\+xml)$/),
+  contentType: z
+    .string()
+    .regex(/^(image\/(png|jpeg|webp|gif|svg\+xml)|text\/csv|application\/json)$/),
   sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
   downloadUrl: z.string().url(),
 });

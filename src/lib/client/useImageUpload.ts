@@ -51,7 +51,15 @@ const COMPRESSION_OPTIONS = {
   initialQuality: 0.85,
   useWebWorker: true,
 };
-const ALLOWED_CTYPES = ["image/png", "image/jpeg", "image/webp", "image/gif", "image/svg+xml"];
+const ALLOWED_CTYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/svg+xml",
+  "text/csv",
+  "application/json",
+];
 
 export interface ImageUploadOptions {
   reportId: string;

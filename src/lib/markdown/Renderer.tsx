@@ -18,6 +18,7 @@ import ReactMarkdown, { type Components } from "react-markdown";
 
 import { embedComponents, EmbedNodeFromHast } from "@/lib/markdown/embeds";
 import { embedSanitizeSchema } from "@/lib/markdown/embedSchema";
+import { ObservableSandbox } from "@/lib/markdown/ObservableSandbox";
 import { remarkEmbed } from "@/lib/markdown/remarkEmbed";
 import { cn } from "@/lib/utils";
 
@@ -85,6 +86,23 @@ const components: Components = {
         style={{ width: "85%", margin: "0 auto", display: "block" }}
       />
     );
+  },
+  // Observable visualization blocks — intercept ```observable fenced code.
+  // rehypeHighlight skips unrecognised languages (ignoreMissing: true), so
+  // children is the raw code string for language-observable blocks.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  pre: ({ node, children, ...rest }: any) => {
+    const codeChild = node?.children?.[0];
+    const classes: string[] = (codeChild?.properties?.className as string[]) ?? [];
+    if (classes.includes("language-observable")) return <>{children}</>;
+    return <pre {...rest}>{children}</pre>;
+  },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  code: ({ className, children }: any) => {
+    if (className === "language-observable") {
+      return <ObservableSandbox code={String(children).replace(/\n$/, "")} />;
+    }
+    return <code className={className}>{children}</code>;
   },
   // @ts-expect-error react-markdown's Components map doesn't know our custom tags
   "youtube-embed": (props) => (

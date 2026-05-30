@@ -1,7 +1,7 @@
 "use client";
-// design.md §3.3 + §2.2 — list student's uploaded images, allow insert / delete / upload.
+// design.md §3.3 + §2.2 — list student's uploaded images/data, allow insert / delete / upload.
 
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { FileJson, FileSpreadsheet, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import * as React from "react";
 
 import { deleteUploadAction } from "@/actions/report";
@@ -53,6 +53,19 @@ function progressLine(state: UploadState): string | null {
   }
 }
 
+function isImageType(contentType: string): boolean {
+  return contentType.startsWith("image/");
+}
+
+function DataFileIcon({ contentType }: { contentType: string }) {
+  const Icon = contentType === "application/json" ? FileJson : FileSpreadsheet;
+  return (
+    <span className="bg-canvas border-border flex h-7 w-7 shrink-0 items-center justify-center rounded border">
+      <Icon className="text-subtle h-3.5 w-3.5" />
+    </span>
+  );
+}
+
 export function FilesSidebar({
   reportId,
   files,
@@ -63,6 +76,7 @@ export function FilesSidebar({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const { state, upload, reset } = useImageUpload({ reportId });
   const [deletingId, setDeletingId] = React.useState<string | null>(null);
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
 
   const handleUploadClick = () => fileInputRef.current?.click();
 
@@ -72,16 +86,20 @@ export function FilesSidebar({
     for (const f of list) {
       const result = await upload(f);
       if (result) {
-        // After each successful upload, refresh list so it shows up immediately.
         onRefresh();
       }
     }
-    // After a small delay, clear the progress line so the sidebar quiets.
     setTimeout(reset, 1500);
   };
 
   const handleInsert = (f: UploadedFile) => {
     onInsert(imageMarkdown({ filename: f.filename, downloadUrl: f.downloadURL }));
+  };
+
+  const handleCopyUrl = async (f: UploadedFile) => {
+    await navigator.clipboard.writeText(f.downloadURL);
+    setCopiedId(f.id);
+    setTimeout(() => setCopiedId(null), 1800);
   };
 
   const handleDelete = async (f: UploadedFile) => {
@@ -103,7 +121,7 @@ export function FilesSidebar({
     <section className="space-y-3 p-4">
       <div className="flex items-center justify-between">
         <div className="text-2xs text-subtle font-mono uppercase tracking-[0.08em]">
-          圖片資源 · {files.length}
+          檔案資源 · {files.length}
         </div>
         <button
           type="button"
@@ -116,7 +134,7 @@ export function FilesSidebar({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,text/csv,application/json"
           multiple
           className="hidden"
           onChange={handleFileSelect}
@@ -138,46 +156,63 @@ export function FilesSidebar({
       )}
 
       {files.length === 0 ? (
-        <p className="text-subtle py-2 text-xs italic">尚未上傳任何圖片</p>
+        <p className="text-subtle py-2 text-xs italic">尚未上傳任何檔案</p>
       ) : (
         <ul className="space-y-1.5">
-          {files.map((f) => (
-            <li
-              key={f.id}
-              className="group hover:bg-surface flex items-center gap-2 rounded px-2 py-1.5"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={f.downloadURL}
-                alt=""
-                className="bg-canvas h-7 w-7 rounded object-cover"
-                loading="lazy"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs">{f.filename}</div>
-                <div className="text-2xs text-subtle font-mono">{bytesToKb(f.sizeBytes)}</div>
-              </div>
-              <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                <button
-                  type="button"
-                  onClick={() => handleInsert(f)}
-                  className="text-accent hover:underline text-2xs"
-                  aria-label={`插入 ${f.filename}`}
-                >
-                  插入
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void handleDelete(f)}
-                  className="text-muted hover:text-destructive-fg ml-1 text-2xs"
-                  aria-label={`刪除 ${f.filename}`}
-                  disabled={deletingId === f.id}
-                >
-                  <Trash2 className="h-3 w-3" />
-                </button>
-              </div>
-            </li>
-          ))}
+          {files.map((f) => {
+            const isImg = isImageType(f.contentType);
+            return (
+              <li
+                key={f.id}
+                className="group hover:bg-surface flex items-center gap-2 rounded px-2 py-1.5"
+              >
+                {isImg ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={f.downloadURL}
+                    alt=""
+                    className="bg-canvas h-7 w-7 shrink-0 rounded object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <DataFileIcon contentType={f.contentType} />
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-xs">{f.filename}</div>
+                  <div className="text-2xs text-subtle font-mono">{bytesToKb(f.sizeBytes)}</div>
+                </div>
+                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  {isImg ? (
+                    <button
+                      type="button"
+                      onClick={() => handleInsert(f)}
+                      className="text-accent hover:underline text-2xs"
+                      aria-label={`插入 ${f.filename}`}
+                    >
+                      插入
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => void handleCopyUrl(f)}
+                    className="text-accent hover:underline text-2xs"
+                    aria-label={`複製連結 ${f.filename}`}
+                  >
+                    {copiedId === f.id ? "已複製" : "複製 URL"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(f)}
+                    className="text-muted hover:text-destructive-fg ml-1 text-2xs"
+                    aria-label={`刪除 ${f.filename}`}
+                    disabled={deletingId === f.id}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>
