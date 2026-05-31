@@ -11,7 +11,7 @@ export function Footer() {
               台大社會學系
             </Link>
             <p className="text-subtle mt-1.5 max-w-xs text-xs leading-relaxed">
-              國立臺灣大學社會學系暨研究所研究生期末論文發表平台。
+              國立臺灣大學社會學系暨社會學研究所期末報告發表平台
             </p>
           </div>
         </div>
