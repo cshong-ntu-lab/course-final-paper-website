@@ -16,6 +16,7 @@ import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import ReactMarkdown, { type Components } from "react-markdown";
 
+import { HeadingWithAnchor } from "@/components/markdown/HeadingWithAnchor";
 import { embedComponents, EmbedNodeFromHast } from "@/lib/markdown/embeds";
 import { embedSanitizeSchema } from "@/lib/markdown/embedSchema";
 import { ObservableSandbox } from "@/lib/markdown/ObservableSandbox";
@@ -52,6 +53,42 @@ function isImageOnlyParagraph(node: { children?: unknown[] } | undefined): boole
 
 // Map our custom embed tag names → React components.
 const components: Components = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h1: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={1}>
+      {children}
+    </HeadingWithAnchor>
+  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h2: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={2}>
+      {children}
+    </HeadingWithAnchor>
+  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h3: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={3}>
+      {children}
+    </HeadingWithAnchor>
+  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h4: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={4}>
+      {children}
+    </HeadingWithAnchor>
+  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h5: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={5}>
+      {children}
+    </HeadingWithAnchor>
+  ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  h6: ({ id, children }: any) => (
+    <HeadingWithAnchor id={id} level={6}>
+      {children}
+    </HeadingWithAnchor>
+  ),
   // Image-only paragraphs (single or multiple images, possibly remark-breaks
   // separated by <br>) are stripped of the outer <p> so the <figure> elements
   // (rendered by the img override below) sit at block level without nesting.
