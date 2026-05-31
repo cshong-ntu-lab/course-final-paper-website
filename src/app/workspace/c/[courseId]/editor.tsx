@@ -48,8 +48,6 @@ export interface EditorReport {
   // v4 extended fields
   subtitle: string;
   tags: string; // stored as comma-separated string in the editor
-  pullQuote: string;
-  coverCaption: string;
   coAuthors: CoAuthor[];
   authorUid: string | null;
 }
@@ -120,8 +118,6 @@ export function ReportEditor({
   const [summary, setSummary] = React.useState(initial.summary);
   const [subtitle, setSubtitle] = React.useState(initial.subtitle);
   const [tags, setTags] = React.useState(initial.tags);
-  const [pullQuote, setPullQuote] = React.useState(initial.pullQuote);
-  const [coverCaption, setCoverCaption] = React.useState(initial.coverCaption);
   const [coverImageUrl, setCoverImageUrl] = React.useState<string | null>(initial.coverImageUrl);
   const [coAuthors, setCoAuthors] = React.useState<CoAuthor[]>(initial.coAuthors);
   const [authorUid, setAuthorUid] = React.useState<string | null>(initial.authorUid);
@@ -499,15 +495,6 @@ export function ReportEditor({
       .filter(Boolean);
     queueAutosave({ tags: parsed });
   };
-  const handlePullQuoteChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setPullQuote(e.target.value);
-    queueAutosave({ pullQuote: e.target.value });
-  };
-  const handleCoverCaptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCoverCaption(e.target.value);
-    queueAutosave({ coverCaption: e.target.value });
-  };
-
   const handleCoverImageUpload = async (file: File) => {
     const res = await coverUpload.upload(file);
     if (res) {
@@ -965,30 +952,6 @@ export function ReportEditor({
                     />
                   </label>
                 )}
-              </div>
-
-              {coverImageUrl && (
-                <div>
-                  <Label htmlFor="meta-cover-caption">封面圖說</Label>
-                  <Input
-                    id="meta-cover-caption"
-                    value={coverCaption}
-                    onChange={handleCoverCaptionChange}
-                    placeholder="選填"
-                  />
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="meta-pull-quote">摘錄（用於卡片）</Label>
-                <textarea
-                  id="meta-pull-quote"
-                  value={pullQuote}
-                  onChange={handlePullQuoteChange}
-                  rows={2}
-                  placeholder="選填"
-                  className="border-border-strong bg-surface placeholder:text-subtle focus-visible:border-accent focus-visible:ring-accent-soft min-h-[60px] w-full resize-y rounded border px-3 py-2 font-sans text-sm leading-relaxed focus-visible:ring-2 focus-visible:outline-none"
-                />
               </div>
             </section>
 

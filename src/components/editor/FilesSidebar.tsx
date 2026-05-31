@@ -1,7 +1,7 @@
 "use client";
 // design.md §3.3 + §2.2 — list student's uploaded images/data, allow insert / delete / upload.
 
-import { FileJson, FileSpreadsheet, ImagePlus, Loader2, Trash2 } from "lucide-react";
+import { FileJson, FileSpreadsheet, Loader2, Trash2, Upload } from "lucide-react";
 import * as React from "react";
 
 import { deleteUploadAction } from "@/actions/report";
@@ -129,7 +129,7 @@ export function FilesSidebar({
           className="text-accent hover:text-accent-hover focus-visible:ring-accent inline-flex items-center gap-1 text-xs font-medium transition-colors focus-visible:rounded focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           disabled={state.phase !== "idle" && state.phase !== "done" && state.phase !== "error"}
         >
-          <ImagePlus className="h-3.5 w-3.5" /> 上傳
+          <Upload className="h-3.5 w-3.5" /> 上傳
         </button>
         <input
           ref={fileInputRef}
