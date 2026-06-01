@@ -19,8 +19,7 @@ interface Params {
 export default async function EditorPage({ params }: Params) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (user.role === "admin") redirect("/admin");
-  if (!user.isOnboarded) redirect("/workspace/onboarding");
+  if (user.role !== "admin" && !user.isOnboarded) redirect("/workspace/onboarding");
 
   const { courseId } = await params;
   const { db } = getFirebaseAdmin();
@@ -82,5 +81,11 @@ export default async function EditorPage({ params }: Params) {
     authorUid: report.authorUid ?? user.uid,
   };
 
-  return <ReportEditor initial={initial} initialUploads={initialUploads} />;
+  return (
+    <ReportEditor
+      initial={initial}
+      initialUploads={initialUploads}
+      isAdmin={user.role === "admin"}
+    />
+  );
 }
