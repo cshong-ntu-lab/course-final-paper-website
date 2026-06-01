@@ -10,9 +10,10 @@ export interface AppHeaderProps {
   context: "student" | "admin";
   user: { displayName: string; email: string };
   breadcrumb?: ReadonlyArray<{ label: string; href?: string }>;
+  adminBackLink?: boolean;
 }
 
-export function AppHeader({ context, user, breadcrumb }: AppHeaderProps) {
+export function AppHeader({ context, user, breadcrumb, adminBackLink }: AppHeaderProps) {
   const homeHref = context === "admin" ? "/admin" : "/workspace";
 
   return (
@@ -66,6 +67,17 @@ export function AppHeader({ context, user, breadcrumb }: AppHeaderProps) {
         <div className="flex-1" />
 
         <div className="text-subtle hidden text-xs sm:flex sm:items-center sm:gap-3">
+          {adminBackLink && (
+            <>
+              <Link
+                href="/admin"
+                className="text-accent hover:text-accent-hover font-medium transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-[3px]"
+              >
+                回到管理員頁面
+              </Link>
+              <span className="bg-border h-3 w-px" />
+            </>
+          )}
           <span className="text-muted max-w-[180px] truncate">
             {user.displayName || user.email}
           </span>

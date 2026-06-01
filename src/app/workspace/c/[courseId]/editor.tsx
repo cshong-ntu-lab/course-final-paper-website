@@ -102,9 +102,11 @@ function clearLocalDraft(reportId: string) {
 export function ReportEditor({
   initial,
   initialUploads,
+  isAdmin = false,
 }: {
   initial: EditorReport;
   initialUploads: UploadedFile[];
+  isAdmin?: boolean;
 }) {
   const router = useRouter();
 
@@ -628,6 +630,17 @@ export function ReportEditor({
         </div>
 
         <div className="flex items-center gap-3">
+          {isAdmin && (
+            <>
+              <Link
+                href="/admin"
+                className="text-accent hover:text-accent-hover text-xs font-medium transition-colors"
+              >
+                回到管理員頁面
+              </Link>
+              <span className="bg-border h-5 w-px" />
+            </>
+          )}
           <SaveStatusIndicator state={effectiveSaveState} since={save.since} />
           <span className="bg-border h-5 w-px" />
           <Button

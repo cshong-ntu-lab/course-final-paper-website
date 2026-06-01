@@ -84,8 +84,7 @@ async function loadMyCourses(uid: string): Promise<StudentCourseCardData[]> {
 export default async function WorkspacePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?from=/workspace");
-  if (user.role === "admin") redirect("/admin");
-  if (!user.isOnboarded) redirect("/workspace/onboarding");
+  if (user.role !== "admin" && !user.isOnboarded) redirect("/workspace/onboarding");
 
   const courses = await loadMyCourses(user.uid);
 
@@ -94,14 +93,15 @@ export default async function WorkspacePage() {
       <AppHeader
         context="student"
         user={{ displayName: user.profileDisplayName || user.displayName, email: user.email }}
+        adminBackLink={user.role === "admin"}
       />
-      <Workspace courses={courses} />
+      <Workspace courses={courses} isAdmin={user.role === "admin"} />
       <Footer />
     </div>
   );
 }
 
-function Workspace({ courses }: { courses: StudentCourseCardData[] }) {
+function Workspace({ courses, isAdmin }: { courses: StudentCourseCardData[]; isAdmin?: boolean }) {
   return (
     <main id="main" className="mx-auto max-w-4xl px-7 py-12">
       <div className="mb-8">
