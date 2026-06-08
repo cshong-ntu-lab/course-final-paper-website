@@ -25,12 +25,11 @@ function termLabel(c: Course): string {
   return `${c.year} 學年第 ${c.semester} 學期`;
 }
 
-async function loadMyCourses(uid: string): Promise<AdminCourseRow[]> {
+async function loadAllCourses(): Promise<AdminCourseRow[]> {
   const { db } = getFirebaseAdmin();
   const snap = await db
     .collection("courses")
     .withConverter(courseConverter)
-    .where("ownerUid", "==", uid)
     .orderBy("createdAt", "desc")
     .get();
 
@@ -67,7 +66,7 @@ async function loadMyCourses(uid: string): Promise<AdminCourseRow[]> {
 
 export default async function AdminHomePage() {
   const user = await getCurrentUser();
-  const courses = user ? await loadMyCourses(user.uid) : [];
+  const courses = await loadAllCourses();
 
   return (
     <>

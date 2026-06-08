@@ -13,4 +13,4 @@ github_repo = "cshong-ntu-lab/course-final-paper-website"
 
 # Admins
 admin_emails      = "cshong.ntu@gmail.com,cshong@g.ntu.edu.tw"
-admin_emails_test = "cshong.ntu@gmail.com,cshong@g.ntu.edu.tw"
+admin_emails_test = "cshong.ntu@gmail.com,cshong@g.ntu.edu.tw,1026oscar1@gmail.com"

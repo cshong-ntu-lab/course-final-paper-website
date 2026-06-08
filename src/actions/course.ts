@@ -159,7 +159,6 @@ export async function updateCourseAction(
   try {
     const snap = await ref.get();
     if (!snap.exists) return { ok: false, error: "not_found" };
-    if (snap.data()!.ownerUid !== admin.uid) return { ok: false, error: "forbidden" };
 
     const update: Partial<Course> = {
       ...patch,
@@ -189,7 +188,6 @@ export async function toggleEnrollmentAction(
   try {
     const snap = await ref.get();
     if (!snap.exists) return { ok: false, error: "not_found" };
-    if (snap.data()!.ownerUid !== admin.uid) return { ok: false, error: "forbidden" };
 
     await ref.set(
       {
@@ -212,7 +210,6 @@ export async function regenerateCourseCodeAction(courseId: string): Promise<Rege
   try {
     const snap = await ref.get();
     if (!snap.exists) return { ok: false, error: "not_found" };
-    if (snap.data()!.ownerUid !== admin.uid) return { ok: false, error: "forbidden" };
 
     const code = await allocateUniqueCode(db, courseId);
     if (!code) return { ok: false, error: "code_conflict" };
@@ -238,7 +235,6 @@ export async function deleteCourseAction(courseId: string): Promise<DeleteCourse
   try {
     const snap = await ref.get();
     if (!snap.exists) return { ok: false, error: "not_found" };
-    if (snap.data()!.ownerUid !== admin.uid) return { ok: false, error: "forbidden" };
 
     // Delete all reports (+ subcollections: publishSnapshots, uploads docs) for this course.
     const reportsSnap = await db.collection("reports").where("courseId", "==", courseId).get();
