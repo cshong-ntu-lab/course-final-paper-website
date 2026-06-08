@@ -89,7 +89,7 @@ steps:
       - "--allow-unauthenticated"
       - "--min-instances=0"
       - "--max-instances=3"
-      - "--set-env-vars=ADMIN_EMAILS=${_ADMIN_EMAILS}"
+      - "--set-env-vars=^|^ADMIN_EMAILS=${_ADMIN_EMAILS}"
       - "--update-secrets=GOOGLE_DRIVE_CLIENT_ID=google-drive-client-id:latest,GOOGLE_DRIVE_CLIENT_SECRET=google-drive-client-secret:latest,GOOGLE_DRIVE_REFRESH_TOKEN=google-drive-refresh-token:latest,GOOGLE_DRIVE_ROOT_FOLDER_ID=google-drive-root-folder-id-test:latest"
 
   # ── 3b. Deploy Firestore indexes + Storage rules to test project (parallel) ─
