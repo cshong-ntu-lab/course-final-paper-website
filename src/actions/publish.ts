@@ -13,7 +13,7 @@ export type PublishResult =
   | { ok: true; snapshotId: string; publishedAt: number }
   | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
-export type UnpublishResult =
+export type WithdrawResult =
   | { ok: true }
   | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
@@ -62,6 +62,7 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
       // Write publish snapshot — authorAffiliation/authorBio come from the author's profile.
       const snapshotRef = snapshotsCol.doc();
       const snapshot: PublishSnapshot = {
+        type: "publish",
         contentMd: report.contentMd,
         title: report.title,
         author: report.author,
@@ -79,12 +80,13 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
       };
       tx.set(snapshotRef, snapshot);
 
-      // Update report: set publishedAt + clear hasNewChanges.
+      // Update report: set publishedAt + clear hasNewChanges + clear adminWithdrawn.
       tx.set(
         reportRef,
         {
           publishedAt: now,
           hasNewChanges: false,
+          adminWithdrawn: false,
           updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
         } as Report,
         { merge: true },
@@ -104,25 +106,43 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
   }
 }
 
-export async function unpublishReportAction(reportId: string): Promise<UnpublishResult> {
-  await requireAdmin();
+export async function withdrawReportAction(reportId: string): Promise<WithdrawResult> {
+  const admin = await requireAdmin();
   const { db } = getFirebaseAdmin();
   const reportRef = db.collection("reports").withConverter(reportConverter).doc(reportId);
+  const snapshotsCol = reportRef.collection("publishSnapshots");
 
   try {
     const snap = await reportRef.get();
     if (!snap.exists) return { ok: false, error: "not_found" };
+    const report = snap.data()!;
+
+    const now = Timestamp.now();
+
+    // Write a lightweight withdrawal record to history.
+    const withdrawSnapshot: PublishSnapshot = {
+      type: "withdraw",
+      contentMd: report.contentMd,
+      title: report.title,
+      author: report.author,
+      summary: report.summary,
+      coverImageUrl: report.coverImageUrl,
+      publishedAt: now,
+      publishedBy: admin.uid,
+    };
+    await snapshotsCol.doc().set(withdrawSnapshot);
 
     await reportRef.set(
       {
         publishedAt: null,
         hasNewChanges: false,
+        adminWithdrawn: true,
         updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
       } as Report,
       { merge: true },
     );
     void syncReportToDrive(reportId).catch((err) =>
-      console.error("[drive-sync] unpublishReport failed", { reportId, err }),
+      console.error("[drive-sync] withdrawReport failed", { reportId, err }),
     );
     return { ok: true };
   } catch {

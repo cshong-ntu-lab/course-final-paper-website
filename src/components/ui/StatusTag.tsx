@@ -1,7 +1,12 @@
 // design.md §4.2 — three states. published-new renders as two chips.
 import { cn } from "@/lib/utils";
 
-export type StatusTagKind = "unpublished" | "published" | "published-new";
+export type StatusTagKind =
+  | "unpublished"
+  | "published"
+  | "published-new"
+  | "admin-withdrawn"
+  | "admin-withdrawn-new";
 
 type ChipConfig = { label: string; cls: string; dot: string };
 
@@ -20,6 +25,11 @@ const CHIPS = {
     label: "有更新待審核",
     cls: "bg-warning-soft text-warning-fg border-warning/40",
     dot: "bg-warning",
+  },
+  "admin-withdrawn": {
+    label: "已撤下",
+    cls: "bg-destructive/10 text-destructive border-destructive/30",
+    dot: "bg-destructive",
   },
 } satisfies Record<string, ChipConfig>;
 
@@ -45,6 +55,17 @@ export function StatusTag({ kind }: { kind: StatusTagKind }) {
         <Chip cfg={CHIPS["has-new"]} />
       </span>
     );
+  }
+  if (kind === "admin-withdrawn-new") {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Chip cfg={CHIPS["admin-withdrawn"]} />
+        <Chip cfg={CHIPS["has-new"]} />
+      </span>
+    );
+  }
+  if (kind === "admin-withdrawn") {
+    return <Chip cfg={CHIPS["admin-withdrawn"]} />;
   }
   return <Chip cfg={CHIPS[kind]} />;
 }

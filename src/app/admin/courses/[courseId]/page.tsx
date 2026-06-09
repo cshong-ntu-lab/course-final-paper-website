@@ -63,11 +63,15 @@ export default async function CourseDetailPage({ params }: Props) {
 
   const reports = reportsSnap.docs.map((d) => {
     const r = d.data();
-    const status: ReportStatus = !r.publishedAt
-      ? "unpublished"
-      : r.hasNewChanges
-        ? "published-new"
-        : "published";
+    const status: ReportStatus = r.adminWithdrawn
+      ? r.hasNewChanges
+        ? "admin-withdrawn-new"
+        : "admin-withdrawn"
+      : !r.publishedAt
+        ? "unpublished"
+        : r.hasNewChanges
+          ? "published-new"
+          : "published";
     return {
       id: d.id,
       courseId,
@@ -79,9 +83,14 @@ export default async function CourseDetailPage({ params }: Props) {
     };
   });
 
-  const publishedCount = reports.filter((r) => r.status !== "unpublished").length;
+  const publishedCount = reports.filter(
+    (r) => r.status === "published" || r.status === "published-new",
+  ).length;
   const pendingCount = reports.filter(
-    (r) => r.status === "unpublished" || r.status === "published-new",
+    (r) =>
+      r.status === "unpublished" ||
+      r.status === "published-new" ||
+      r.status === "admin-withdrawn-new",
   ).length;
 
   return (

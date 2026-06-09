@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import * as React from "react";
 
-import { publishReportAction, unpublishReportAction } from "@/actions/publish";
+import { publishReportAction, withdrawReportAction } from "@/actions/publish";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import { Button } from "@/components/ui/button";
 import { StatusTag } from "@/components/ui/StatusTag";
@@ -17,6 +17,7 @@ type DiffMode = "source" | "rendered";
 
 interface SnapshotSummary {
   id: string;
+  type?: "publish" | "withdraw";
   title: string;
   author: string;
   contentMd: string;
@@ -70,7 +71,7 @@ export function ReportReviewClient({
   const [diffMode, setDiffMode] = React.useState<DiffMode>("source");
   const [selectedSnapshotId, setSelectedSnapshotId] = React.useState<string | null>(null);
   const [publishOpen, setPublishOpen] = React.useState(false);
-  const [unpublishOpen, setUnpublishOpen] = React.useState(false);
+  const [withdrawOpen, setWithdrawOpen] = React.useState(false);
   const [pending, setPending] = React.useState(false);
   const [toast, setToast] = React.useState<string | null>(null);
   const [currentStatus, setCurrentStatus] = React.useState(report.status);
@@ -95,14 +96,14 @@ export function ReportReviewClient({
     }
   }
 
-  async function handleUnpublish() {
+  async function handleWithdraw() {
     setPending(true);
-    const result = await unpublishReportAction(reportId);
+    const result = await withdrawReportAction(reportId);
     setPending(false);
-    setUnpublishOpen(false);
+    setWithdrawOpen(false);
     if (result.ok) {
-      setCurrentStatus("unpublished");
-      showToast("已取消發布");
+      setCurrentStatus("admin-withdrawn");
+      showToast("已撤下報告");
     } else {
       showToast("操作失敗，請稍後再試。");
     }
@@ -114,6 +115,10 @@ export function ReportReviewClient({
         ? "text-foreground border-accent"
         : "text-muted border-transparent hover:text-foreground"
     }`;
+
+  const isWithdrawn =
+    currentStatus === "admin-withdrawn" || currentStatus === "admin-withdrawn-new";
+  const isPublished = currentStatus === "published" || currentStatus === "published-new";
 
   return (
     <>
@@ -135,9 +140,14 @@ export function ReportReviewClient({
           <div className="mt-1.5 text-sm text-muted">作者　{report.author}</div>
         </div>
         <div className="flex shrink-0 gap-2">
-          {currentStatus !== "unpublished" && (
-            <Button variant="secondary" onClick={() => setUnpublishOpen(true)} type="button">
-              取消發布
+          {(isPublished || isWithdrawn) && (
+            <Button
+              variant="destructive"
+              onClick={() => setWithdrawOpen(true)}
+              type="button"
+              disabled={isWithdrawn}
+            >
+              {isWithdrawn ? "已撤下" : "撤下報告"}
             </Button>
           )}
           <Button onClick={() => setPublishOpen(true)} type="button">
@@ -224,48 +234,70 @@ export function ReportReviewClient({
                 <div className="overflow-hidden rounded-md border border-border bg-surface">
                   <div className="grid grid-cols-[1fr_160px_24px] border-b border-border bg-canvas px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.08em] text-subtle">
                     <div>版本</div>
-                    <div className="text-right">發布時間</div>
+                    <div className="text-right">時間</div>
                     <div />
                   </div>
                   {snapshots.map((s, i) => {
                     const selected = selectedSnapshotId === s.id;
+                    const isWithdrawEntry = s.type === "withdraw";
                     return (
                       <button
                         key={s.id}
                         type="button"
-                        onClick={() => setSelectedSnapshotId(selected ? null : s.id)}
+                        onClick={() =>
+                          !isWithdrawEntry && setSelectedSnapshotId(selected ? null : s.id)
+                        }
                         className={[
                           "grid w-full grid-cols-[1fr_160px_24px] items-center border-b border-border px-5 py-3.5 text-left last:border-b-0 transition-colors",
-                          selected ? "bg-accent/5" : "hover:bg-canvas",
+                          isWithdrawEntry
+                            ? "cursor-default opacity-70"
+                            : selected
+                              ? "bg-accent/5"
+                              : "hover:bg-canvas",
                         ].join(" ")}
                       >
                         <div>
-                          <div className="font-serif text-sm font-medium">
-                            {s.title || "（未命名）"}
-                            {i === 0 && (
-                              <span className="ml-2 font-mono text-2xs text-subtle">（最新）</span>
-                            )}
-                          </div>
-                          <div className="text-xs text-subtle">{s.author}</div>
+                          {isWithdrawEntry ? (
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1 rounded border border-destructive/30 bg-destructive/10 px-1.5 py-0.5 font-mono text-2xs text-destructive">
+                                撤下
+                              </span>
+                              <span className="text-xs text-subtle">管理員撤下報告</span>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-serif text-sm font-medium">
+                                {s.title || "（未命名）"}
+                                {i === 0 && snapshots[0]?.type !== "withdraw" && (
+                                  <span className="ml-2 font-mono text-2xs text-subtle">
+                                    （最新）
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-subtle">{s.author}</div>
+                            </>
+                          )}
                         </div>
                         <div className="text-right text-xs text-subtle">
                           {formatDate(s.publishedAtMs)}
                         </div>
                         <div className="flex justify-end">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className={`text-subtle transition-transform ${selected ? "rotate-180" : ""}`}
-                          >
-                            <path d="m6 9 6 6 6-6" />
-                          </svg>
+                          {!isWithdrawEntry && (
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              className={`text-subtle transition-transform ${selected ? "rotate-180" : ""}`}
+                            >
+                              <path d="m6 9 6 6 6-6" />
+                            </svg>
+                          )}
                         </div>
                       </button>
                     );
@@ -317,25 +349,26 @@ export function ReportReviewClient({
         </div>
       )}
 
-      {/* Unpublish confirmation dialog */}
-      {unpublishOpen && (
+      {/* Withdraw confirmation dialog */}
+      {withdrawOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
           <div className="w-full max-w-md rounded-lg border border-border bg-surface p-6 shadow-lg">
-            <h2 className="font-serif text-xl font-semibold text-destructive">取消發布？</h2>
+            <h2 className="font-serif text-xl font-semibold text-destructive">撤下報告？</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted">
-              此報告將從公開首頁下架。學生的草稿和 History 紀錄不受影響，仍可重新發布。
+              此報告將從公開首頁下架，並標記為「已撤下」。學生看到的狀態為「未發布」。撤下紀錄會保存在
+              History 中，可重新發布。
             </p>
             <div className="mt-4 flex justify-end gap-2">
-              <Button variant="ghost" onClick={() => setUnpublishOpen(false)} type="button">
+              <Button variant="ghost" onClick={() => setWithdrawOpen(false)} type="button">
                 取消
               </Button>
               <Button
                 variant="destructive"
-                onClick={handleUnpublish}
+                onClick={handleWithdraw}
                 disabled={pending}
                 type="button"
               >
-                {pending ? "處理中…" : "確認取消發布"}
+                {pending ? "處理中…" : "確認撤下"}
               </Button>
             </div>
           </div>

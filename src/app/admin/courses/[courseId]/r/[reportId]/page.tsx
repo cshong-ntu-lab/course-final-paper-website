@@ -57,11 +57,15 @@ export default async function ReportReviewPage({ params }: Props) {
 
   const latestSnapshot = snapshots[0] ?? null;
 
-  const status: ReportStatus = !report.publishedAt
-    ? "unpublished"
-    : report.hasNewChanges
-      ? "published-new"
-      : "published";
+  const status: ReportStatus = report.adminWithdrawn
+    ? report.hasNewChanges
+      ? "admin-withdrawn-new"
+      : "admin-withdrawn"
+    : !report.publishedAt
+      ? "unpublished"
+      : report.hasNewChanges
+        ? "published-new"
+        : "published";
 
   return (
     <>
@@ -92,6 +96,7 @@ export default async function ReportReviewPage({ params }: Props) {
           latestSnapshotContentMd={latestSnapshot?.contentMd ?? null}
           snapshots={snapshots.map((s) => ({
             id: s.id,
+            type: s.type,
             title: s.title,
             author: s.author,
             contentMd: s.contentMd,

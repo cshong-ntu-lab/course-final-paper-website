@@ -6,7 +6,12 @@ export type Role = "student" | "admin";
 
 export type Semester = "1" | "2";
 
-export type ReportStatus = "unpublished" | "published" | "published-new";
+export type ReportStatus =
+  | "unpublished"
+  | "published"
+  | "published-new"
+  | "admin-withdrawn"
+  | "admin-withdrawn-new";
 
 export interface User {
   email: string;
@@ -68,6 +73,7 @@ export interface Report {
   contentMd: string;
   publishedAt: Timestamp | null;
   hasNewChanges: boolean;
+  adminWithdrawn?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   driveFolderId?: string;
@@ -83,6 +89,7 @@ export interface Report {
 }
 
 export interface PublishSnapshot {
+  type?: "publish" | "withdraw";
   contentMd: string;
   title: string;
   author: string;
