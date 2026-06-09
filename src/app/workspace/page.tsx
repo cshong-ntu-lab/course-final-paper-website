@@ -59,11 +59,12 @@ async function loadMyCourses(uid: string): Promise<StudentCourseCardData[]> {
       const status: StudentCourseCardData["mine"] = report
         ? {
             title: report.title || null,
-            status: !report.publishedAt
-              ? "unpublished"
-              : report.hasNewChanges
-                ? "published-new"
-                : "published",
+            status:
+              report.adminWithdrawn || !report.publishedAt
+                ? "unpublished"
+                : report.hasNewChanges
+                  ? "published-new"
+                  : "published",
             updated: relativeDays(report.updatedAt),
           }
         : null;

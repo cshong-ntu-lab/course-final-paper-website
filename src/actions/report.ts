@@ -168,13 +168,15 @@ export async function saveReportDraftAction(
       if (data.uid !== u.uid) return { ok: false as const, error: "forbidden" as const };
 
       // Compute hasNewChanges:
-      // - If we're changing contentMd AND there has been a previous publish,
+      // - If we're changing contentMd AND there has been a previous publish (or the
+      //   report was admin-withdrawn, which implies it was published before),
       //   the diff against the published snapshot triggers the "+New" badge.
-      // - We approximate by setting hasNewChanges=true whenever contentMd
-      //   changes after the report has ever been published.
+      // - adminWithdrawn=true means publishedAt was nulled by withdrawal, but the
+      //   report had been published — so we still flag new changes.
       const contentChanged =
         validated.contentMd !== undefined && validated.contentMd !== data.contentMd;
-      const hasNewChanges = data.publishedAt !== null && (contentChanged || data.hasNewChanges);
+      const everPublished = data.publishedAt !== null || data.adminWithdrawn === true;
+      const hasNewChanges = everPublished && (contentChanged || data.hasNewChanges);
 
       tx.set(
         ref,
