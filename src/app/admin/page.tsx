@@ -48,9 +48,10 @@ async function loadAllCourses(): Promise<AdminCourseRow[]> {
         db.collection("reports").withConverter(reportConverter).where("courseId", "==", s.id).get(),
       ]);
       const publishedCount = reportsSnap.docs.filter((d) => d.data().publishedAt).length;
-      const pendingCount = reportsSnap.docs.filter(
-        (d) => !d.data().publishedAt || d.data().hasNewChanges,
-      ).length;
+      const pendingCount = reportsSnap.docs.filter((d) => {
+        const r = d.data();
+        return r.reviewRequested && ((!r.publishedAt && !r.adminWithdrawn) || r.hasNewChanges);
+      }).length;
       return {
         id: s.id,
         code: c.code,
@@ -76,6 +77,7 @@ export default async function AdminHomePage() {
           displayName: user?.profileDisplayName || user?.displayName || "",
           email: user?.email || "",
         }}
+        workspaceLink
       />
       <main id="main" className="mx-auto max-w-5xl px-7 py-10">
         <div className="mb-7 flex items-end justify-between">
@@ -84,12 +86,6 @@ export default async function AdminHomePage() {
               管理後台
             </div>
             <h1 className="font-serif text-3xl font-semibold tracking-tight">我的課程</h1>
-            <p className="text-muted mt-1.5 text-sm">
-              從這裡{" "}
-              <Link href="/workspace" className="text-accent underline underline-offset-[3px]">
-                查看學生頁面
-              </Link>
-            </p>
           </div>
           <Button asChild>
             <Link href="/admin/courses/new">＋ 建立新課程</Link>

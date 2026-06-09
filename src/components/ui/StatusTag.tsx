@@ -3,10 +3,13 @@ import { cn } from "@/lib/utils";
 
 export type StatusTagKind =
   | "unpublished"
+  | "unpublished-review"
   | "published"
   | "published-new"
+  | "published-new-review"
   | "admin-withdrawn"
-  | "admin-withdrawn-new";
+  | "admin-withdrawn-new"
+  | "admin-withdrawn-new-review";
 
 type ChipConfig = { label: string; cls: string; dot: string };
 
@@ -22,7 +25,17 @@ const CHIPS = {
     dot: "bg-success",
   },
   "has-new": {
+    label: "有更新",
+    cls: "bg-warning-soft text-warning-fg border-warning/40",
+    dot: "bg-warning",
+  },
+  "has-new-review": {
     label: "有更新待審核",
+    cls: "bg-warning-soft text-warning-fg border-warning/40",
+    dot: "bg-warning",
+  },
+  "pending-review": {
+    label: "待審核",
     cls: "bg-warning-soft text-warning-fg border-warning/40",
     dot: "bg-warning",
   },
@@ -48,6 +61,14 @@ function Chip({ cfg }: { cfg: ChipConfig }) {
 }
 
 export function StatusTag({ kind }: { kind: StatusTagKind }) {
+  if (kind === "unpublished-review") {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Chip cfg={CHIPS.unpublished} />
+        <Chip cfg={CHIPS["pending-review"]} />
+      </span>
+    );
+  }
   if (kind === "published-new") {
     return (
       <span className="inline-flex flex-wrap items-center gap-1.5">
@@ -56,11 +77,27 @@ export function StatusTag({ kind }: { kind: StatusTagKind }) {
       </span>
     );
   }
+  if (kind === "published-new-review") {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Chip cfg={CHIPS.published} />
+        <Chip cfg={CHIPS["has-new-review"]} />
+      </span>
+    );
+  }
   if (kind === "admin-withdrawn-new") {
     return (
       <span className="inline-flex flex-wrap items-center gap-1.5">
         <Chip cfg={CHIPS["admin-withdrawn"]} />
         <Chip cfg={CHIPS["has-new"]} />
+      </span>
+    );
+  }
+  if (kind === "admin-withdrawn-new-review") {
+    return (
+      <span className="inline-flex flex-wrap items-center gap-1.5">
+        <Chip cfg={CHIPS["admin-withdrawn"]} />
+        <Chip cfg={CHIPS["has-new-review"]} />
       </span>
     );
   }

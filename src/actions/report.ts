@@ -168,15 +168,24 @@ export async function saveReportDraftAction(
       if (data.uid !== u.uid) return { ok: false as const, error: "forbidden" as const };
 
       // Compute hasNewChanges:
-      // - If we're changing contentMd AND there has been a previous publish (or the
-      //   report was admin-withdrawn, which implies it was published before),
-      //   the diff against the published snapshot triggers the "+New" badge.
-      // - adminWithdrawn=true means publishedAt was nulled by withdrawal, but the
-      //   report had been published — so we still flag new changes.
-      const contentChanged =
-        validated.contentMd !== undefined && validated.contentMd !== data.contentMd;
+      // - If publishedContentMd is stored (set at publish time), compare the
+      //   current/incoming content directly against it. This gives a true diff:
+      //   add-then-delete returns false, not sticky-true.
+      // - Legacy reports (publishedContentMd missing) fall back to the old sticky
+      //   flag until their next publish sets the snapshot.
+      const newContentMd = validated.contentMd !== undefined ? validated.contentMd : data.contentMd;
       const everPublished = data.publishedAt !== null || data.adminWithdrawn === true;
-      const hasNewChanges = everPublished && (contentChanged || data.hasNewChanges);
+      let hasNewChanges: boolean;
+      if (!everPublished) {
+        hasNewChanges = false;
+      } else if (data.publishedContentMd !== undefined) {
+        hasNewChanges = newContentMd !== data.publishedContentMd;
+      } else {
+        // Legacy: fall back to sticky flag until next publish
+        const contentChanged =
+          validated.contentMd !== undefined && validated.contentMd !== data.contentMd;
+        hasNewChanges = contentChanged || data.hasNewChanges;
+      }
 
       tx.set(
         ref,
@@ -197,6 +206,36 @@ export async function saveReportDraftAction(
       console.error("[drive-sync] saveReportDraft failed", { reportId, err }),
     );
     return { ok: true, hasNewChanges: result.hasNewChanges, savedAt: Date.now() };
+  } catch {
+    return { ok: false, error: "internal" };
+  }
+}
+
+export type SetReviewRequestedResult =
+  | { ok: true }
+  | { ok: false; error: "not_found" | "forbidden" | "internal" };
+
+export async function setReviewRequestedAction(
+  reportId: string,
+  requested: boolean,
+): Promise<SetReviewRequestedResult> {
+  const u = await requireUser();
+  const { db } = getFirebaseAdmin();
+  const ref = db.collection("reports").withConverter(reportConverter).doc(reportId);
+
+  try {
+    const snap = await ref.get();
+    if (!snap.exists) return { ok: false, error: "not_found" };
+    if (snap.data()!.uid !== u.uid) return { ok: false, error: "forbidden" };
+
+    await ref.set(
+      {
+        reviewRequested: requested,
+        updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
+      } as Partial<Report> as Report,
+      { merge: true },
+    );
+    return { ok: true };
   } catch {
     return { ok: false, error: "internal" };
   }

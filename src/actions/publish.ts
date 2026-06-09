@@ -80,13 +80,15 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
       };
       tx.set(snapshotRef, snapshot);
 
-      // Update report: set publishedAt + clear hasNewChanges + clear adminWithdrawn.
+      // Update report: set publishedAt + snapshot content + clear flags.
       tx.set(
         reportRef,
         {
           publishedAt: now,
           hasNewChanges: false,
+          publishedContentMd: report.contentMd,
           adminWithdrawn: false,
+          reviewRequested: false,
           updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
         } as Report,
         { merge: true },
@@ -132,10 +134,12 @@ export async function withdrawReportAction(reportId: string): Promise<WithdrawRe
     };
     await snapshotsCol.doc().set(withdrawSnapshot);
 
+    // Preserve hasNewChanges and reviewRequested — if the student had pending
+    // changes and a review request, withdrawal should show 已撤下 有更新待審核,
+    // not silently clear the request.
     await reportRef.set(
       {
         publishedAt: null,
-        hasNewChanges: false,
         adminWithdrawn: true,
         updatedAt: FieldValue.serverTimestamp() as unknown as Report["updatedAt"],
       } as Report,

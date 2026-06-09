@@ -55,16 +55,30 @@ export default async function ReportReviewPage({ params }: Props) {
     publishedAtMs: (d.data() as PublishSnapshot).publishedAt.toMillis(),
   }));
 
-  const latestSnapshot = snapshots[0] ?? null;
+  // Latest publish snapshot (skip "withdraw" entries which record the current
+  // content at withdrawal time, not the published baseline for diffing).
+  const latestPublishSnapshot = snapshots.find((s) => s.type !== "withdraw") ?? null;
+
+  // Compute hasNewChanges from actual content diff against the published baseline,
+  // bypassing the stored sticky flag which may be stale for pre-migration reports.
+  const realHasNewChanges = latestPublishSnapshot
+    ? report.contentMd !== latestPublishSnapshot.contentMd
+    : report.hasNewChanges;
 
   const status: ReportStatus = report.adminWithdrawn
-    ? report.hasNewChanges
-      ? "admin-withdrawn-new"
+    ? realHasNewChanges
+      ? report.reviewRequested
+        ? "admin-withdrawn-new-review"
+        : "admin-withdrawn-new"
       : "admin-withdrawn"
     : !report.publishedAt
-      ? "unpublished"
-      : report.hasNewChanges
-        ? "published-new"
+      ? report.reviewRequested
+        ? "unpublished-review"
+        : "unpublished"
+      : realHasNewChanges
+        ? report.reviewRequested
+          ? "published-new-review"
+          : "published-new"
         : "published";
 
   return (
@@ -90,10 +104,10 @@ export default async function ReportReviewPage({ params }: Props) {
             contentMd: report.contentMd,
             updatedAtMs: report.updatedAt.toMillis(),
             publishedAtMs: report.publishedAt?.toMillis() ?? null,
-            hasNewChanges: report.hasNewChanges,
+            hasNewChanges: realHasNewChanges,
             status,
           }}
-          latestSnapshotContentMd={latestSnapshot?.contentMd ?? null}
+          latestSnapshotContentMd={latestPublishSnapshot?.contentMd ?? null}
           snapshots={snapshots.map((s) => ({
             id: s.id,
             type: s.type,

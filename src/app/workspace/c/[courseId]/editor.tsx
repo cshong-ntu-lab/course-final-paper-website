@@ -11,7 +11,11 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 
 import { getAllUsersForSearchAction, type UserSearchResult } from "@/actions/user";
-import { saveReportDraftAction, type SaveReportPatch } from "@/actions/report";
+import {
+  saveReportDraftAction,
+  setReviewRequestedAction,
+  type SaveReportPatch,
+} from "@/actions/report";
 import { FilesSidebar, type UploadedFile } from "@/components/editor/FilesSidebar";
 import { SaveStatusIndicator, type SaveState } from "@/components/editor/SaveStatusIndicator";
 import { Button } from "@/components/ui/button";
@@ -44,6 +48,7 @@ export interface EditorReport {
   contentMd: string;
   publishedAt: string | null;
   hasNewChanges: boolean;
+  reviewRequested: boolean;
   updatedAtIso: string;
   // v4 extended fields
   subtitle: string;
@@ -124,6 +129,8 @@ export function ReportEditor({
   const [coAuthors, setCoAuthors] = React.useState<CoAuthor[]>(initial.coAuthors);
   const [authorUid, setAuthorUid] = React.useState<string | null>(initial.authorUid);
   const [optimisticUploadCount, setOptimisticUploadCount] = React.useState(0);
+  const [reviewRequested, setReviewRequested] = React.useState(initial.reviewRequested);
+  const [reviewTogglePending, setReviewTogglePending] = React.useState(false);
 
   // Author / co-author search state (shared user list)
   const [showAuthorSearch, setShowAuthorSearch] = React.useState(false);
@@ -590,6 +597,16 @@ export function ReportEditor({
       .slice(0, 8);
   }, [allUsers, coAuthorQuery, coAuthors, authorUid]);
 
+  // --- review request toggle --------------------------------------------
+  const handleToggleReviewRequested = React.useCallback(async () => {
+    const next = !reviewRequested;
+    setReviewRequested(next);
+    setReviewTogglePending(true);
+    const result = await setReviewRequestedAction(initial.id, next);
+    if (!result.ok) setReviewRequested(!next); // revert on failure
+    setReviewTogglePending(false);
+  }, [reviewRequested, initial.id]);
+
   // --- render -----------------------------------------------------------
   const effectiveSaveState: SaveState = !online ? "offline" : save.state;
 
@@ -630,17 +647,6 @@ export function ReportEditor({
         </div>
 
         <div className="flex items-center gap-3">
-          {isAdmin && (
-            <>
-              <Link
-                href="/admin"
-                className="text-accent hover:text-accent-hover text-xs font-medium transition-colors"
-              >
-                回到管理員頁面
-              </Link>
-              <span className="bg-border h-5 w-px" />
-            </>
-          )}
           <SaveStatusIndicator state={effectiveSaveState} since={save.since} />
           <span className="bg-border h-5 w-px" />
           <Button
@@ -727,6 +733,36 @@ export function ReportEditor({
 
         {sidebarOpen && (
           <aside className="border-border bg-canvas hidden w-72 shrink-0 overflow-y-auto border-l md:block">
+            {/* Review request toggle */}
+            <div className="border-border border-b p-4">
+              <button
+                type="button"
+                onClick={() => void handleToggleReviewRequested()}
+                disabled={reviewTogglePending}
+                className={cn(
+                  "flex w-full items-center gap-3 rounded-md border px-3 py-2.5 text-left transition-colors",
+                  reviewRequested
+                    ? "border-success/50 bg-success-soft text-success-fg"
+                    : "border-border bg-surface text-muted hover:border-accent hover:text-accent",
+                  reviewTogglePending && "cursor-wait opacity-60",
+                )}
+              >
+                <span
+                  className={cn(
+                    "flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[9px] font-bold",
+                    reviewRequested
+                      ? "border-success bg-success text-white"
+                      : "border-border-strong bg-canvas",
+                  )}
+                >
+                  {reviewRequested && "✓"}
+                </span>
+                <span className="text-[12.5px] font-medium leading-snug">
+                  準備好了，請求教師審核
+                </span>
+              </button>
+            </div>
+
             <section className="space-y-4 p-4">
               <div>
                 <Label htmlFor="meta-title">標題</Label>
