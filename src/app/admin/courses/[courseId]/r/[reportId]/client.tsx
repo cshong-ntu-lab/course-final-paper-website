@@ -117,8 +117,13 @@ export function ReportReviewClient({
     }`;
 
   const isWithdrawn =
-    currentStatus === "admin-withdrawn" || currentStatus === "admin-withdrawn-new";
-  const isPublished = currentStatus === "published" || currentStatus === "published-new";
+    currentStatus === "admin-withdrawn" ||
+    currentStatus === "admin-withdrawn-new" ||
+    currentStatus === "admin-withdrawn-new-review";
+  const isPublished =
+    currentStatus === "published" ||
+    currentStatus === "published-new" ||
+    currentStatus === "published-new-review";
 
   return (
     <>

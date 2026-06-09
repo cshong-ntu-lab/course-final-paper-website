@@ -72,6 +72,7 @@ export default async function EditorPage({ params }: Params) {
       ? (report.publishedAt as unknown as { toDate(): Date }).toDate().toISOString()
       : null,
     hasNewChanges: report.hasNewChanges,
+    reviewRequested: report.reviewRequested ?? false,
     updatedAtIso: (report.updatedAt as unknown as { toDate(): Date }).toDate().toISOString(),
     // v4 extended fields
     subtitle: report.subtitle ?? "",

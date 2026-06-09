@@ -65,12 +65,18 @@ export default async function CourseDetailPage({ params }: Props) {
     const r = d.data();
     const status: ReportStatus = r.adminWithdrawn
       ? r.hasNewChanges
-        ? "admin-withdrawn-new"
+        ? r.reviewRequested
+          ? "admin-withdrawn-new-review"
+          : "admin-withdrawn-new"
         : "admin-withdrawn"
       : !r.publishedAt
-        ? "unpublished"
+        ? r.reviewRequested
+          ? "unpublished-review"
+          : "unpublished"
         : r.hasNewChanges
-          ? "published-new"
+          ? r.reviewRequested
+            ? "published-new-review"
+            : "published-new"
           : "published";
     return {
       id: d.id,
@@ -84,13 +90,16 @@ export default async function CourseDetailPage({ params }: Props) {
   });
 
   const publishedCount = reports.filter(
-    (r) => r.status === "published" || r.status === "published-new",
+    (r) =>
+      r.status === "published" ||
+      r.status === "published-new" ||
+      r.status === "published-new-review",
   ).length;
   const pendingCount = reports.filter(
     (r) =>
-      r.status === "unpublished" ||
-      r.status === "published-new" ||
-      r.status === "admin-withdrawn-new",
+      r.status === "unpublished-review" ||
+      r.status === "published-new-review" ||
+      r.status === "admin-withdrawn-new-review",
   ).length;
 
   return (

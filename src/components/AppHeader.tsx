@@ -11,9 +11,16 @@ export interface AppHeaderProps {
   user: { displayName: string; email: string };
   breadcrumb?: ReadonlyArray<{ label: string; href?: string }>;
   adminBackLink?: boolean;
+  workspaceLink?: boolean;
 }
 
-export function AppHeader({ context, user, breadcrumb, adminBackLink }: AppHeaderProps) {
+export function AppHeader({
+  context,
+  user,
+  breadcrumb,
+  adminBackLink,
+  workspaceLink,
+}: AppHeaderProps) {
   const homeHref = context === "admin" ? "/admin" : "/workspace";
 
   return (
@@ -74,6 +81,17 @@ export function AppHeader({ context, user, breadcrumb, adminBackLink }: AppHeade
                 className="text-accent hover:text-accent-hover font-medium transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-[3px]"
               >
                 回到管理員頁面
+              </Link>
+              <span className="bg-border h-3 w-px" />
+            </>
+          )}
+          {workspaceLink && (
+            <>
+              <Link
+                href="/workspace"
+                className="text-accent hover:text-accent-hover font-medium transition-colors focus-visible:outline-none focus-visible:underline focus-visible:underline-offset-[3px]"
+              >
+                查看學生頁面
               </Link>
               <span className="bg-border h-3 w-px" />
             </>

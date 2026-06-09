@@ -8,10 +8,13 @@ export type Semester = "1" | "2";
 
 export type ReportStatus =
   | "unpublished"
+  | "unpublished-review"
   | "published"
   | "published-new"
+  | "published-new-review"
   | "admin-withdrawn"
-  | "admin-withdrawn-new";
+  | "admin-withdrawn-new"
+  | "admin-withdrawn-new-review";
 
 export interface User {
   email: string;
@@ -73,7 +76,9 @@ export interface Report {
   contentMd: string;
   publishedAt: Timestamp | null;
   hasNewChanges: boolean;
+  publishedContentMd?: string;
   adminWithdrawn?: boolean;
+  reviewRequested?: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   driveFolderId?: string;
