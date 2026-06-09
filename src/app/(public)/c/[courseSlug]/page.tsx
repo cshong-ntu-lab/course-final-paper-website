@@ -166,12 +166,7 @@ export default async function CoursePage({ params }: Props) {
               {reportItems.length >= 2 && (
                 <div className="grid grid-cols-1 gap-9 pt-11 md:grid-cols-3">
                   {reportItems.slice(1).map((r, i) => (
-                    <ReportListItem
-                      key={r.slug}
-                      report={r}
-                      courseSlug={slug}
-                      variant={i % 2 === 0 ? "text-only" : "default"}
-                    />
+                    <ReportListItem key={r.slug} report={r} courseSlug={slug} variant="default" />
                   ))}
                 </div>
               )}
