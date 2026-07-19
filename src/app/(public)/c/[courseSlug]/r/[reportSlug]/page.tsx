@@ -89,6 +89,8 @@ export default async function ReportPage({ params }: Props) {
         toc={toc}
         prev={adjacent.prev}
         next={adjacent.next}
+        backHref="/"
+        backLabel="返回首頁"
       />
       <Footer />
     </>
