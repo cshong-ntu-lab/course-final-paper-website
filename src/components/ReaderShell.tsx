@@ -46,6 +46,10 @@ interface ReaderShellProps {
   // Preview-mode options
   basePath?: string; // default "/c"
   previewMode?: boolean; // shows draft badge, hides citation, adjusts sticky offset
+  // Overrides the "back to course" link (defaults to `${basePath}/${courseSlug}`).
+  // The public reader has no per-course index page, so it points home instead.
+  backHref?: string;
+  backLabel?: string;
 }
 
 function formatDate(iso: string): string {
@@ -68,9 +72,14 @@ export function ReaderShell({
   next,
   basePath = "/c",
   previewMode = false,
+  backHref,
+  backLabel,
 }: ReaderShellProps) {
   const progress = useScrollProgress();
   const [activeId, setActiveId] = useState<string>("");
+
+  const resolvedBackHref = backHref ?? `${basePath}/${courseSlug}`;
+  const resolvedBackLabel = backLabel ?? `返回 ${courseName}`;
 
   const year = new Date(snap.publishedAt).getFullYear();
   const remainMin = Math.max(1, Math.round(readingMins * (1 - progress / 100)));
@@ -117,10 +126,10 @@ export function ReaderShell({
       >
         <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-6">
           <Link
-            href={`${basePath}/${courseSlug}`}
+            href={resolvedBackHref}
             className="text-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
           >
-            ← 返回 {courseName}
+            ← {resolvedBackLabel}
           </Link>
           <div className="flex items-center gap-3">
             {previewMode && (
@@ -368,10 +377,10 @@ export function ReaderShell({
 
           {/* Back link */}
           <Link
-            href={`${basePath}/${courseSlug}`}
+            href={resolvedBackHref}
             className="border-accent/40 text-accent hover:border-accent mt-7 inline-flex items-center gap-1.5 border-b pb-[1px] text-[14px]"
           >
-            ← 返回 {courseName} 所有報告
+            ← {resolvedBackLabel}
           </Link>
         </article>
 

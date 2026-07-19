@@ -74,6 +74,8 @@ export default async function PreviewReportPage({ params }: Props) {
         next={null}
         basePath="/preview/c"
         previewMode={true}
+        backHref="/preview"
+        backLabel="返回首頁"
       />
       <Footer />
     </>
