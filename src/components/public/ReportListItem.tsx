@@ -84,7 +84,8 @@ function CardBody({ report, badgeLabel }: { report: ReportItem; badgeLabel?: str
     <>
       <div className="mt-3.5 flex flex-wrap gap-1.5">
         {report.courseTag && <CourseTag>{report.courseTag}</CourseTag>}
-        {report.tags?.slice(0, 2).map((t) => <Tag key={t}>{t}</Tag>)}
+        {/* 5 matches the editor's max tag count (TAGS_MAX_COUNT in actions/report.ts) */}
+        {report.tags?.slice(0, 5).map((t) => <Tag key={t}>{t}</Tag>)}
       </div>
       <h3 className="text-foreground group-hover:text-accent mt-2.5 font-serif text-[21px] font-semibold leading-[1.3] tracking-[-0.005em] text-pretty transition-colors">
         {report.title}

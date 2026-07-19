@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { imageMarkdown, useImageUpload } from "@/lib/client/useImageUpload";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
+import { parseTags } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 import type { CoAuthor } from "@/lib/types";
 
@@ -498,11 +499,7 @@ export function ReportEditor({
   };
   const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTags(e.target.value);
-    const parsed = e.target.value
-      .split(/[,、]/)
-      .map((t) => t.trim())
-      .filter(Boolean);
-    queueAutosave({ tags: parsed });
+    queueAutosave({ tags: parseTags(e.target.value) });
   };
   const handleCoverImageUpload = async (file: File) => {
     const res = await coverUpload.upload(file);
