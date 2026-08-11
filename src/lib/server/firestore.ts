@@ -69,11 +69,15 @@ export async function getLatestSnapshot(reportId: string): Promise<SnapshotDoc |
     .doc(reportId)
     .collection("publishSnapshots")
     .orderBy("publishedAt", "desc")
-    .limit(1)
     .get();
-  if (snap.empty) return null;
-  const doc = snap.docs[0]!;
-  return { ...(doc.data() as PublishSnapshot), id: doc.id };
+  // "withdraw" snapshots are lightweight history records (contentMd/title/author/
+  // summary/coverImageUrl only — no tags/subtitle/pullQuote/etc.) and must never be
+  // treated as the public content to render. Skip them and return the latest real
+  // "publish" snapshot instead. Legacy docs without a `type` field predate the
+  // withdraw feature, so they're always a publish snapshot.
+  const publishDoc = snap.docs.find((d) => (d.data() as PublishSnapshot).type !== "withdraw");
+  if (!publishDoc) return null;
+  return { ...(publishDoc.data() as PublishSnapshot), id: publishDoc.id };
 }
 
 /** All report drafts, newest-updated first. Used by the staging home page. */
