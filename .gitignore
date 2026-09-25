@@ -28,7 +28,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
 # env files — exclude everything except the example template
 .env*

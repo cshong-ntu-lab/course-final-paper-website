@@ -282,7 +282,7 @@ firebase deploy --only firestore:rules --project=avid-factor-496115-d6
 ## 測試
 
 ```bash
-pnpm test      # 執行所有 Vitest 單元測試
+npm test      # 執行所有 Vitest 單元測試
 ```
 
 測試檔案與被測試的模組放在同一目錄（`*.test.ts`）：

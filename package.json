@@ -70,14 +70,6 @@
     "typescript": "^5",
     "vitest": "^4.1.6"
   },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "sharp",
-      "unrs-resolver",
-      "@firebase/util",
-      "protobufjs"
-    ]
-  },
   "lint-staged": {
     "*.{ts,tsx,js,jsx,mjs,cjs}": [
       "eslint --fix",
