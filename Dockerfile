@@ -6,14 +6,12 @@ ARG NODE_VERSION=22-alpine
 # ─── deps stage ─────────────────────────────────────────────
 FROM node:${NODE_VERSION} AS deps
 RUN apk add --no-cache libc6-compat
-RUN corepack enable
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod=false
+COPY package.json package-lock.json .npmrc ./
+RUN npm ci
 
 # ─── builder stage ──────────────────────────────────────────
 FROM node:${NODE_VERSION} AS builder
-RUN corepack enable
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -34,7 +32,7 @@ ENV NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=$NEXT_PUBLIC_FIREBASE_MESSAGING_SEN
 ENV NEXT_PUBLIC_FIREBASE_APP_ID=$NEXT_PUBLIC_FIREBASE_APP_ID
 ENV NEXT_PUBLIC_FIREBASE_USE_EMULATOR=$NEXT_PUBLIC_FIREBASE_USE_EMULATOR
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN pnpm build
+RUN npm run build
 
 # ─── runner stage ───────────────────────────────────────────
 FROM node:${NODE_VERSION} AS runner

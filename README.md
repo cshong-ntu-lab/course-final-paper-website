@@ -97,7 +97,7 @@ graph TD
 | 資料庫   | Firestore（Native mode，`asia-east1`）                 |
 | 檔案儲存 | Firebase Storage                                       |
 | 測試     | Vitest（單元測試）                                     |
-| 套件管理 | pnpm 11                                                |
+| 套件管理 | npm                                                    |
 
 詳細技術說明請見 [src/README.md](src/README.md)。  
 基礎設施詳細說明請見 [infra/README.md](infra/README.md)。
@@ -109,7 +109,6 @@ graph TD
 ### 前置需求
 
 - Node.js 20+
-- pnpm 11（`npm install -g pnpm@11`）
 - Java 21+（Firestore 模擬器需要）
 - Firebase CLI（`npm install -g firebase-tools`）
 
@@ -117,7 +116,7 @@ graph TD
 
 ```bash
 # 1. 安裝相依套件
-pnpm install
+npm install
 
 # 2. 複製環境變數範本並填入設定
 cp .env.example .env.local
@@ -127,7 +126,7 @@ cp .env.example .env.local
 firebase emulators:start
 
 # 4. 啟動 Next.js 開發伺服器（終端機二）
-FIREBASE_USE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1 pnpm dev
+FIREBASE_USE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1 npm run dev
 ```
 
 開啟瀏覽器前往 http://localhost:3000 即可。
@@ -169,9 +168,9 @@ FIREBASE_USE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1 pnpm dev
 ## 測試
 
 ```bash
-pnpm test         # Vitest 單元測試
-pnpm typecheck    # TypeScript 型別檢查（tsc --noEmit）
-pnpm lint         # ESLint 程式碼檢查
+npm test         # Vitest 單元測試
+npm run typecheck # TypeScript 型別檢查（tsc --noEmit）
+npm run lint      # ESLint 程式碼檢查
 ```
 
 單元測試與被測試的模組放在同一目錄（`*.test.ts`）。主要測試對象：純函式工具、驗證器、URL 匹配、授權角色判斷、Firestore 轉換器。
