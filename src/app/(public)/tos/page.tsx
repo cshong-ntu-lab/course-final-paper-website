@@ -16,7 +16,7 @@ export default function TosPage() {
           ← 返回首頁
         </Link>
 
-        <article className="prose prose-research font-serif">
+        <article className="prose prose-research">
           <h1>服務條款</h1>
           <p className="not-prose text-muted mt-1 mb-8 text-sm">最後更新：2026 年</p>
 
