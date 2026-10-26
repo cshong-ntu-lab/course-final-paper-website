@@ -1,5 +1,5 @@
 /* Tailwind v4 — CSS-first config.
- * Tokens sourced from tasks/design.md §1 (Forest accent · UI sans + body serif).
+ * Tokens sourced from docs/design-v2.md §1 (Forest accent · sans body, serif headings).
  * The v4 @theme directive replaces v3's tailwind.config.ts colors block.
  */
 
@@ -20,15 +20,34 @@
     --foreground: 60 4% 11%; /* #1c1d1a */
     --muted: 48 4% 35%; /* #5a5a52 */
     --muted-foreground: 48 4% 35%;
-    --subtle: 48 5% 53%; /* #8e8d83 */
+    /* #6e6d64 — was #8e8d83 (3.2:1 on background); it only sets ≤12px text, so it
+       needs AA 4.5:1 — now 4.9:1 on background, 4.6:1 on canvas */
+    --subtle: 54 5% 41%;
     --border: 46 19% 88%; /* #e5e3d9 */
     --border-strong: 42 12% 78%; /* #cfccc1 */
+    --ink-read: 60 5% 22%; /* #3b3b35 — article body text, softer than foreground */
 
     /* accent — forest green */
     --accent: 120 22% 29%; /* #3a5a3a */
     --accent-hover: 120 24% 22%; /* #2a4429 */
     --accent-soft: 96 18% 92%; /* #ecefe8 */
     --accent-foreground: 0 0% 100%;
+
+    /* department-mark palette for tags and decoration (design-v2 §1.1).
+       gold = same values as warning, but a separate name: course tags and
+       section labels are not warnings. Never put white text on --gold (3.3:1);
+       use --gold-ink (6.4:1). */
+    --gold: 37 64% 45%; /* #b8842c */
+    --gold-soft: 42 71% 92%; /* #faf2dd */
+    --gold-ink: 38 65% 28%; /* #7a5a18 */
+    --stone: 211 11% 41%; /* #5e6975 — semester tags */
+    --stone-soft: 210 22% 93%; /* #e9edf1 */
+
+    /* motion durations (design-v2 §5.1); exits are ~30% shorter than enters */
+    --dur-xs: 120ms;
+    --dur-s: 180ms;
+    --dur-m: 240ms;
+    --dur-l: 280ms;
 
     /* semantic */
     --success: 120 22% 29%;
@@ -122,10 +141,35 @@
   --color-info: hsl(var(--info));
   --color-info-soft: hsl(var(--info-soft));
 
-  /* radii */
+  --color-ink-read: hsl(var(--ink-read));
+  --color-gold: hsl(var(--gold));
+  --color-gold-soft: hsl(var(--gold-soft));
+  --color-gold-ink: hsl(var(--gold-ink));
+  --color-stone: hsl(var(--stone));
+  --color-stone-soft: hsl(var(--stone-soft));
+  /* department-mark slice fields (design-v2 §2.3) */
+  --color-tint-green: color-mix(in srgb, hsl(var(--accent)) 22%, white);
+  --color-tint-khaki: color-mix(in srgb, hsl(var(--gold)) 30%, white);
+  --color-tint-grey: color-mix(in srgb, hsl(var(--stone)) 22%, white);
+
+  /* radii — sm/md/lg are used by ui/button, input and select, so they stay;
+     v2 surfaces get their own names (design-v2 §1.4) */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
+  --radius-field: 6px;
+  --radius-control: 9px;
+  --radius-thumb: 12px;
+  --radius-card: 16px;
+  --radius-feature: 20px;
+
+  /* shadows (design-v2 §1.5) */
+  --shadow-soft: 0 1px 2px rgba(28, 29, 26, 0.04), 0 8px 24px -8px rgba(28, 29, 26, 0.12);
+  --shadow-hover: 0 2px 4px rgba(28, 29, 26, 0.05), 0 14px 30px -10px rgba(28, 29, 26, 0.18);
+
+  /* easing (design-v2 §5.1) — not named ease-out / ease-in, which are Tailwind defaults */
+  --ease-enter: cubic-bezier(0.2, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
 
   /* fonts (variables set by next/font) */
   --font-sans: var(--font-sans-en), var(--font-sans-tc), system-ui, sans-serif;
@@ -136,6 +180,14 @@
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
   --text-2xs--letter-spacing: 0.06em;
+
+  /* v2 additions (design-v2 §1.3): article body and titles */
+  --text-read: 1.0625rem;
+  --text-read--line-height: 2.1;
+  --text-read--letter-spacing: 0.03em;
+
+  --text-title: clamp(1.6rem, 3vw, 2.1rem);
+  --text-title--line-height: 1.4;
 
   --text-xs: 0.75rem;
   --text-xs--line-height: 1.05rem;
@@ -284,10 +336,15 @@
   --tw-prose-th-borders: hsl(var(--border-strong));
   --tw-prose-td-borders: hsl(var(--border));
 
-  font-family: var(--font-serif);
+  /* v2: body in sans (like twreporter), headings stay serif */
+  font-family: var(--font-sans);
   font-size: 17px;
   line-height: 1.8;
   max-width: none;
+}
+
+.prose-research :is(h1, h2, h3, h4) {
+  font-family: var(--font-serif);
 }
 
 .prose-research h1 {
