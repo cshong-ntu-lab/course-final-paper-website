@@ -2,11 +2,12 @@
 
 import { FieldValue } from "firebase-admin/firestore";
 
+import { isCohort, isDegree } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { userConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
 import { renameStudentFolders } from "@/lib/server/drive";
-import type { User } from "@/lib/types";
+import type { Degree, User } from "@/lib/types";
 
 const NAME_MIN = 2;
 const NAME_MAX = 30;
@@ -18,6 +19,10 @@ export interface UpdateProfilePatch {
   title?: string;
   bio?: string;
   avatarUrl?: string | null;
+  /** null clears the field */
+  degree?: Degree | null;
+  /** null clears the field */
+  cohort?: number | null;
 }
 
 export type UpdateProfileResult = { ok: true } | { ok: false; error: "invalid_input" | "internal" };
@@ -25,7 +30,10 @@ export type UpdateProfileResult = { ok: true } | { ok: false; error: "invalid_in
 export async function updateProfileAction(patch: UpdateProfilePatch): Promise<UpdateProfileResult> {
   const u = await requireUser();
 
-  const update: Partial<User> = {};
+  const update: Partial<Omit<User, "degree" | "cohort">> & {
+    degree?: Degree | FieldValue;
+    cohort?: number | FieldValue;
+  } = {};
 
   if (patch.profileDisplayName !== undefined) {
     const name = patch.profileDisplayName.trim();
@@ -51,6 +59,18 @@ export async function updateProfileAction(patch: UpdateProfilePatch): Promise<Up
       return { ok: false, error: "invalid_input" };
     }
     update.avatarUrl = patch.avatarUrl;
+  }
+  if (patch.degree !== undefined) {
+    if (patch.degree !== null && !isDegree(patch.degree)) {
+      return { ok: false, error: "invalid_input" };
+    }
+    update.degree = patch.degree ?? FieldValue.delete();
+  }
+  if (patch.cohort !== undefined) {
+    if (patch.cohort !== null && !isCohort(patch.cohort)) {
+      return { ok: false, error: "invalid_input" };
+    }
+    update.cohort = patch.cohort ?? FieldValue.delete();
   }
 
   if (Object.keys(update).length === 0) return { ok: true };
@@ -78,8 +98,7 @@ export async function updateProfileAction(patch: UpdateProfilePatch): Promise<Up
 
 /** @deprecated Use updateProfileAction instead */
 export type SetProfileNameResult =
-  | { ok: true }
-  | { ok: false; error: "invalid_length" | "internal" };
+  { ok: true } | { ok: false; error: "invalid_length" | "internal" };
 
 /** @deprecated Use updateProfileAction instead */
 export async function setProfileNameAction(rawName: string): Promise<SetProfileNameResult> {

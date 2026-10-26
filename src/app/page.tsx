@@ -52,6 +52,8 @@ export default async function RootPage() {
     subtitle: r.subtitle,
     authorAffiliation: r.authorAffiliation,
     authorAvatarUrl: profileMap.get(r.authorUid ?? r.uid)?.avatarUrl ?? null,
+    authorUid: r.authorUid ?? r.uid,
+    authorCohort: profileMap.get(r.authorUid ?? r.uid)?.cohort ?? null,
     courseName: course.name,
     semesterTag: semesterLabel(course.year, course.semester),
     courseSlug: courseSlug(course),

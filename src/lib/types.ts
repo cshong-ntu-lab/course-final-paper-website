@@ -6,6 +6,9 @@ export type Role = "student" | "admin";
 
 export type Semester = "1" | "2";
 
+/** NTU Sociology has no research groups — only degree programmes (design-v2 D10). */
+export type Degree = "學士班" | "碩士班" | "博士班";
+
 export type ReportStatus =
   | "unpublished"
   | "unpublished-review"
@@ -28,6 +31,9 @@ export interface User {
   title?: string;
   bio?: string;
   avatarUrl?: string | null;
+  // v2: shown as "社會系碩士班 · 112級"
+  degree?: Degree;
+  cohort?: number; // entering class (ROC year), e.g. 112
 }
 
 export interface Course {

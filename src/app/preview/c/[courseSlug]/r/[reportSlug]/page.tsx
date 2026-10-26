@@ -45,6 +45,7 @@ export default async function PreviewReportPage({ params }: Props) {
 
   const primaryProfile = profileMap.get(primaryAuthorUid);
   const enrichedCoAuthors = (report.coAuthors ?? []).map((a) => ({
+    uid: a.uid,
     name: a.name,
     title: profileMap.get(a.uid)?.title,
     bio: profileMap.get(a.uid)?.bio,
@@ -69,6 +70,9 @@ export default async function PreviewReportPage({ params }: Props) {
           authorBio: primaryProfile?.bio,
           authorAffiliation: primaryProfile?.title,
           authorAvatarUrl: primaryProfile?.avatarUrl ?? null,
+          authorUid: primaryAuthorUid,
+          authorDegree: primaryProfile?.degree ?? null,
+          authorCohort: primaryProfile?.cohort ?? null,
           coverCaption: report.coverCaption,
           coAuthors: enrichedCoAuthors.length > 0 ? enrichedCoAuthors : undefined,
         }}

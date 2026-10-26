@@ -35,6 +35,8 @@ export default async function SettingsPage() {
             currentTitle={user.title ?? ""}
             currentBio={user.bio ?? ""}
             currentAvatarUrl={user.avatarUrl}
+            currentDegree={user.degree}
+            currentCohort={user.cohort}
           />
         </div>
 

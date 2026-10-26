@@ -3,6 +3,7 @@
 
 import "server-only";
 
+import { isReportByAuthor } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter, reportConverter, userConverter } from "@/lib/firestore/converters";
 import { courseSlug } from "@/lib/slug";
@@ -59,6 +60,21 @@ export async function getPublishedReportsByCourse(courseId: string): Promise<Rep
     .orderBy("publishedAt", "desc")
     .get();
   return snap.docs.map((d) => ({ ...d.data(), id: d.id }));
+}
+
+/** Published reports a user wrote or co-wrote, newest-published first.
+ *  Co-authors are stored as {uid, name} objects, which Firestore can't filter
+ *  by uid, so this reads every published report (single-field inequality, no
+ *  composite index) and filters in code — fine at this site's volume. */
+export async function getPublishedReportsByAuthor(uid: string): Promise<ReportDoc[]> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db
+    .collection("reports")
+    .withConverter(reportConverter)
+    .where("publishedAt", "!=", null)
+    .orderBy("publishedAt", "desc")
+    .get();
+  return snap.docs.map((d) => ({ ...d.data(), id: d.id })).filter((r) => isReportByAuthor(r, uid));
 }
 
 /** Latest publish snapshot for a report, or null if never published. */
