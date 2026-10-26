@@ -9,6 +9,7 @@ import {
   getPublishedReportsByCourse,
   getUsersByUids,
 } from "@/lib/server/firestore";
+import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
 
@@ -51,7 +52,8 @@ export default async function RootPage() {
     subtitle: r.subtitle,
     authorAffiliation: r.authorAffiliation,
     authorAvatarUrl: profileMap.get(r.authorUid ?? r.uid)?.avatarUrl ?? null,
-    courseTag: `${course.year}-${course.semester} ${course.name}`,
+    courseName: course.name,
+    semesterTag: semesterLabel(course.year, course.semester),
     courseSlug: courseSlug(course),
   }));
 
