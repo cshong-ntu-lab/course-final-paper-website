@@ -1,12 +1,10 @@
 // Hardcoded default markdown template assigned to a student's report on
 // first enrollment. Edit this file to change the global template (per
 // tasks/plan.md §19 — per-course templates are out of MVP scope).
+// No "## 摘要" section: the abstract is written once, in the editor's summary
+// field (docs/design-v2.md §3.2, D9).
 
-export const DEFAULT_REPORT_TEMPLATE_MD = `## 摘要
-
-（請在此撰寫 100–300 字的摘要，說明你的研究問題、方法與主要發現。）
-
-## 一、研究問題與動機
+export const DEFAULT_REPORT_TEMPLATE_MD = `## 一、研究問題與動機
 
 （為什麼這個問題值得研究？對社會學討論有何意義？）
 

@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { ReaderShell } from "@/components/ReaderShell";
 import { Footer } from "@/components/Footer";
 import { extractToc } from "@/lib/markdown/extractToc";
+import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
+import { semesterLabel } from "@/lib/semester";
 import { getCourseBySlug, getReportDoc, getUsersByUids } from "@/lib/server/firestore";
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
@@ -30,7 +32,9 @@ export default async function PreviewReportPage({ params }: Props) {
   const updatedIso = updatedTs?.toDate?.().toISOString() ?? new Date().toISOString();
 
   const readingMins = estimateReadingMinutes(report.contentMd);
-  const toc = extractToc(report.contentMd);
+  // the abstract shows in its own card; old reports also repeat it as "## 摘要"
+  const contentMd = stripAbstractSection(report.contentMd);
+  const toc = extractToc(contentMd);
 
   // Fetch primary author + co-author profiles (public reader reads from enriched snapshot).
   const primaryAuthorUid = report.authorUid ?? report.uid;
@@ -52,13 +56,13 @@ export default async function PreviewReportPage({ params }: Props) {
         courseSlug={courseSlug}
         courseName={course.name}
         courseCode={course.courseNo ?? course.code}
-        courseTag={`${course.year}-${course.semester} ${course.name}`}
+        semesterTag={semesterLabel(course.year, course.semester)}
         snap={{
           title: report.title || "（無標題）",
           author: report.author || "（未署名）",
           summary: report.summary,
           coverImageUrl: report.coverImageUrl,
-          contentMd: report.contentMd,
+          contentMd,
           publishedAt: updatedIso,
           subtitle: report.subtitle,
           tags: report.tags,
