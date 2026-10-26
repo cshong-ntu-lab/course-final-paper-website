@@ -7,3 +7,18 @@ export function parseTags(input: string): string[] {
     .map((t) => t.trim())
     .filter(Boolean);
 }
+
+/** Pills a card shows at most — docs/design-v2.md §2.2. */
+export const CARD_TAG_MAX = 3;
+
+/** Splits a card's topic keywords into shown and folded ("+N"). The course and
+ *  semester pills (`fixedCount`) are always shown, so only topics fold, and at
+ *  least one topic stays visible. */
+export function foldCardTags(
+  topics: string[],
+  fixedCount: number,
+  max: number = CARD_TAG_MAX,
+): { shown: string[]; hidden: string[] } {
+  const slots = Math.max(1, max - fixedCount);
+  return { shown: topics.slice(0, slots), hidden: topics.slice(slots) };
+}
