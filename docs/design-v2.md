@@ -280,7 +280,7 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 
 **列表列（新增 `variant="row"`）**：縮圖 130px 4:3、`radius-thumb`；摘要 2 行；其餘同卡片。
 
-**精選（`variant="lead"`）**：`surface` 底、`radius-feature`、padding 26px；縮圖 **16:9**（現在 4:3，太高）；欄寬 `1.15fr 1fr`；小標「本期精選」`gold-soft` 底 `gold-ink` 字膠囊；標題 `text-3xl`；摘要 4 行。
+**精選（`variant="lead"`）**：`surface` 底、`radius-feature`、padding 26px；縮圖 **16:9**（現在 4:3，太高）；欄寬 `1.15fr 1fr`；小標「最新發表」`gold-soft` 底 `gold-ink` 字膠囊（repo 的 lead 是最新一篇、不是人工挑選，所以不寫「本期精選」）；標題 `text-3xl`；摘要 4 行。
 
 **卡片 / 列表切換**：結果列右側，`canvas` 底的分段切換器。
 

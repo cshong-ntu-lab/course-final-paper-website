@@ -818,3 +818,22 @@
     stroke-dasharray: none;
   }
 }
+
+/* feed entrances (docs/design-v2.md §5.2 #6, #19): children of .stagger-in rise
+   in 40ms apart (capped at the 8th); .swap-in is the quieter grid ↔ list change */
+.rise-once {
+  animation: rise-in var(--dur-l) var(--ease-enter) backwards;
+}
+.stagger-in > * {
+  animation: rise-in var(--dur-l) var(--ease-enter) backwards;
+  animation-delay: calc(min(var(--i, 0), 8) * 40ms);
+}
+.swap-in {
+  --rise: 4px;
+  animation: rise-in var(--dur-s) var(--ease-enter) backwards;
+}
+/* SegmentedControl before its thumb is measured: the active option paints itself */
+.seg:not([data-ready]) > button[aria-pressed="true"] {
+  background: hsl(var(--surface));
+  box-shadow: var(--shadow-soft);
+}
