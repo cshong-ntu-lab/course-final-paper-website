@@ -11,9 +11,11 @@ import { Avatar } from "@/components/Avatar";
 import { MarkSliceCorner } from "@/components/MarkSlice";
 import { TagPill } from "@/components/TagPill";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { authorLine } from "@/lib/authors";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import type { TocEntry } from "@/lib/markdown/extractToc";
 import { activeHeading, parentH2Indices } from "@/lib/scrollSpy";
+import type { Degree } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface AdjacentReport {
@@ -23,6 +25,7 @@ interface AdjacentReport {
 }
 
 interface SnapCoAuthor {
+  uid?: string;
   name: string;
   title?: string;
   bio?: string;
@@ -45,6 +48,10 @@ interface ReaderShellProps {
     authorBio?: string;
     authorAffiliation?: string;
     authorAvatarUrl?: string | null;
+    // v2 author identity, from the live profile; the card links to /u/{authorUid}
+    authorUid?: string;
+    authorDegree?: Degree | null;
+    authorCohort?: number | null;
     coverCaption?: string;
     coAuthors?: SnapCoAuthor[];
   };
@@ -239,8 +246,22 @@ export function ReaderShell({
   const stickyTop = previewMode ? "top-8" : "top-0";
   const readerTop = previewMode ? "90px" : "58px";
   const people = [
-    { name: snap.author, title: snap.authorAffiliation, avatarUrl: snap.authorAvatarUrl },
-    ...(snap.coAuthors ?? []).map((ca) => ({ name: ca.name, title: ca.title, avatarUrl: null })),
+    {
+      uid: snap.authorUid,
+      name: snap.author,
+      // "社會系碩士班 · 112級" once the author has filled it in; until then their title
+      line:
+        snap.authorDegree || snap.authorCohort
+          ? authorLine(snap.authorDegree, snap.authorCohort)
+          : snap.authorAffiliation,
+      avatarUrl: snap.authorAvatarUrl,
+    },
+    ...(snap.coAuthors ?? []).map((ca) => ({
+      uid: ca.uid,
+      name: ca.name,
+      line: ca.title,
+      avatarUrl: null,
+    })),
   ];
   const bios = [
     ...(snap.authorBio
@@ -330,20 +351,36 @@ export function ReaderShell({
         {/* Meta rail: authors, date, tags; tools stay in view */}
         <aside className="reader-meta" aria-label="作者與標籤">
           <div className="reader-meta-block">
-            {people.map((p, i) => (
-              <div
-                key={`${p.name}-${i}`}
-                className="border-border bg-canvas rounded-thumb flex items-center gap-2.5 border px-2.5 py-2"
-              >
-                <Avatar name={p.name || "？"} src={p.avatarUrl} size={i === 0 ? "md" : "sm"} />
-                <div className="min-w-0">
-                  <div className="text-foreground text-sm font-bold">{p.name || "（未署名）"}</div>
-                  {p.title && (
-                    <div className="text-subtle text-xs [word-break:keep-all]">{p.title}</div>
-                  )}
+            {people.map((p, i) => {
+              const card = (
+                <>
+                  <Avatar name={p.name || "？"} src={p.avatarUrl} size={i === 0 ? "md" : "sm"} />
+                  <div className="min-w-0">
+                    <div className="text-foreground text-sm font-bold">
+                      {p.name || "（未署名）"}
+                    </div>
+                    {p.line && (
+                      <div className="text-subtle text-xs [word-break:keep-all]">{p.line}</div>
+                    )}
+                  </div>
+                </>
+              );
+              const cls =
+                "border-border bg-canvas rounded-thumb flex items-center gap-2.5 border px-2.5 py-2";
+              return p.uid ? (
+                <Link
+                  key={`${p.uid}-${i}`}
+                  href={`/u/${p.uid}`}
+                  className={cn(cls, "hover:border-accent transition-colors")}
+                >
+                  {card}
+                </Link>
+              ) : (
+                <div key={`${p.name}-${i}`} className={cls}>
+                  {card}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             <p className="text-subtle m-0 text-xs leading-relaxed [word-break:keep-all]">
               {previewMode ? "更新" : "發布"} {formatDate(snap.publishedAt)} ·{" "}
               {`閱讀 ${readingMins} 分鐘`}

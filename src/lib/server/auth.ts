@@ -10,7 +10,7 @@ import { cookies } from "next/headers";
 import { env } from "@/lib/env";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { userConverter } from "@/lib/firestore/converters";
-import type { Role, User } from "@/lib/types";
+import type { Degree, Role, User } from "@/lib/types";
 
 export const SESSION_COOKIE = "session";
 // Firebase session cookie max lifetime is 14 days; we mint for 5 to keep risk bounded.
@@ -28,6 +28,8 @@ export interface CurrentUser {
   title: string;
   bio: string;
   avatarUrl: string | null;
+  degree: Degree | null;
+  cohort: number | null;
 }
 
 export function isAdminEmail(email: string | undefined | null): boolean {
@@ -68,6 +70,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     title: userDoc?.title ?? "",
     bio: userDoc?.bio ?? "",
     avatarUrl: userDoc?.avatarUrl ?? null,
+    degree: userDoc?.degree ?? null,
+    cohort: userDoc?.cohort ?? null,
   };
 }
 
