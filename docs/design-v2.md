@@ -203,6 +203,7 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 }
 ```
 
+- 標題的實際 DOM id 有 `user-content-` 前綴（`rehype-sanitize` 防 DOM clobbering 的預設），目錄連結與判斷要用加了前綴的 id；修改前正式站的目錄連結因此一直點不到。
 - 在 scroll 事件（passive）裡算；測試要涵蓋「最後兩節都很短」的情況，捲到底前每一節都要輪到。
 - 點目錄項目後該項**釘住**為目前章節，直到使用者自己捲動（`wheel` / `touchstart` / `keydown` 解除）。
 

@@ -316,10 +316,10 @@
 
 /* ─── prose-research (design.md §4.4) ─── */
 /* Layered onto .prose from @tailwindcss/typography. Designed for long-form
- * 中文 academic content: Noto Serif TC body, sans-serif tables/captions/UI,
- * Forest accent for links, paper background. */
+ * 中文 academic content (docs/design-v2.md §4.1): sans body at a relaxed
+ * reading measure, serif headings, Forest accent for links, paper background. */
 .prose-research {
-  --tw-prose-body: hsl(var(--foreground));
+  --tw-prose-body: hsl(var(--ink-read));
   --tw-prose-headings: hsl(var(--foreground));
   --tw-prose-lead: hsl(var(--muted));
   --tw-prose-links: hsl(var(--accent));
@@ -339,8 +339,15 @@
   /* v2: body in sans (like twreporter), headings stay serif */
   font-family: var(--font-sans);
   font-size: 17px;
-  line-height: 1.8;
+  line-height: 2.1;
+  letter-spacing: 0.03em;
   max-width: none;
+}
+@media (max-width: 860px) {
+  .prose-research {
+    font-size: 1rem;
+    line-height: 2;
+  }
 }
 
 .prose-research :is(h1, h2, h3, h4) {
@@ -355,23 +362,22 @@
   margin-top: 0;
   margin-bottom: 1.2em;
 }
+/* v2: quiet section heads — the reading column carries the page, not the rules */
 .prose-research h2 {
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  font-size: 1.6rem;
-  line-height: 1.3;
-  margin-top: 2.2em;
-  margin-bottom: 0.7em;
-  padding-bottom: 0.3em;
-  border-bottom: 1px solid hsl(var(--border));
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  margin-top: 56px;
+  margin-bottom: 18px;
 }
 .prose-research h3 {
-  font-weight: 600;
-  letter-spacing: -0.005em;
-  font-size: 1.25rem;
-  line-height: 1.4;
-  margin-top: 1.8em;
-  margin-bottom: 0.5em;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  margin-top: 36px;
+  margin-bottom: 12px;
 }
 .prose-research h4 {
   font-weight: 600;
@@ -380,9 +386,12 @@
   margin-bottom: 0.4em;
 }
 
+.prose-research > :first-child {
+  margin-top: 0;
+}
 .prose-research p {
   margin-top: 0;
-  margin-bottom: 1.2em;
+  margin-bottom: 1.6em;
   text-wrap: pretty;
 }
 .prose-research a {
@@ -564,4 +573,248 @@
   color: hsl(var(--subtle));
   border-top: 1px solid hsl(var(--border));
   font-family: var(--font-sans);
+}
+
+/* ─── motion (docs/design-v2.md §5) ─── */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise, 8px));
+  }
+}
+@keyframes stem-grow {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* ─── reader layout (docs/design-v2.md §4.1) ───
+ * meta rail | centred reading column | quiet TOC rail. Both rails are the same
+ * width, so the reading column sits on the page's centre line.
+ * --reader-top = height of the sticky reader header (+ PreviewBanner in preview). */
+.reader-grid {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 180px;
+  grid-template-areas:
+    "meta head toc"
+    "meta chips toc"
+    "meta main toc";
+  grid-template-rows: auto auto 1fr;
+  column-gap: 48px;
+}
+.reader-grid > * {
+  min-width: 0;
+}
+.reader-head {
+  grid-area: head;
+}
+.reader-meta {
+  grid-area: meta;
+}
+.reader-chips {
+  grid-area: chips;
+}
+.reader-main {
+  grid-area: main;
+}
+.reader-toc {
+  grid-area: toc;
+}
+.reader-head,
+.reader-main,
+.reader-chips {
+  width: 100%;
+  max-width: 640px;
+  justify-self: center;
+}
+.reader-head {
+  padding-bottom: 36px;
+  margin-bottom: 44px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+/* course → title → subtitle → abstract rise in, 60ms apart (delays set inline) */
+.reader-head > * {
+  animation: rise-in var(--dur-l) var(--ease-enter) backwards;
+}
+.reader-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.reader-meta-block {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid hsl(var(--border));
+}
+.reader-tools {
+  position: sticky;
+  top: calc(var(--reader-top) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.reader-grid .prose-research :is(h2, h3) {
+  scroll-margin-top: calc(var(--reader-top) + 24px);
+}
+
+/* TOC: hairline trunk; the accent segment down to the current item is reading progress */
+.toc-trunk::before,
+.toc-trunk::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+}
+.toc-trunk::before {
+  bottom: 0;
+  background: hsl(var(--border));
+}
+.toc-trunk::after {
+  height: var(--fill, 0px);
+  background: hsl(var(--accent));
+  transition: height 200ms var(--ease-enter);
+}
+.toc-link::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+  background: hsl(var(--accent));
+  transform: scaleY(0);
+  transition: transform 150ms var(--ease-enter);
+}
+.toc-link[aria-current] {
+  font-weight: 700;
+  color: hsl(var(--accent));
+}
+.toc-link[aria-current]::before {
+  transform: scaleY(1);
+}
+
+/* the abstract card's stems grow out once: main, then the branch from its fork, then the twig */
+.mark-grow .stroke-surface {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1.001;
+  animation: stem-grow 700ms var(--ease-enter) 200ms forwards;
+}
+.mark-grow path:nth-of-type(5) {
+  animation-delay: 450ms; /* paths 1–3 are the fields; 4 main, 5 branch, 6 twig */
+}
+.mark-grow path:nth-of-type(6) {
+  animation-delay: 600ms;
+  animation-duration: 500ms;
+}
+
+.reader-chips {
+  display: none;
+}
+.reader-chips ol.fade-start {
+  mask-image: linear-gradient(to right, transparent, #000 28px);
+}
+.reader-chips ol.fade-end {
+  mask-image: linear-gradient(to left, transparent, #000 28px);
+}
+.reader-chips ol.fade-start.fade-end {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    #000 28px,
+    #000 calc(100% - 28px),
+    transparent
+  );
+}
+
+/* ≤1100px: the meta rail folds into a strip under the head; the TOC rail stays */
+@media (max-width: 1100px) {
+  .reader-grid {
+    grid-template-columns: minmax(0, 1fr) 160px;
+    grid-template-areas:
+      "head toc"
+      "meta toc"
+      "chips toc"
+      "main toc";
+    grid-template-rows: auto auto auto 1fr;
+    column-gap: 40px;
+  }
+  .reader-head {
+    padding-bottom: 0;
+    margin-bottom: 24px;
+    border-bottom: 0;
+  }
+  .reader-meta {
+    width: 100%;
+    max-width: 640px;
+    justify-self: center;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding-bottom: 24px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  .reader-meta-block {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0;
+    border: 0;
+  }
+  .reader-tools {
+    position: static;
+    flex-direction: row;
+    gap: 18px;
+  }
+}
+/* ≤860px: one column; the TOC becomes a sticky, scrollable row of h2 chips */
+@media (max-width: 860px) {
+  .reader-grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "head"
+      "meta"
+      "chips"
+      "main";
+    grid-template-rows: none;
+  }
+  .reader-toc {
+    display: none;
+  }
+  .reader-chips {
+    display: block;
+    position: sticky;
+    top: var(--reader-top);
+    z-index: 30;
+    margin: -16px 0 28px;
+    background: hsl(var(--background));
+    box-shadow:
+      0 0 0 100vmax hsl(var(--background)),
+      0 1px 0 100vmax hsl(var(--border));
+    clip-path: inset(0 -100vmax -1px);
+  }
+  .reader-grid .prose-research :is(h2, h3) {
+    scroll-margin-top: calc(var(--reader-top) + 72px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .mark-grow .stroke-surface {
+    stroke-dasharray: none;
+  }
 }

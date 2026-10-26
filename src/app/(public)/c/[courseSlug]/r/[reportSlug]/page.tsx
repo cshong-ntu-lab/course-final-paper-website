@@ -1,4 +1,4 @@
-// design.md §3.2 — R1 Classical report reader (v4 redesign).
+// docs/design-v2.md §4.1 — report reader.
 // RSC shell for data fetching + SEO; interactive parts in ReaderShell (client).
 
 import type { Metadata } from "next";
@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/Footer";
 import { extractToc } from "@/lib/markdown/extractToc";
+import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
+import { semesterCitationYear, semesterLabel } from "@/lib/semester";
 import {
   getCourseBySlug,
   getAdjacentPublishedReports,
@@ -54,7 +56,9 @@ export default async function ReportPage({ params }: Props) {
 
   const publishedMs = snap.publishedAt.toDate().getTime();
   const readingMins = estimateReadingMinutes(snap.contentMd);
-  const toc = extractToc(snap.contentMd);
+  // the abstract shows in its own card; old reports also repeat it as "## 摘要"
+  const contentMd = stripAbstractSection(snap.contentMd);
+  const toc = extractToc(contentMd);
 
   const adjacent = await getAdjacentPublishedReports(course.id, publishedMs);
 
@@ -69,13 +73,14 @@ export default async function ReportPage({ params }: Props) {
         courseSlug={courseSlug}
         courseName={course.name}
         courseCode={course.courseNo ?? course.code}
-        courseTag={`${course.year}-${course.semester} ${course.name}`}
+        semesterTag={semesterLabel(course.year, course.semester)}
+        citationYear={semesterCitationYear(course.year, course.semester)}
         snap={{
           title: snap.title || "（無標題）",
           author: snap.author || "（未署名）",
           summary: snap.summary,
           coverImageUrl: snap.coverImageUrl,
-          contentMd: snap.contentMd,
+          contentMd,
           publishedAt: snap.publishedAt.toDate().toISOString(),
           subtitle: snap.subtitle,
           tags: snap.tags,

@@ -1,11 +1,20 @@
 "use client";
+// docs/design-v2.md §4.1 — report reader, modelled on twreporter's article page:
+// meta rail (author, tags, tools) | centred reading column | quiet TOC rail.
+// Layout lives in globals.css (.reader-grid); this file owns behaviour.
 
+import { Check, Printer, Quote, Share2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import { MarkdownRenderer } from "@/lib/markdown/Renderer";
+import { Avatar } from "@/components/Avatar";
+import { MarkSliceCorner } from "@/components/MarkSlice";
+import { TagPill } from "@/components/TagPill";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
+import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import type { TocEntry } from "@/lib/markdown/extractToc";
+import { activeHeading, parentH2Indices } from "@/lib/scrollSpy";
+import { cn } from "@/lib/utils";
 
 interface AdjacentReport {
   slug: string;
@@ -28,6 +37,7 @@ interface ReaderShellProps {
     author: string;
     summary: string;
     coverImageUrl: string | null;
+    /** Body without the old template's "## 摘要" section (see stripAbstractSection). */
     contentMd: string;
     publishedAt: string; // ISO string
     subtitle?: string;
@@ -40,7 +50,9 @@ interface ReaderShellProps {
   };
   readingMins: number;
   toc: TocEntry[];
-  courseTag?: string; // e.g. "114-2 計算社會學"
+  semesterTag?: string; // e.g. "114-2"
+  /** From the course semester (semesterCitationYear); falls back to the publish year. */
+  citationYear?: number;
   prev: AdjacentReport | null;
   next: AdjacentReport | null;
   // Preview-mode options
@@ -60,11 +72,32 @@ function formatDate(iso: string): string {
   }).format(new Date(iso));
 }
 
+const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// rehype-sanitize prefixes heading ids (DOM-clobbering guard), so a TOC slug
+// "一研究動機" is rendered as id="user-content-一研究動機".
+const headingDomId = (slug: string) => `user-content-${slug}`;
+
+/** Tool icon that cross-fades into a check for a moment after success. */
+function SwapIcon({ Icon, done }: { Icon: LucideIcon; done: boolean }) {
+  const layer = "col-start-1 row-start-1 size-4 transition-[opacity,transform] duration-150";
+  return (
+    <span className="inline-grid shrink-0" aria-hidden="true">
+      <Icon className={cn(layer, done && "scale-60 opacity-0")} />
+      <Check className={cn(layer, "text-accent", !done && "scale-60 opacity-0")} />
+    </span>
+  );
+}
+
+const TOOL =
+  "text-muted hover:text-accent flex items-center gap-2.5 py-1.5 text-left text-sm transition-colors";
+
 export function ReaderShell({
   courseSlug,
   courseName,
   courseCode,
-  courseTag,
+  semesterTag,
+  citationYear,
   snap,
   readingMins,
   toc,
@@ -76,50 +109,160 @@ export function ReaderShell({
   backLabel,
 }: ReaderShellProps) {
   const progress = useScrollProgress();
-  const [activeId, setActiveId] = useState<string>("");
+  const [current, setCurrent] = useState(toc.length > 0 ? 0 : -1);
+  const [done, setDone] = useState<"share" | "cite" | null>(null);
+  const pinnedRef = useRef(-1); // a clicked TOC entry stays current until the reader scrolls
+  const trunkRef = useRef<HTMLOListElement>(null);
+  const chipsRef = useRef<HTMLOListElement>(null);
+  const doneTimer = useRef<number | undefined>(undefined);
 
   const resolvedBackHref = backHref ?? `${basePath}/${courseSlug}`;
   const resolvedBackLabel = backLabel ?? `返回 ${courseName}`;
 
-  const year = new Date(snap.publishedAt).getFullYear();
-  const remainMin = Math.max(1, Math.round(readingMins * (1 - progress / 100)));
-
+  const year = citationYear ?? new Date(snap.publishedAt).getFullYear();
   const citationText = `${snap.author} (${year}). 〈${snap.title}〉. 《台大社會系研究筆記》, ${courseCode}.`;
 
-  const copyLink = useCallback(() => void navigator.clipboard.writeText(window.location.href), []);
-  const copyCitation = useCallback(
-    () => void navigator.clipboard.writeText(citationText),
-    [citationText],
+  const chipOf = useMemo(() => parentH2Indices(toc.map((h) => h.level)), [toc]);
+  const chips = useMemo(
+    () => toc.map((h, i) => ({ h, i })).filter(({ h }) => h.level === 2),
+    [toc],
   );
-  const print = useCallback(() => window.print(), []);
 
-  // Track active TOC heading via IntersectionObserver
+  // --- current section ---------------------------------------------------
   useEffect(() => {
     if (toc.length === 0) return;
-    const headingEls = toc
-      .map((h) => document.getElementById(h.id))
-      .filter((el): el is HTMLElement => el !== null);
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
-        }
-      },
-      { rootMargin: "-20% 0px -70% 0px" },
-    );
-    headingEls.forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    const headings = toc.map((h) => document.getElementById(headingDomId(h.id)));
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      if (pinnedRef.current >= 0) return setCurrent(pinnedRef.current);
+      const vh = window.innerHeight;
+      const remaining = document.documentElement.scrollHeight - vh - window.scrollY;
+      const tops = headings.map((el) => (el ? el.getBoundingClientRect().top : Infinity));
+      setCurrent(activeHeading(tops, vh, remaining));
+    };
+    const schedule = () => {
+      if (!frame) frame = requestAnimationFrame(update);
+    };
+    const unpin = () => {
+      if (pinnedRef.current < 0) return;
+      pinnedRef.current = -1;
+      schedule();
+    };
+    const unpinOn = ["wheel", "touchstart", "keydown"] as const;
+    schedule();
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    unpinOn.forEach((ev) => window.addEventListener(ev, unpin, { passive: true }));
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      unpinOn.forEach((ev) => window.removeEventListener(ev, unpin));
+    };
   }, [toc]);
 
-  // sticky top offset: preview pages sit below a PreviewBanner
+  // trunk fill down to the current entry; current chip centred in its row
+  useEffect(() => {
+    const trunk = trunkRef.current;
+    const li = trunk?.children[current] as HTMLElement | undefined;
+    trunk?.style.setProperty("--fill", li ? `${li.offsetTop + li.offsetHeight / 2}px` : "0px");
+
+    const row = chipsRef.current;
+    const chip = row?.children[chipOf[current] ?? -1] as HTMLElement | undefined;
+    if (row && chip && row.offsetParent) {
+      row.scrollTo({
+        left: chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2,
+        behavior: prefersReducedMotion() ? "auto" : "smooth",
+      });
+    }
+  }, [current, chipOf]);
+
+  // fade whichever edge of the chip row still hides chips
+  const updateFades = useCallback(() => {
+    const row = chipsRef.current;
+    if (!row) return;
+    const max = row.scrollWidth - row.clientWidth;
+    row.classList.toggle("fade-start", row.scrollLeft > 2);
+    row.classList.toggle("fade-end", row.scrollLeft < max - 2);
+  }, []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(updateFades);
+    window.addEventListener("resize", updateFades);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("resize", updateFades);
+    };
+  }, [updateFades]);
+
+  const jumpTo = (i: number) => (e: React.MouseEvent) => {
+    const entry = toc[i];
+    const el = entry && document.getElementById(headingDomId(entry.id));
+    if (!el) return;
+    e.preventDefault();
+    pinnedRef.current = i;
+    setCurrent(i);
+    el.scrollIntoView({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+    history.replaceState(null, "", `#${el.id}`);
+  };
+
+  // --- tools -----------------------------------------------------------------
+  useEffect(() => () => window.clearTimeout(doneTimer.current), []);
+  const flash = (key: "share" | "cite") => {
+    setDone(key);
+    window.clearTimeout(doneTimer.current);
+    doneTimer.current = window.setTimeout(() => setDone(null), 1600);
+  };
+  const copy = (text: string) =>
+    navigator.clipboard.writeText(text).then(
+      () => true,
+      () => false,
+    );
+  const share = async () => {
+    const url = window.location.href.split("#")[0] ?? window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: snap.title, url });
+        flash("share");
+      } catch (err) {
+        if ((err as Error).name !== "AbortError" && (await copy(url))) flash("share");
+      }
+      return;
+    }
+    if (await copy(url)) flash("share");
+  };
+  const copyCitation = async () => {
+    if (await copy(citationText)) flash("cite");
+  };
+
+  // sticky offsets: the reader header (56px + 2px progress sliver), plus PreviewBanner
   const stickyTop = previewMode ? "top-8" : "top-0";
-  const tocStickyTop = previewMode ? "top-[88px]" : "top-20";
+  const readerTop = previewMode ? "90px" : "58px";
+  const people = [
+    { name: snap.author, title: snap.authorAffiliation, avatarUrl: snap.authorAvatarUrl },
+    ...(snap.coAuthors ?? []).map((ca) => ({ name: ca.name, title: ca.title, avatarUrl: null })),
+  ];
+  const bios = [
+    ...(snap.authorBio
+      ? [
+          {
+            name: snap.author,
+            title: snap.authorAffiliation,
+            bio: snap.authorBio,
+            avatarUrl: snap.authorAvatarUrl,
+          },
+        ]
+      : []),
+    ...(snap.coAuthors ?? [])
+      .filter((ca) => ca.bio)
+      .map((ca) => ({ ...ca, avatarUrl: null as string | null })),
+  ];
 
   return (
-    <div className="bg-background min-h-screen">
+    <div
+      className="bg-background min-h-screen"
+      style={{ "--reader-top": readerTop } as React.CSSProperties}
+    >
       {/* Sticky reader header */}
       <header
         className={`border-border bg-background/95 sticky ${stickyTop} z-40 border-b backdrop-blur`}
@@ -133,7 +276,7 @@ export function ReaderShell({
           </Link>
           <div className="flex items-center gap-3">
             {previewMode && (
-              <span className="rounded border border-warning/40 bg-warning-soft px-2 py-0.5 font-mono text-2xs text-warning-fg">
+              <span className="border-warning/40 bg-warning-soft text-2xs text-warning-fg rounded border px-2 py-0.5 font-mono">
                 草稿
               </span>
             )}
@@ -151,112 +294,131 @@ export function ReaderShell({
         </div>
       </header>
 
-      {/* Main grid: article + right rail */}
-      <div className="mx-auto grid max-w-[1180px] gap-x-16 px-6 py-14 lg:grid-cols-[minmax(0,720px)_200px] lg:justify-center">
-        <article id="main">
-          {/* Article masthead */}
-          <header className="animate-fade-up mb-10">
-            <div className="mb-4 inline-flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.18em] text-subtle">
-              <span>{courseCode}</span>
-              <span className="bg-accent animate-pulse-dot inline-block h-[5px] w-[5px] rounded-full" />
-              <span>期末報告</span>
-            </div>
-
-            <h1 className="text-foreground m-0 font-serif text-[58px] font-semibold leading-[1.05] tracking-[-0.03em] text-balance">
-              {snap.title || "（無標題）"}
-            </h1>
-
-            {snap.subtitle && (
-              <p className="text-muted m-0 mt-[22px] max-w-[32em] font-serif italic text-[21px] leading-[1.5] text-pretty">
-                {snap.subtitle}
+      <div className="reader-grid mx-auto max-w-[1180px] px-6 py-14">
+        {/* Head: course → title → subtitle → abstract, rising in 60ms apart */}
+        <header className="reader-head">
+          <p className="text-gold-ink m-0 text-sm font-bold tracking-[0.08em]">{courseName}</p>
+          <h1
+            className="text-title text-foreground m-0 mt-2.5 mb-3 font-serif font-bold text-balance"
+            style={{ animationDelay: "60ms" }}
+          >
+            {snap.title || "（無標題）"}
+          </h1>
+          {snap.subtitle && (
+            <p
+              className="text-muted m-0 mb-4 font-serif text-base italic text-pretty"
+              style={{ animationDelay: "120ms" }}
+            >
+              {snap.subtitle}
+            </p>
+          )}
+          {snap.summary && (
+            <section
+              aria-label="摘要"
+              className="border-border bg-surface rounded-card relative isolate mt-7 overflow-hidden border px-6 pt-5 pb-6"
+              style={{ animationDelay: "180ms" }}
+            >
+              <MarkSliceCorner className="mark-grow" />
+              <p className="text-2xs text-muted m-0 mb-3 font-bold tracking-[0.24em]">摘要</p>
+              <p className="text-ink-read m-0 text-base leading-[1.9] text-pretty">
+                {snap.summary}
               </p>
-            )}
+            </section>
+          )}
+        </header>
 
-            {(courseTag || (snap.tags && snap.tags.length > 0)) && (
-              <div className="mt-5 flex flex-wrap gap-1.5">
-                {courseTag && (
-                  <span className="border-accent/35 bg-accent/[0.08] text-accent inline-flex items-center rounded-[2px] border px-2 py-[2px] font-mono text-[10px] tracking-[0.04em]">
-                    {courseTag}
-                  </span>
-                )}
-                {snap.tags?.map((t) => (
-                  <span
-                    key={t}
-                    className="border-accent/30 bg-accent/[0.08] text-accent hover:bg-accent hover:text-background inline-flex items-center rounded-[2px] border px-2 py-[2px] text-[11px] tracking-[0.02em] transition-colors"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            {/* Author meta */}
-            <div className="mt-8 flex flex-wrap items-center gap-[18px] text-sm">
-              {/* Primary author */}
-              <div className="flex items-center gap-3">
-                {snap.authorAvatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={snap.authorAvatarUrl}
-                    alt=""
-                    className="h-10 w-10 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
-                    {(snap.author || "？")[0]}
-                  </span>
-                )}
-                <div>
-                  <div className="text-foreground font-serif text-[15px] font-semibold">
-                    {snap.author || "（未署名）"}
-                  </div>
-                  {snap.authorAffiliation && (
-                    <div className="text-subtle text-[12px]">{snap.authorAffiliation}</div>
+        {/* Meta rail: authors, date, tags; tools stay in view */}
+        <aside className="reader-meta" aria-label="作者與標籤">
+          <div className="reader-meta-block">
+            {people.map((p, i) => (
+              <div
+                key={`${p.name}-${i}`}
+                className="border-border bg-canvas rounded-thumb flex items-center gap-2.5 border px-2.5 py-2"
+              >
+                <Avatar name={p.name || "？"} src={p.avatarUrl} size={i === 0 ? "md" : "sm"} />
+                <div className="min-w-0">
+                  <div className="text-foreground text-sm font-bold">{p.name || "（未署名）"}</div>
+                  {p.title && (
+                    <div className="text-subtle text-xs [word-break:keep-all]">{p.title}</div>
                   )}
                 </div>
               </div>
-              {/* Co-authors */}
-              {snap.coAuthors?.map((ca) => (
-                <div key={ca.name} className="flex items-center gap-3">
-                  <div className="border-border h-[30px] w-px" />
-                  <span className="bg-accent text-background font-serif inline-grid h-10 w-10 shrink-0 place-items-center rounded-full text-[18px] font-semibold">
-                    {(ca.name || "？")[0]}
-                  </span>
-                  <div>
-                    <div className="text-foreground font-serif text-[15px] font-semibold">
-                      {ca.name}
-                    </div>
-                    {ca.title && <div className="text-subtle text-[12px]">{ca.title}</div>}
-                  </div>
-                </div>
+            ))}
+            <p className="text-subtle m-0 text-xs leading-relaxed [word-break:keep-all]">
+              {previewMode ? "更新" : "發布"} {formatDate(snap.publishedAt)} ·{" "}
+              {`閱讀 ${readingMins} 分鐘`}
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {snap.tags?.map((t) => (
+                <TagPill key={t} kind="topic">
+                  {t}
+                </TagPill>
               ))}
-              <div className="border-border h-[30px] w-px" />
-              <div>
-                <div className="text-subtle font-mono text-[11px] uppercase tracking-[0.14em]">
-                  {previewMode ? "更新" : "發布"}
-                </div>
-                <div className="text-foreground mt-1 text-[13.5px]">
-                  {formatDate(snap.publishedAt)}
-                </div>
-              </div>
-              <div>
-                <div className="text-subtle font-mono text-[11px] uppercase tracking-[0.14em]">
-                  閱讀
-                </div>
-                <div className="text-foreground mt-1 text-[13.5px]">{readingMins} 分鐘</div>
-              </div>
+              <TagPill kind="course">{courseName}</TagPill>
+              {semesterTag && <TagPill kind="semester">{semesterTag}</TagPill>}
             </div>
+          </div>
+          <div className="reader-tools">
+            <button type="button" onClick={() => void share()} className={TOOL}>
+              <SwapIcon Icon={Share2} done={done === "share"} />
+              分享
+            </button>
+            {!previewMode && (
+              <button type="button" onClick={() => void copyCitation()} className={TOOL}>
+                <SwapIcon Icon={Quote} done={done === "cite"} />
+                {done === "cite" ? "已複製引用" : "複製引用"}
+              </button>
+            )}
+            <button type="button" onClick={() => window.print()} className={TOOL}>
+              <SwapIcon Icon={Printer} done={false} />
+              列印 / PDF
+            </button>
+          </div>
+        </aside>
 
-            <hr className="border-border-strong mt-8 border-t" />
-          </header>
+        {/* Narrow screens: sticky row of h2 chips */}
+        {chips.length > 0 && (
+          <nav className="reader-chips" aria-label="目錄">
+            <ol
+              ref={chipsRef}
+              onScroll={updateFades}
+              className="m-0 flex list-none gap-1 overflow-x-auto overscroll-x-contain p-0 py-1.5 [scrollbar-width:none] [@media(hover:hover)_and_(pointer:fine)]:[scrollbar-width:thin]"
+            >
+              {chips.map(({ h, i }, k) => {
+                const isCurrent = k === chipOf[current];
+                return (
+                  <li key={h.id} className="shrink-0">
+                    <a
+                      href={`#${headingDomId(h.id)}`}
+                      onClick={jumpTo(i)}
+                      aria-current={isCurrent ? "location" : undefined}
+                      className={cn(
+                        "text-subtle inline-flex min-h-10 items-center rounded-full px-3.5 text-xs whitespace-nowrap no-underline transition-colors",
+                        isCurrent && "bg-accent-soft text-accent font-bold",
+                      )}
+                    >
+                      {h.title}
+                    </a>
+                  </li>
+                );
+              })}
+            </ol>
+          </nav>
+        )}
 
+        <div className="reader-main">
           {/* Cover figure */}
           {snap.coverImageUrl && (
-            <figure className="mb-9 m-0">
-              <div className="bg-border ring-border-strong overflow-hidden ring-1">
+            <figure className="m-0 mb-9">
+              <div className="bg-border rounded-card overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={snap.coverImageUrl} alt="" className="aspect-video w-full object-cover" />
               </div>
+              {snap.coverCaption && (
+                <figcaption className="text-subtle mt-2 text-center text-xs">
+                  {snap.coverCaption}
+                </figcaption>
+              )}
             </figure>
           )}
 
@@ -264,80 +426,43 @@ export function ReaderShell({
           <MarkdownRenderer content={snap.contentMd} />
 
           {/* Author bio cards */}
-          {(() => {
-            const allAuthors: {
-              name: string;
-              title?: string;
-              bio?: string;
-              avatarUrl?: string | null;
-            }[] = [
-              ...(snap.authorBio || snap.authorAffiliation
-                ? [
-                    {
-                      name: snap.author,
-                      title: snap.authorAffiliation,
-                      bio: snap.authorBio,
-                      avatarUrl: snap.authorAvatarUrl,
-                    },
-                  ]
-                : []),
-              ...(snap.coAuthors?.filter((ca) => ca.title || ca.bio) ?? []),
-            ];
-            if (allAuthors.length === 0) return null;
-            return (
-              <div className="mt-14 flex flex-col gap-4">
-                {allAuthors.map((a, i) => (
-                  <section
-                    key={`${a.name}-${i}`}
-                    className="border-border bg-surface flex gap-[18px] rounded-[5px] border px-6 py-[22px]"
-                  >
-                    {a.avatarUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={a.avatarUrl}
-                        alt=""
-                        className="h-[52px] w-[52px] shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span className="bg-accent text-background font-serif inline-grid h-[52px] w-[52px] shrink-0 place-items-center rounded-full text-[24px] font-semibold">
-                        {(a.name || "？")[0]}
-                      </span>
-                    )}
-                    <div>
-                      <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                        關於作者
+          {bios.length > 0 && (
+            <div className="mt-14 flex flex-col gap-4">
+              {bios.map((a, i) => (
+                <section
+                  key={`${a.name}-${i}`}
+                  className="border-border bg-surface rounded-card flex gap-[18px] border px-6 py-[22px]"
+                >
+                  <Avatar name={a.name || "？"} src={a.avatarUrl} size="md" />
+                  <div>
+                    <p className="text-2xs text-subtle m-0 font-bold tracking-[0.24em]">關於作者</p>
+                    <p className="m-0 mt-1.5 font-serif text-lg font-bold">{a.name}</p>
+                    {a.title && <p className="text-subtle m-0 mt-0.5 text-xs">{a.title}</p>}
+                    {a.bio && (
+                      <p className="text-ink-read m-0 mt-2.5 text-sm leading-[1.8] text-pretty">
+                        {a.bio}
                       </p>
-                      <p className="m-0 mt-1.5 font-serif text-[18px] font-semibold">{a.name}</p>
-                      {a.title && <p className="text-subtle m-0 mt-0.5 text-[12.5px]">{a.title}</p>}
-                      {a.bio && (
-                        <p className="text-muted m-0 mt-2.5 font-serif text-[14.5px] leading-[1.7] text-pretty">
-                          {a.bio}
-                        </p>
-                      )}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            );
-          })()}
+                    )}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
 
           {/* Citation card — hidden in preview mode (draft is not citable) */}
           {!previewMode && (
-            <section className="border-border bg-surface mt-6 rounded-[5px] border px-6 py-[22px]">
+            <section className="border-border bg-surface rounded-card mt-6 border px-6 py-[22px]">
               <div className="mb-3 flex items-baseline justify-between">
-                <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                  引用格式 · APA
-                </p>
+                <p className="text-2xs text-subtle m-0 font-bold tracking-[0.24em]">引用格式</p>
                 <button
-                  onClick={copyCitation}
-                  className="text-accent border-0 bg-transparent text-[13px] underline underline-offset-[3px]"
+                  type="button"
+                  onClick={() => void copyCitation()}
+                  className="text-accent border-0 bg-transparent text-sm underline underline-offset-[3px]"
                 >
-                  複製
+                  {done === "cite" ? "已複製" : "複製"}
                 </button>
               </div>
-              <p className="m-0 font-serif text-[15px] leading-[1.75] text-pretty">
-                {citationText}
-              </p>
+              <p className="text-ink-read m-0 text-sm leading-[1.8] text-pretty">{citationText}</p>
             </section>
           )}
 
@@ -347,29 +472,25 @@ export function ReaderShell({
               {prev && (
                 <Link
                   href={`${basePath}/${courseSlug}/r/${prev.slug}`}
-                  className="border-border hover:border-accent block rounded-[5px] border px-[22px] py-[18px] transition-colors"
+                  className="border-border hover:border-accent rounded-card block border px-[22px] py-[18px] transition-colors"
                 >
-                  <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                    ← 較早一篇
-                  </p>
-                  <p className="m-0 mt-2 font-serif text-[16px] font-semibold leading-[1.35] text-pretty">
+                  <p className="text-2xs text-subtle m-0 font-bold tracking-[0.1em]">← 較早一篇</p>
+                  <p className="m-0 mt-2 font-serif text-base leading-[1.4] font-bold text-pretty">
                     {prev.title}
                   </p>
-                  <p className="text-subtle m-0 mt-1.5 text-[12px]">{prev.author}</p>
+                  <p className="text-subtle m-0 mt-1.5 text-xs">{prev.author}</p>
                 </Link>
               )}
               {next && (
                 <Link
                   href={`${basePath}/${courseSlug}/r/${next.slug}`}
-                  className="border-border hover:border-accent block rounded-[5px] border px-[22px] py-[18px] text-right transition-colors"
+                  className="border-border hover:border-accent rounded-card block border px-[22px] py-[18px] text-right transition-colors"
                 >
-                  <p className="text-subtle m-0 font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                    較新一篇 →
-                  </p>
-                  <p className="m-0 mt-2 font-serif text-[16px] font-semibold leading-[1.35] text-pretty">
+                  <p className="text-2xs text-subtle m-0 font-bold tracking-[0.1em]">較新一篇 →</p>
+                  <p className="m-0 mt-2 font-serif text-base leading-[1.4] font-bold text-pretty">
                     {next.title}
                   </p>
-                  <p className="text-subtle m-0 mt-1.5 text-[12px]">{next.author}</p>
+                  <p className="text-subtle m-0 mt-1.5 text-xs">{next.author}</p>
                 </Link>
               )}
             </nav>
@@ -378,31 +499,28 @@ export function ReaderShell({
           {/* Back link */}
           <Link
             href={resolvedBackHref}
-            className="border-accent/40 text-accent hover:border-accent mt-7 inline-flex items-center gap-1.5 border-b pb-[1px] text-[14px]"
+            className="border-accent/40 text-accent hover:border-accent mt-7 inline-flex items-center gap-1.5 border-b pb-[1px] text-sm"
           >
             ← {resolvedBackLabel}
           </Link>
-        </article>
+        </div>
 
-        {/* Right rail */}
-        {toc.length > 0 && (
-          <aside className={`sticky ${tocStickyTop} mt-20 hidden h-fit flex-col gap-6 lg:flex`}>
-            <nav aria-label="目錄">
-              <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                本文目錄
-              </p>
-              <ol className="border-border mt-3 flex flex-col gap-2.5 border-t pt-3">
-                {toc.map((h) => (
+        {/* TOC rail */}
+        <aside className="reader-toc">
+          {toc.length > 0 && (
+            <nav aria-label="目錄" className="sticky top-[calc(var(--reader-top)+24px)]">
+              <p className="text-2xs text-subtle m-0 mb-3 font-mono tracking-[0.06em]">目錄</p>
+              <ol ref={trunkRef} className="toc-trunk relative m-0 list-none p-0">
+                {toc.map((h, i) => (
                   <li key={h.id}>
                     <a
-                      href={`#${h.id}`}
-                      className={[
-                        "-ml-px block border-l-2 leading-[1.4]",
-                        h.level === 3 ? "pl-4 text-[12.5px]" : "pl-2.5 text-[13.5px]",
-                        activeId === h.id
-                          ? "border-accent text-accent font-semibold"
-                          : "border-transparent text-muted hover:text-foreground",
-                      ].join(" ")}
+                      href={`#${headingDomId(h.id)}`}
+                      onClick={jumpTo(i)}
+                      aria-current={i === current ? "location" : undefined}
+                      className={cn(
+                        "toc-link text-subtle hover:text-foreground relative block py-1.5 pl-3.5 text-xs leading-[1.6] no-underline transition-colors",
+                        h.level === 3 && "text-2xs pl-[26px]",
+                      )}
                     >
                       {h.title}
                     </a>
@@ -410,47 +528,8 @@ export function ReaderShell({
                 ))}
               </ol>
             </nav>
-
-            <div className="border-border border-t pt-3.5">
-              <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                閱讀進度
-              </p>
-              <div className="mt-2 flex items-baseline justify-between">
-                <span className="text-accent font-serif text-[24px] font-semibold">
-                  {Math.round(progress)}
-                  <span className="text-subtle text-[14px] font-normal">%</span>
-                </span>
-                <span className="text-subtle text-[11px]">還 {remainMin} 分鐘</span>
-              </div>
-            </div>
-
-            <div className="border-border flex flex-col gap-2 border-t pt-3.5">
-              <p className="text-subtle font-mono text-[10.5px] uppercase tracking-[0.14em]">
-                工具
-              </p>
-              <button
-                onClick={copyLink}
-                className="text-muted hover:text-accent mt-1 text-left text-[13px] transition-colors"
-              >
-                複製連結
-              </button>
-              {!previewMode && (
-                <button
-                  onClick={copyCitation}
-                  className="text-muted hover:text-accent text-left text-[13px] transition-colors"
-                >
-                  複製引用
-                </button>
-              )}
-              <button
-                onClick={print}
-                className="text-muted hover:text-accent text-left text-[13px] transition-colors"
-              >
-                列印 / PDF
-              </button>
-            </div>
-          </aside>
-        )}
+          )}
+        </aside>
       </div>
     </div>
   );
