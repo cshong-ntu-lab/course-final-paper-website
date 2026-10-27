@@ -1,6 +1,6 @@
 "use client";
 // docs/design-v2.md §4.2 — home: centred heading, tag filter panel, then the
-// feed (the latest report as the lead block, the rest as cards or rows).
+// feed (the latest reports in a carousel, then every report as cards or rows).
 // Several tags can be selected (OR within a group, AND across groups); the
 // selection is mirrored in the URL with history.replaceState, so no server
 // round-trip per click.
@@ -8,6 +8,7 @@
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
+import { LeadCarousel } from "@/components/public/LeadCarousel";
 import { ReportListItem, type ReportItem } from "@/components/public/ReportListItem";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
@@ -36,6 +37,9 @@ interface ReportFeedProps {
 }
 
 type View = "grid" | "list";
+
+/** How many of the latest reports the carousel cycles through. */
+const LEAD_COUNT = 5;
 
 const GROUP_LABELS: Record<FeedFilterKind, string> = {
   topic: "主題",
@@ -102,8 +106,9 @@ export function ReportFeed({
   const facets = React.useMemo(() => feedFacets(reportItems), [reportItems]);
   const count = selectionCount(selection);
   const filtered = reportItems.filter((r) => matchesFeedSelection(r, selection));
-  // the lead block only on the unfiltered feed (as in the prototype)
-  const [lead, rest] = count > 0 ? [undefined, filtered] : [filtered[0], filtered.slice(1)];
+  // the carousel only on the unfiltered feed (as in the prototype); the grid
+  // below always lists every match, so it agrees with 「共 N 篇」
+  const lead = count > 0 ? [] : filtered.slice(0, LEAD_COUNT);
   const selectionKey = feedSelectionHref(selection);
 
   const applySelection = (next: FeedSelection) => {
@@ -117,7 +122,7 @@ export function ReportFeed({
       {/* Heading + filter (centred) */}
       <section className="mb-12 flex flex-col items-center text-center">
         <h1 className="m-0 mb-4 font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] font-extrabold">
-          課程期末論文
+          AI課程期末論文
         </h1>
         {/* the quote the site has carried since v1 */}
         <blockquote className="text-muted m-0 max-w-[44ch] font-serif text-[1.05rem] leading-[1.6] italic text-pretty">
@@ -219,17 +224,7 @@ export function ReportFeed({
         </div>
       </section>
 
-      {lead && (
-        <ReportListItem
-          key={selectionKey}
-          report={lead}
-          courseSlug={lead.courseSlug}
-          variant="lead"
-          basePath={basePath}
-          badgeLabel={lead.badgeLabel}
-          className="rise-once"
-        />
-      )}
+      {lead.length > 0 && <LeadCarousel key={selectionKey} items={lead} basePath={basePath} />}
 
       {/* Result line + view switch */}
       <div className="mt-6 mb-[22px] flex flex-wrap items-center justify-between gap-3">
@@ -273,7 +268,7 @@ export function ReportFeed({
           )}
         </div>
       ) : (
-        rest.length > 0 && (
+        filtered.length > 0 && (
           <div
             key={`${selectionKey}-${view}`}
             className={
@@ -282,7 +277,7 @@ export function ReportFeed({
                 : `${entrance} flex flex-col gap-3.5`
             }
           >
-            {rest.map((r, i) => (
+            {filtered.map((r, i) => (
               <ReportListItem
                 key={`${r.courseSlug}-${r.slug}`}
                 report={r}
