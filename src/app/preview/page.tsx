@@ -2,8 +2,6 @@
 // aggregates ALL reports (draft + published) across all courses and links into
 // /preview/c/... report pages. Do not duplicate SiteHomeShell's markup here.
 
-import Link from "next/link";
-
 import {
   getAllCourses,
   getAllReportsByCourse,
@@ -72,14 +70,6 @@ export default async function PreviewHomePage({
       basePath="/preview/c"
       homeHref="/preview"
       stickyTop="top-8"
-      headerExtra={
-        <Link
-          href="/workspace"
-          className="border-border text-muted hover:border-accent hover:text-accent rounded border px-3 py-1.5 font-mono text-[11px] transition-colors"
-        >
-          ← 工作區
-        </Link>
-      }
     />
   );
 }

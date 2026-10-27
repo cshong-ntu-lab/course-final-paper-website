@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Footer } from "@/components/Footer";
+import { SiteHeader } from "@/components/public/SiteHeader";
 
 export const metadata: Metadata = { title: "服務條款" };
 
 export default function TosPage() {
   return (
     <div className="bg-background min-h-screen">
+      <SiteHeader container="max-w-[640px] px-6" />
       <main id="main" className="mx-auto max-w-[640px] px-6 py-14">
         <Link
           href="/"

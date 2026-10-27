@@ -9,7 +9,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_SITE_URL ?? "";
   const courses = await getAllCourses();
 
-  const entries: MetadataRoute.Sitemap = [{ url: base, lastModified: new Date() }];
+  const entries: MetadataRoute.Sitemap = [
+    { url: base, lastModified: new Date() },
+    { url: `${base}/about` },
+  ];
 
   for (const course of courses) {
     const cSlug = courseSlug(course);
