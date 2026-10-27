@@ -8,8 +8,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
-import { Crest } from "@/components/Crest";
 import { MarkSliceCorner } from "@/components/MarkSlice";
+import { SiteHeader } from "@/components/public/SiteHeader";
 import { TagPill } from "@/components/TagPill";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { authorLine } from "@/lib/authors";
@@ -292,23 +292,17 @@ export function ReaderShell({
       className="bg-background min-h-screen"
       style={{ "--reader-top": readerTop } as React.CSSProperties}
     >
-      {/* Sticky reader header */}
-      <header
-        className={`border-border bg-background/95 sticky ${stickyTop} z-40 border-b backdrop-blur`}
-      >
-        <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-6">
-          <div className="flex items-center gap-2.5">
-            <Crest linked />
-            <Link href="/" className="font-sans text-lg font-semibold">
-              臺灣大學社會學系
-            </Link>
-          </div>
-          {previewMode && (
+      <SiteHeader
+        homeHref={filterHome}
+        stickyTop={stickyTop}
+        extra={
+          previewMode && (
             <span className="border-warning/40 bg-warning-soft text-2xs text-warning-fg rounded border px-2 py-0.5 font-mono">
               草稿
             </span>
-          )}
-        </div>
+          )
+        }
+      >
         {/* Progress sliver */}
         <div className="bg-border-strong/30 h-[2px]">
           <div
@@ -316,7 +310,7 @@ export function ReaderShell({
             style={{ width: `${progress}%` }}
           />
         </div>
-      </header>
+      </SiteHeader>
 
       {/* Back link — top of the content, on the same left edge as the crest */}
       <div className="mx-auto max-w-[1180px] px-6 pt-8">

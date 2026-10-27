@@ -9,6 +9,7 @@ import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
 import { Footer } from "@/components/Footer";
 import { AuthorWorks, type AuthorWork } from "@/components/public/AuthorWorks";
+import { SiteHeader } from "@/components/public/SiteHeader";
 import { TagPill } from "@/components/TagPill";
 import { authorLine, authorStats } from "@/lib/authors";
 import { feedFilterHref } from "@/lib/feed";
@@ -66,6 +67,7 @@ export default async function AuthorPage({ params }: Props) {
 
   return (
     <div className="bg-background min-h-screen">
+      <SiteHeader container="max-w-[720px] px-6" />
       <main id="main" className="mx-auto max-w-[720px] px-6 py-14">
         <Link
           href="/"
