@@ -13,7 +13,9 @@ import { ReportListItem, type ReportItem } from "@/components/public/ReportListI
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import {
   EMPTY_SELECTION,
+  FEED_FILTER_HASH,
   FEED_FILTER_KINDS,
+  OPEN_FEED_FILTER_EVENT,
   feedFacets,
   feedSelectionHref,
   matchesFeedSelection,
@@ -98,6 +100,21 @@ export function ReportFeed({
 }: ReportFeedProps) {
   const [selection, setSelection] = React.useState<FeedSelection>(initialSelection);
   const [panelOpen, setPanelOpen] = React.useState(false);
+  const filterRef = React.useRef<HTMLElement>(null);
+
+  // the header's 「更多主題」 opens the panel: an event on this page, or the
+  // #filter hash when it navigated here from another page
+  React.useEffect(() => {
+    const open = () => {
+      setPanelOpen(true);
+      requestAnimationFrame(() =>
+        filterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    };
+    if (window.location.hash === FEED_FILTER_HASH) open();
+    window.addEventListener(OPEN_FEED_FILTER_EVENT, open);
+    return () => window.removeEventListener(OPEN_FEED_FILTER_EVENT, open);
+  }, []);
   const [view, setView] = React.useState<View>("grid");
   // Cards rise in one after another when the set of reports changes (first
   // render, filter); switching grid ↔ list only cross-fades.
@@ -120,7 +137,10 @@ export function ReportFeed({
   return (
     <>
       {/* Heading + filter (centred) */}
-      <section className="mb-12 flex flex-col items-center text-center">
+      <section
+        ref={filterRef}
+        className="mb-12 flex scroll-mt-20 flex-col items-center text-center"
+      >
         <h1 className="m-0 mb-4 font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] font-extrabold">
           AI課程期末論文
         </h1>

@@ -8,14 +8,14 @@
 
 import { ChevronDown, Menu } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { DropdownMenu } from "radix-ui";
 import { useCallback, useEffect, useState } from "react";
 
 import type { SiteNavData } from "@/app/api/site-nav/route";
 import { Avatar } from "@/components/Avatar";
 import { Crest } from "@/components/Crest";
-import { feedFilterHref } from "@/lib/feed";
+import { FEED_FILTER_HASH, OPEN_FEED_FILTER_EVENT, feedFilterHref } from "@/lib/feed";
 import { cn } from "@/lib/utils";
 
 const MENU_CONTENT = cn(
@@ -28,6 +28,9 @@ const MENU_ITEM =
   "text-muted data-[highlighted]:bg-canvas data-[highlighted]:text-accent block cursor-pointer rounded-lg px-3.5 py-2 text-sm whitespace-nowrap outline-none";
 const MENU_LABEL = "text-subtle px-3.5 pt-2 pb-1 text-2xs font-semibold tracking-[0.12em]";
 const MENU_SEPARATOR = "bg-border mx-1 my-1.5 h-px";
+/** Topics listed in 文章分類 (most used first); the rest are one click away in
+ *  the home filter panel via 「更多主題」. */
+const NAV_TOPIC_MAX = 8;
 const NAV_LINK = "text-muted hover:text-accent text-sm font-medium transition-colors";
 
 export interface SiteHeaderProps {
@@ -76,6 +79,8 @@ export function SiteHeader({
   children,
 }: SiteHeaderProps) {
   const { data, logout } = useSiteNav();
+  const pathname = usePathname();
+  const router = useRouter();
   const topics = data?.topics ?? [];
   const user = data?.user;
 
@@ -85,11 +90,25 @@ export function SiteHeader({
         <Link href={homeHref}>全部文章</Link>
       </DropdownMenu.Item>
       {topics.length > 0 && <DropdownMenu.Separator className={MENU_SEPARATOR} />}
-      {topics.map((t) => (
+      {topics.slice(0, NAV_TOPIC_MAX).map((t) => (
         <DropdownMenu.Item key={t} asChild className={MENU_ITEM}>
           <Link href={feedFilterHref({ kind: "topic", value: t }, homeHref)}>{t}</Link>
         </DropdownMenu.Item>
       ))}
+      {topics.length > NAV_TOPIC_MAX && (
+        <>
+          <DropdownMenu.Separator className={MENU_SEPARATOR} />
+          <DropdownMenu.Item
+            className={cn(MENU_ITEM, "text-accent font-semibold")}
+            onSelect={() => {
+              if (pathname === homeHref) window.dispatchEvent(new Event(OPEN_FEED_FILTER_EVENT));
+              else router.push(`${homeHref}${FEED_FILTER_HASH}`);
+            }}
+          >
+            更多主題（共 {topics.length} 個）
+          </DropdownMenu.Item>
+        </>
+      )}
     </>
   );
 

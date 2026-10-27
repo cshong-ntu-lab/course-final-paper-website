@@ -1,6 +1,27 @@
 import { describe, expect, it } from "vitest";
 
-import { foldCardTags, parseTags } from "@/lib/tags";
+import { foldCardTags, normalizeTags, parseTags } from "@/lib/tags";
+
+describe("normalizeTags", () => {
+  it("splits a tag that holds several comma-joined keywords", () => {
+    expect(normalizeTags(["n8n，AI自動化，財劃法，文字分析", "BERT"])).toEqual([
+      "n8n",
+      "AI自動化",
+      "財劃法",
+      "文字分析",
+      "BERT",
+    ]);
+  });
+
+  it("trims, drops empties and duplicates", () => {
+    expect(normalizeTags([" 勞動 ", "勞動、 ", "", "性別,勞動"])).toEqual(["勞動", "性別"]);
+  });
+
+  it("keeps undefined and leaves clean tags alone", () => {
+    expect(normalizeTags(undefined)).toBeUndefined();
+    expect(normalizeTags(["Machine Learning"])).toEqual(["Machine Learning"]);
+  });
+});
 
 describe("foldCardTags", () => {
   it("keeps course + semester and folds extra topics", () => {

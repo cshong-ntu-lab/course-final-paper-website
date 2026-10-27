@@ -6,6 +6,7 @@ import "server-only";
 import { isReportByAuthor } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter, reportConverter, userConverter } from "@/lib/firestore/converters";
+import { normalizeTags } from "@/lib/tags";
 import { courseSlug } from "@/lib/slug";
 import type { Course, PublishSnapshot, Report, User } from "@/lib/types";
 
@@ -93,7 +94,8 @@ export async function getLatestSnapshot(reportId: string): Promise<SnapshotDoc |
   // withdraw feature, so they're always a publish snapshot.
   const publishDoc = snap.docs.find((d) => (d.data() as PublishSnapshot).type !== "withdraw");
   if (!publishDoc) return null;
-  return { ...(publishDoc.data() as PublishSnapshot), id: publishDoc.id };
+  const data = publishDoc.data() as PublishSnapshot;
+  return { ...data, tags: normalizeTags(data.tags), id: publishDoc.id };
 }
 
 /** All report drafts, newest-updated first. Used by the staging home page. */
