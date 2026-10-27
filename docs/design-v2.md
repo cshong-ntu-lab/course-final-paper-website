@@ -282,6 +282,9 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 
 **精選（`variant="lead"`）**：`surface` 底、`radius-feature`、padding 26px；縮圖 **16:9**（現在 4:3，太高）；欄寬 `1.15fr 1fr`；小標「最新發表」`gold-soft` 底 `gold-ink` 字膠囊（repo 的 lead 是最新一篇、不是人工挑選，所以不寫「本期精選」）；標題 `text-3xl`；摘要 4 行。
 
+**最新發表輪播（`src/components/public/LeadCarousel.tsx`，2026-10-27）**：精選區塊改成輪播，放最新 5 篇（未篩選時才顯示）。**卡片外框固定不動，只有框內的封面與文字滑動**（`ReportListItem` 的 `frameless`）。每 6 秒向左滑一篇（500ms，`ease-enter`），最後一篇之後滑到第一篇的複本再無動畫跳回，所以永遠往左。手動切換只用觸控／滑鼠左右拖曳 48px 以上，以及卡片下方**置中**的圓點；不放暫停、上一篇、下一篇按鈕。滑過時不會誤點進文章。滑鼠停在上面、鍵盤聚焦、分頁在背景時暫停；`prefers-reduced-motion` 時不自動播放。不在畫面上的那幾張設 `inert`。下方的卡片／列表改列出**全部**符合的文章（含輪播裡的），跟「共 N 篇」一致。
+首頁大標改為「AI課程期末論文」。
+
 **卡片 / 列表切換**：結果列右側，`canvas` 底的分段切換器。
 
 **待決 — 首頁上半部**：repo 現在是「台大社會系 人工智慧課程成果」大標 + Bail (2024) 引言 + 課程下拉；原型是「課程期末論文」+ 標籤篩選面板（主題 / 課程 / 學期三組 chip）+ 入口頁（粒子場）。卡片部分照本節移植；上半部要不要換、入口頁要不要做，移植前要決定。

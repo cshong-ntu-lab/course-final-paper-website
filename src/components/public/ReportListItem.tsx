@@ -41,6 +41,9 @@ export interface ReportListItemProps {
   badgeLabel?: string; // optional status badge (preview pages)
   /** On the author page every work has the same author. */
   hideByline?: boolean;
+  /** lead only: drop the card frame (border, surface, shadow, padding) so a
+   *  parent can hold one fixed frame while the content inside it changes */
+  frameless?: boolean;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -121,6 +124,7 @@ export function ReportListItem({
   basePath = "/c",
   badgeLabel,
   hideByline = false,
+  frameless = false,
   className,
   style,
 }: ReportListItemProps) {
@@ -136,8 +140,11 @@ export function ReportListItem({
       <article
         style={style}
         className={cn(
-          "group border-border bg-surface rounded-feature shadow-soft relative grid grid-cols-1 items-center gap-9 border p-[26px] md:grid-cols-[1.15fr_1fr]",
-          focusRing,
+          "group relative grid grid-cols-1 items-center gap-9 md:grid-cols-[1.15fr_1fr]",
+          !frameless && [
+            "border-border bg-surface rounded-feature shadow-soft border p-[26px]",
+            focusRing,
+          ],
           className,
         )}
       >
