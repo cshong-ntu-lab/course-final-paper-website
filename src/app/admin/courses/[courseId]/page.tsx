@@ -105,6 +105,7 @@ export default async function CourseDetailPage({ params }: Props) {
   return (
     <>
       <AppHeader
+        container="max-w-5xl px-7"
         context="admin"
         user={{
           displayName: user.profileDisplayName || user.displayName,

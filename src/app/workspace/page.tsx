@@ -96,6 +96,7 @@ export default async function WorkspacePage() {
   return (
     <div className="bg-background min-h-screen">
       <AppHeader
+        container="max-w-4xl px-7"
         context="student"
         user={{ displayName: user.profileDisplayName || user.displayName, email: user.email }}
         adminBackLink={user.role === "admin"}

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { Crest } from "@/components/Crest";
 import { getCurrentUser } from "@/lib/server/auth";
 
 export const metadata: Metadata = {
@@ -26,9 +27,8 @@ export default async function LoginPage() {
     <div className="bg-background grid min-h-screen grid-cols-1 md:grid-cols-2">
       {/* Left editorial column (md+) */}
       <aside className="border-border bg-background hidden flex-col justify-between border-r p-16 md:flex">
-        <Link href="/" className="inline-flex items-baseline gap-2">
-          <span className="font-serif text-xl font-semibold tracking-tight">台大社會系</span>
-          <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
+        <Link href="/" className="font-sans text-xl font-semibold">
+          臺灣大學社會學系
         </Link>
 
         <div>
@@ -49,11 +49,11 @@ export default async function LoginPage() {
       <main id="main" className="bg-surface grid place-items-center p-10 md:p-16">
         <div className="w-full max-w-sm">
           {/* Mobile-only wordmark at top */}
-          <Link href="/" className="mb-8 inline-flex items-baseline gap-2 md:hidden">
-            <span className="font-serif text-lg font-semibold tracking-tight">台大社會系</span>
-            <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
+          <Link href="/" className="mb-8 inline-block font-sans text-lg font-semibold md:hidden">
+            臺灣大學社會學系
           </Link>
 
+          <Crest size="lg" className="mb-4" />
           <h1 className="mb-2 font-serif text-4xl font-semibold tracking-tight">登入</h1>
           <p className="text-muted mb-7 font-serif text-base leading-relaxed">
             僅供台大社會所師生使用。

@@ -29,24 +29,55 @@ function GoogleIcon({ className }: { className?: string }) {
   );
 }
 
-type AuthErrorCode = "popup_closed_by_user" | "popup_blocked" | "session_failed" | "internal";
+type AuthErrorCode =
+  | "popup_closed_by_user"
+  | "popup_blocked"
+  | "unauthorized_domain"
+  | "network"
+  | "session_failed"
+  | "internal";
 
 const ERROR_COPY: Record<AuthErrorCode, string> = {
   popup_closed_by_user: "登入視窗被關閉，請再試一次。",
   popup_blocked: "瀏覽器封鎖了登入彈出視窗，請允許彈出後再試。",
+  unauthorized_domain:
+    "這個網址尚未授權使用 Google 登入，請改用正式網址，或請管理員把此網域加入 Firebase 的已授權網域。",
+  network: "網路連線失敗，請確認網路後再試一次。",
   session_failed: "登入流程失敗，請再試一次或稍後再來。",
   internal: "發生未預期錯誤。",
 };
+
+/** What went wrong, plus the raw code shown to the user so it can be reported. */
+interface AuthError {
+  code: AuthErrorCode;
+  detail: string;
+}
+
+function popupError(firebaseCode: string): AuthErrorCode {
+  switch (firebaseCode) {
+    case "auth/popup-closed-by-user":
+    case "auth/cancelled-popup-request":
+      return "popup_closed_by_user";
+    case "auth/popup-blocked":
+      return "popup_blocked";
+    case "auth/unauthorized-domain":
+      return "unauthorized_domain";
+    case "auth/network-request-failed":
+      return "network";
+    default:
+      return "internal";
+  }
+}
 
 export function GoogleSignInButton() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [pending, setPending] = React.useState(false);
-  const [errCode, setErrCode] = React.useState<AuthErrorCode | null>(null);
+  const [err, setErr] = React.useState<AuthError | null>(null);
 
   async function handleSignIn() {
     setPending(true);
-    setErrCode(null);
+    setErr(null);
     try {
       const { signInWithPopup, GoogleAuthProvider } = await import("firebase/auth");
       const { auth } = getFirebaseClient();
@@ -57,13 +88,13 @@ export function GoogleSignInButton() {
       try {
         cred = await signInWithPopup(auth, provider);
       } catch (e) {
-        const code = (e as { code?: string })?.code ?? "";
-        if (code === "auth/popup-closed-by-user") setErrCode("popup_closed_by_user");
-        else if (code === "auth/popup-blocked") setErrCode("popup_blocked");
-        else {
-          console.error("[GoogleSignIn] signInWithPopup error:", code, e);
-          setErrCode("internal");
-        }
+        const code = (e as { code?: string })?.code || "unknown";
+        console.error("[GoogleSignIn] signInWithPopup error:", code, e);
+        const kind = popupError(code);
+        setErr({
+          code: kind,
+          detail: kind === "unauthorized_domain" ? `${code} · ${location.host}` : code,
+        });
         setPending(false);
         return;
       }
@@ -76,7 +107,10 @@ export function GoogleSignInButton() {
       });
 
       if (!res.ok) {
-        setErrCode("session_failed");
+        // the route answers { error: "invalid_id_token" | "stale_id_token_reauth_required" | … }
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        console.error("[GoogleSignIn] /api/auth/session failed:", res.status, body);
+        setErr({ code: "session_failed", detail: `session/${body?.error ?? res.status}` });
         // Sign out client-side too so the next attempt is clean.
         const { signOut } = await import("firebase/auth");
         await signOut(auth);
@@ -88,8 +122,12 @@ export function GoogleSignInButton() {
       const dest = searchParams.get("from") ?? (role === "admin" ? "/admin" : "/workspace");
       router.push(dest);
       router.refresh();
-    } catch {
-      setErrCode("internal");
+    } catch (e) {
+      console.error("[GoogleSignIn] unexpected error:", e);
+      const code =
+        (e as { code?: string })?.code ||
+        (e instanceof Error ? `${e.name}: ${e.message}`.slice(0, 120) : "unknown");
+      setErr({ code: "internal", detail: code });
       setPending(false);
     }
   }
@@ -105,9 +143,12 @@ export function GoogleSignInButton() {
         <GoogleIcon className="h-4 w-4" />
         {pending ? "登入中..." : "使用 Google 帳號登入"}
       </button>
-      {errCode && (
+      {err && (
         <p className="text-destructive text-sm" role="alert">
-          {ERROR_COPY[errCode]}
+          {ERROR_COPY[err.code]}
+          {err.code !== "popup_closed_by_user" && (
+            <span className="text-subtle mt-1 block font-mono text-xs">錯誤代碼：{err.detail}</span>
+          )}
         </p>
       )}
     </div>

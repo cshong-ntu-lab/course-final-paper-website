@@ -15,6 +15,7 @@ export default async function SettingsPage() {
   return (
     <div className="bg-background min-h-screen">
       <AppHeader
+        container="max-w-2xl px-6"
         context="student"
         user={{ displayName: user.profileDisplayName || user.displayName, email: user.email }}
         breadcrumb={[{ label: "工作區", href: "/workspace" }, { label: "個人設定" }]}

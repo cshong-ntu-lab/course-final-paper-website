@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { MarkSliceCorner } from "@/components/MarkSlice";
+import { SiteHeader } from "@/components/public/SiteHeader";
 import { TagPill } from "@/components/TagPill";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { authorLine } from "@/lib/authors";
@@ -291,28 +292,17 @@ export function ReaderShell({
       className="bg-background min-h-screen"
       style={{ "--reader-top": readerTop } as React.CSSProperties}
     >
-      {/* Sticky reader header */}
-      <header
-        className={`border-border bg-background/95 sticky ${stickyTop} z-40 border-b backdrop-blur`}
+      <SiteHeader
+        homeHref={filterHome}
+        stickyTop={stickyTop}
+        extra={
+          previewMode && (
+            <span className="border-warning/40 bg-warning-soft text-2xs text-warning-fg rounded border px-2 py-0.5 font-mono">
+              草稿
+            </span>
+          )
+        }
       >
-        <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-6">
-          <Link
-            href={resolvedBackHref}
-            className="text-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
-          >
-            ← {resolvedBackLabel}
-          </Link>
-          <div className="flex items-center gap-3">
-            {previewMode && (
-              <span className="border-warning/40 bg-warning-soft text-2xs text-warning-fg rounded border px-2 py-0.5 font-mono">
-                草稿
-              </span>
-            )}
-            <Link href="/" className="font-serif text-sm font-semibold tracking-tight">
-              台大社會系
-            </Link>
-          </div>
-        </div>
         {/* Progress sliver */}
         <div className="bg-border-strong/30 h-[2px]">
           <div
@@ -320,9 +310,19 @@ export function ReaderShell({
             style={{ width: `${progress}%` }}
           />
         </div>
-      </header>
+      </SiteHeader>
 
-      <div className="reader-grid mx-auto max-w-[1180px] px-6 py-14">
+      {/* Back link — top of the content, on the same left edge as the crest */}
+      <div className="mx-auto max-w-[1180px] px-6 pt-8">
+        <Link
+          href={resolvedBackHref}
+          className="text-muted hover:text-foreground inline-flex items-center gap-1.5 text-sm transition-colors"
+        >
+          ← {resolvedBackLabel}
+        </Link>
+      </div>
+
+      <div className="reader-grid mx-auto max-w-[1180px] px-6 pt-8 pb-14">
         {/* Head: course → title → subtitle → abstract, rising in 60ms apart */}
         <header className="reader-head">
           <p className="m-0 text-sm font-bold tracking-[0.08em]">
