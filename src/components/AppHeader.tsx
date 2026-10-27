@@ -4,6 +4,7 @@
 import Link from "next/link";
 
 import { logoutAction } from "@/actions/auth";
+import { Crest } from "@/components/Crest";
 import { cn } from "@/lib/utils";
 
 export interface AppHeaderProps {
@@ -12,6 +13,9 @@ export interface AppHeaderProps {
   breadcrumb?: ReadonlyArray<{ label: string; href?: string }>;
   adminBackLink?: boolean;
   workspaceLink?: boolean;
+  /** Width + side padding of the page's <main>, e.g. "max-w-5xl px-7", so the
+   *  crest lines up with the content's left edge. */
+  container: string;
 }
 
 export function AppHeader({
@@ -20,19 +24,22 @@ export function AppHeader({
   breadcrumb,
   adminBackLink,
   workspaceLink,
+  container,
 }: AppHeaderProps) {
   const homeHref = context === "admin" ? "/admin" : "/workspace";
 
   return (
     <header className="border-border bg-surface sticky top-0 z-40 border-b">
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-5 px-5">
-        <Link
-          href={homeHref}
-          className="hover:text-accent inline-flex items-baseline gap-2 transition-colors"
-        >
-          <span className="font-serif text-base font-semibold tracking-tight">台大社會系</span>
-          <span className="text-2xs text-subtle font-mono tracking-[0.06em]">NTU SOC</span>
-        </Link>
+      <div className={cn("mx-auto flex h-14 items-center gap-5", container)}>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <Crest linked />
+          <Link
+            href={homeHref}
+            className="hover:text-accent font-sans text-base font-semibold transition-colors"
+          >
+            臺灣大學社會學系
+          </Link>
+        </div>
 
         {breadcrumb && breadcrumb.length > 0 && (
           <>

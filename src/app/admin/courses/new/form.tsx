@@ -71,6 +71,7 @@ export function NewCourseForm({ user }: Props) {
   return (
     <>
       <AppHeader
+        container="max-w-2xl px-7"
         context="admin"
         user={user}
         breadcrumb={[{ label: "我的課程", href: "/admin" }, { label: "建立新課程" }]}

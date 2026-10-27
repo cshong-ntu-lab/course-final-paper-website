@@ -4,6 +4,7 @@
 
 import Link from "next/link";
 
+import { Crest } from "@/components/Crest";
 import { Footer } from "@/components/Footer";
 import { ReportFeed } from "@/components/public/ReportFeed";
 import type { ReportItem } from "@/components/public/ReportListItem";
@@ -38,11 +39,13 @@ export function SiteHomeShell({
       <header
         className={`border-border bg-background/95 sticky ${stickyTop} z-40 border-b backdrop-blur`}
       >
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
-          <Link href={homeHref} className="inline-flex items-baseline gap-2">
-            <span className="font-serif text-xl font-semibold tracking-tight">台大社會系</span>
-            <span className="text-subtle font-mono text-[0.65rem] tracking-[0.06em]">NTU SOC</span>
-          </Link>
+        <div className="mx-auto flex h-14 max-w-[1180px] items-center justify-between px-6">
+          <div className="flex items-center gap-2.5">
+            <Crest linked />
+            <Link href={homeHref} className="font-sans text-lg font-semibold">
+              臺灣大學社會學系
+            </Link>
+          </div>
           {headerExtra}
         </div>
       </header>
