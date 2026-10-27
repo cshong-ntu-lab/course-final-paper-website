@@ -81,3 +81,8 @@ export function feedFacets(entries: FeedEntry[]): FeedSelection {
     semester: unique(entries.map((e) => e.semesterTag)).sort((a, b) => b.localeCompare(a)),
   };
 }
+
+/** Opening the home filter panel from elsewhere (the header's 「更多主題」):
+ *  on the home page an event, from other pages the hash on the home URL. */
+export const FEED_FILTER_HASH = "#filter";
+export const OPEN_FEED_FILTER_EVENT = "feed:open-filter";

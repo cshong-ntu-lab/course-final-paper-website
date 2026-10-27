@@ -12,6 +12,7 @@ import type {
   QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
 
+import { normalizeTags } from "@/lib/tags";
 import type { Course, Enrollment, Report, User } from "@/lib/types";
 
 function makeConverter<T extends DocumentData>(): FirestoreDataConverter<T> {
@@ -28,4 +29,12 @@ function makeConverter<T extends DocumentData>(): FirestoreDataConverter<T> {
 export const userConverter = makeConverter<User>();
 export const courseConverter = makeConverter<Course>();
 export const enrollmentConverter = makeConverter<Enrollment>();
-export const reportConverter = makeConverter<Report>();
+export const reportConverter: FirestoreDataConverter<Report> = {
+  toFirestore(value: Report) {
+    return value;
+  },
+  fromFirestore(snap: QueryDocumentSnapshot) {
+    const data = snap.data() as Report;
+    return { ...data, tags: normalizeTags(data.tags) };
+  },
+};

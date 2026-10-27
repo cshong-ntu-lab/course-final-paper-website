@@ -8,6 +8,14 @@ export function parseTags(input: string): string[] {
     .filter(Boolean);
 }
 
+/** Splits every stored tag with parseTags and drops duplicates. Tags saved
+ *  before parseTags learned the fullwidth comma can hold several keywords in
+ *  one string (「n8n，AI自動化，財劃法」); reads and writes both go through this. */
+export function normalizeTags(tags: string[] | undefined): string[] | undefined {
+  if (!tags) return tags;
+  return [...new Set(tags.flatMap(parseTags))];
+}
+
 /** Pills a card shows at most — docs/design-v2.md §2.2. */
 export const CARD_TAG_MAX = 3;
 

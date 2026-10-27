@@ -173,7 +173,9 @@ export function LeadCarousel({ items, basePath }: { items: LeadItem[]; basePath:
                     basePath={basePath}
                     badgeLabel={r.badgeLabel}
                     frameless
-                    className="h-full"
+                    // slides share the tallest one's height; on one column keep the
+                    // content at the top so the spare height sits below the tags
+                    className="h-full max-md:content-start"
                   />
                 </div>
               );

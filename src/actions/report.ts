@@ -7,6 +7,7 @@ import { reportConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
 import { syncReportToDrive } from "@/lib/server/drive";
 import { deleteStorageObject } from "@/lib/server/storage";
+import { normalizeTags } from "@/lib/tags";
 import type { CoAuthor, Report } from "@/lib/types";
 
 const TITLE_MAX = 120;
@@ -89,14 +90,14 @@ function validate(patch: SaveReportPatch): SaveReportPatch | { error: SaveReport
     out.subtitle = patch.subtitle;
   }
   if (patch.tags !== undefined) {
-    if (
-      !Array.isArray(patch.tags) ||
-      patch.tags.length > TAGS_MAX_COUNT ||
-      patch.tags.some((t) => typeof t !== "string" || t.length > TAG_MAX_LEN)
-    ) {
+    if (!Array.isArray(patch.tags) || patch.tags.some((t) => typeof t !== "string")) {
       return { error: { ok: false, error: "invalid_input" } };
     }
-    out.tags = patch.tags.filter((t) => t.trim().length > 0);
+    const tags = normalizeTags(patch.tags) ?? [];
+    if (tags.length > TAGS_MAX_COUNT || tags.some((t) => t.length > TAG_MAX_LEN)) {
+      return { error: { ok: false, error: "invalid_input" } };
+    }
+    out.tags = tags;
   }
   if (patch.pullQuote !== undefined) {
     if (typeof patch.pullQuote !== "string" || patch.pullQuote.length > PULL_QUOTE_MAX) {
@@ -212,8 +213,7 @@ export async function saveReportDraftAction(
 }
 
 export type SetReviewRequestedResult =
-  | { ok: true }
-  | { ok: false; error: "not_found" | "forbidden" | "internal" };
+  { ok: true } | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
 export async function setReviewRequestedAction(
   reportId: string,
@@ -242,8 +242,7 @@ export async function setReviewRequestedAction(
 }
 
 export type DeleteUploadResult =
-  | { ok: true }
-  | { ok: false; error: "not_found" | "forbidden" | "internal" };
+  { ok: true } | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
 export async function deleteUploadAction(
   reportId: string,
