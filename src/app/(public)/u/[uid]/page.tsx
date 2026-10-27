@@ -11,6 +11,7 @@ import { Footer } from "@/components/Footer";
 import { AuthorWorks, type AuthorWork } from "@/components/public/AuthorWorks";
 import { TagPill } from "@/components/TagPill";
 import { authorLine, authorStats } from "@/lib/authors";
+import { feedFilterHref } from "@/lib/feed";
 import { semesterLabel } from "@/lib/semester";
 import { getAllCourses, getPublishedReportsByAuthor, getUsersByUids } from "@/lib/server/firestore";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
@@ -88,7 +89,7 @@ export default async function AuthorPage({ params }: Props) {
             {stats.topics.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-1.5 max-sm:justify-center">
                 {stats.topics.map((t) => (
-                  <TagPill key={t} kind="topic">
+                  <TagPill key={t} kind="topic" href={feedFilterHref({ kind: "topic", value: t })}>
                     {t}
                   </TagPill>
                 ))}

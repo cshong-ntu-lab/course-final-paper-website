@@ -12,6 +12,7 @@ import { MarkSliceCorner } from "@/components/MarkSlice";
 import { TagPill } from "@/components/TagPill";
 import { useScrollProgress } from "@/hooks/useScrollProgress";
 import { authorLine } from "@/lib/authors";
+import { feedFilterHref } from "@/lib/feed";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import type { TocEntry } from "@/lib/markdown/extractToc";
 import { activeHeading, parentH2Indices } from "@/lib/scrollSpy";
@@ -71,11 +72,15 @@ interface ReaderShellProps {
   backLabel?: string;
 }
 
+// Pinned to Taiwan time: the server renders in UTC, so without a time zone a
+// report published before 08:00 Taiwan time showed the previous day and the
+// client re-render didn't match (React hydration error #418).
 function formatDate(iso: string): string {
   return new Intl.DateTimeFormat("zh-TW", {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "Asia/Taipei",
   }).format(new Date(iso));
 }
 
@@ -245,6 +250,8 @@ export function ReaderShell({
   // sticky offsets: the reader header (56px + 2px progress sliver), plus PreviewBanner
   const stickyTop = previewMode ? "top-8" : "top-0";
   const readerTop = previewMode ? "90px" : "58px";
+  // tags and the course label open the home feed filtered to them
+  const filterHome = previewMode ? "/preview" : "/";
   const people = [
     {
       uid: snap.authorUid,
@@ -318,7 +325,14 @@ export function ReaderShell({
       <div className="reader-grid mx-auto max-w-[1180px] px-6 py-14">
         {/* Head: course → title → subtitle → abstract, rising in 60ms apart */}
         <header className="reader-head">
-          <p className="text-gold-ink m-0 text-sm font-bold tracking-[0.08em]">{courseName}</p>
+          <p className="m-0 text-sm font-bold tracking-[0.08em]">
+            <Link
+              href={feedFilterHref({ kind: "course", value: courseName }, filterHome)}
+              className="text-gold-ink hover:underline hover:underline-offset-[3px]"
+            >
+              {courseName}
+            </Link>
+          </p>
           <h1
             className="text-title text-foreground m-0 mt-2.5 mb-3 font-serif font-bold text-balance"
             style={{ animationDelay: "60ms" }}
@@ -387,12 +401,28 @@ export function ReaderShell({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {snap.tags?.map((t) => (
-                <TagPill key={t} kind="topic">
+                <TagPill
+                  key={t}
+                  kind="topic"
+                  href={feedFilterHref({ kind: "topic", value: t }, filterHome)}
+                >
                   {t}
                 </TagPill>
               ))}
-              <TagPill kind="course">{courseName}</TagPill>
-              {semesterTag && <TagPill kind="semester">{semesterTag}</TagPill>}
+              <TagPill
+                kind="course"
+                href={feedFilterHref({ kind: "course", value: courseName }, filterHome)}
+              >
+                {courseName}
+              </TagPill>
+              {semesterTag && (
+                <TagPill
+                  kind="semester"
+                  href={feedFilterHref({ kind: "semester", value: semesterTag }, filterHome)}
+                >
+                  {semesterTag}
+                </TagPill>
+              )}
             </div>
           </div>
           <div className="reader-tools">

@@ -162,12 +162,15 @@ export function ReportListItem({
   }
 
   // ─── Row · list view ───────────────────────────────────────────────────────
+  // The thumbnail is as tall as the text beside it (fixed width, cropped), so
+  // its top and bottom line up with the byline and the tags. Stays side by side
+  // on phones and drops the summary there, so the list is denser than the grid.
   if (variant === "row") {
     return (
       <article
         style={style}
         className={cn(
-          "group border-border bg-surface rounded-card hover:shadow-hover relative flex items-start gap-[18px] border p-3.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-px max-[560px]:flex-col",
+          "group border-border bg-surface rounded-card hover:shadow-hover relative flex items-stretch gap-[18px] border p-3.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-px max-[560px]:gap-3 max-[560px]:p-3",
           focusRing,
           className,
         )}
@@ -175,16 +178,18 @@ export function ReportListItem({
         <Cover
           report={report}
           id={coverId}
-          className="rounded-thumb aspect-[4/3] w-[130px] max-[560px]:aspect-video max-[560px]:w-full"
+          className="rounded-thumb min-h-[98px] w-[130px] max-[560px]:min-h-[72px] max-[560px]:w-[96px]"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-2 max-[560px]:gap-1.5">
           {byline}
-          <h3 className={cn(TITLE, "text-[1.08rem] leading-[1.45]")}>
+          <h3 className={cn(TITLE, "text-[1.08rem] leading-[1.45] max-[560px]:text-base")}>
             <Link href={href} className={STRETCHED}>
               {report.title}
             </Link>
           </h3>
-          <p className="text-muted m-0 line-clamp-2 text-sm leading-[1.7]">{report.summary}</p>
+          <p className="text-muted m-0 line-clamp-2 text-sm leading-[1.7] max-[560px]:hidden">
+            {report.summary}
+          </p>
           <Tags report={report} />
         </div>
       </article>
