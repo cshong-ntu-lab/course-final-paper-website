@@ -163,6 +163,8 @@ FIREBASE_USE_EMULATOR=1 NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1 npm run dev
 | Firebase 前端（建置時注入） | `NEXT_PUBLIC_FIREBASE_*`                                                                                            |
 | Google Drive 同步（執行期） | `GOOGLE_DRIVE_ROOT_FOLDER_ID`、`GOOGLE_DRIVE_CLIENT_ID`、`GOOGLE_DRIVE_CLIENT_SECRET`、`GOOGLE_DRIVE_REFRESH_TOKEN` |
 
+> **改管理員名單要多部署一次。** 正式／測試環境的 `ADMIN_EMAILS` 來自 `infra/config/terraform.tfvars` 的 `admin_emails` / `admin_emails_test`，由 Terraform 寫進 Cloud Build 觸發條件。合併到 `main` 時，部署和 `terraform-apply` 同時開始，這次部署通常還帶著舊名單；新名單要等下一次部署才生效。可以到 Cloud Build 對觸發條件按「執行」（不要對舊建置按「重試」，會沿用舊的值），或再合併一個 PR。
+
 ---
 
 ## 測試
