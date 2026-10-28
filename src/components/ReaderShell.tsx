@@ -399,19 +399,11 @@ export function ReaderShell({
               {previewMode ? "更新" : "發布"} {formatDate(snap.publishedAt)} ·{" "}
               {`閱讀 ${readingMins} 分鐘`}
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {snap.tags?.map((t) => (
-                <TagPill
-                  key={t}
-                  kind="topic"
-                  href={feedFilterHref({ kind: "topic", value: t }, filterHome)}
-                >
-                  {t}
-                </TagPill>
-              ))}
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <TagPill
                 kind="course"
                 href={feedFilterHref({ kind: "course", value: courseName }, filterHome)}
+                className="text-sm"
               >
                 {courseName}
               </TagPill>
@@ -419,11 +411,25 @@ export function ReaderShell({
                 <TagPill
                   kind="semester"
                   href={feedFilterHref({ kind: "semester", value: semesterTag }, filterHome)}
+                  className="text-sm"
                 >
                   {semesterTag}
                 </TagPill>
               )}
             </div>
+            {snap.tags && snap.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {snap.tags.map((t) => (
+                  <TagPill
+                    key={t}
+                    kind="topic"
+                    href={feedFilterHref({ kind: "topic", value: t }, filterHome)}
+                  >
+                    {t}
+                  </TagPill>
+                ))}
+              </div>
+            )}
           </div>
           <div className="reader-tools">
             <button type="button" onClick={() => void share()} className={TOOL}>

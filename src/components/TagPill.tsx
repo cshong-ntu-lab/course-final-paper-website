@@ -1,5 +1,5 @@
-// docs/design-v2.md §2.2 — three tag kinds, three soft colours, pill-shaped.
-// Order is always topic → course → semester.
+// docs/design-v2.md §2.2 — course and semester are plain text (bold / regular),
+// topics are outlined hashtag pills. Order is always course → semester → topic.
 import Link from "next/link";
 
 import { foldCardTags } from "@/lib/tags";
@@ -7,13 +7,20 @@ import { cn } from "@/lib/utils";
 
 export type TagKind = "topic" | "course" | "semester";
 
+const HASHTAG =
+  "inline-flex items-center rounded-full border border-border-strong px-2.5 py-0.5 text-xs text-subtle";
+
 const KIND_CLASSES: Record<TagKind, string> = {
-  topic: "bg-accent-soft text-accent",
-  course: "bg-gold-soft text-gold-ink",
-  semester: "bg-stone-soft text-stone",
+  topic: HASHTAG,
+  course: "text-xs font-bold text-gold-ink",
+  semester: "text-xs font-normal text-gold-ink",
 };
 
-const PILL = "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium";
+const KIND_HOVER: Record<TagKind, string> = {
+  topic: "transition-colors hover:border-accent hover:text-accent",
+  course: "hover:underline underline-offset-4",
+  semester: "hover:underline underline-offset-4",
+};
 
 export function TagPill({
   kind,
@@ -27,19 +34,20 @@ export function TagPill({
   href?: string;
   className?: string;
 }) {
-  const cls = cn(PILL, KIND_CLASSES[kind], href && "hover:brightness-95", className);
+  const cls = cn(KIND_CLASSES[kind], href && KIND_HOVER[kind], className);
+  const label = kind === "topic" ? <>#{children}</> : children;
   return href ? (
     <Link href={href} className={cls}>
-      {children}
+      {label}
     </Link>
   ) : (
-    <span className={cls}>{children}</span>
+    <span className={cls}>{label}</span>
   );
 }
 
-/** Card tag row: at most three pills — course and semester always, extra
- *  topics folded into "+N" (its tooltip lists them). The full set is shown on
- *  the article page instead. */
+/** Card tag row: course and semester always, then at most one topic hashtag —
+ *  extra topics fold into "+N" (its tooltip lists them). The full set is shown
+ *  on the article page instead. */
 export function CardTags({
   topics,
   course,
@@ -54,17 +62,25 @@ export function CardTags({
   const fixed = [course, semester].filter(Boolean).length;
   const { shown, hidden } = foldCardTags(topics, fixed);
   return (
-    <div className={cn("flex flex-wrap items-center gap-1.5", className)}>
-      {shown.map((t) => (
-        <TagPill key={t} kind="topic">
-          {t}
-        </TagPill>
-      ))}
-      {course && <TagPill kind="course">{course}</TagPill>}
-      {semester && <TagPill kind="semester">{semester}</TagPill>}
-      {hidden.length > 0 && (
-        <span className={cn(PILL, "bg-canvas text-subtle")} title={hidden.join("、")}>
-          +{hidden.length}
+    <div className={cn("flex flex-wrap items-center gap-x-3 gap-y-1.5", className)}>
+      {(course || semester) && (
+        <span className="inline-flex items-baseline gap-2.5">
+          {course && <TagPill kind="course">{course}</TagPill>}
+          {semester && <TagPill kind="semester">{semester}</TagPill>}
+        </span>
+      )}
+      {(shown.length > 0 || hidden.length > 0) && (
+        <span className="inline-flex flex-wrap items-center gap-1.5">
+          {shown.map((t) => (
+            <TagPill key={t} kind="topic">
+              {t}
+            </TagPill>
+          ))}
+          {hidden.length > 0 && (
+            <span className={HASHTAG} title={hidden.join("、")}>
+              +{hidden.length}
+            </span>
+          )}
         </span>
       )}
     </div>
