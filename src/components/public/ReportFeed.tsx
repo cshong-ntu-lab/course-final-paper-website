@@ -1,6 +1,6 @@
 "use client";
 // docs/design-v2.md §4.2 — home: centred heading, tag filter panel, then the
-// feed (the latest reports in a carousel, then every report as cards or rows).
+// feed (a carousel of picked reports, then every report as cards or rows).
 // Several tags can be selected (OR within a group, AND across groups); the
 // selection is mirrored in the URL with history.replaceState, so no server
 // round-trip per click.
@@ -15,12 +15,14 @@ import {
   EMPTY_SELECTION,
   FEED_FILTER_HASH,
   FEED_FILTER_KINDS,
+  LEAD_COUNT,
   OPEN_FEED_FILTER_EVENT,
   feedFacets,
   feedSelectionHref,
   matchesFeedSelection,
   selectionCount,
   toggleSelection,
+  visibleTopics,
   type FeedFilterKind,
   type FeedSelection,
 } from "@/lib/feed";
@@ -36,12 +38,12 @@ interface ReportFeedProps {
   initialSelection?: FeedSelection;
   basePath?: string; // default "/c"
   homeHref?: string; // default "/"; preview passes "/preview"
+  /** Carousel reports as `${courseSlug}/${slug}`, drawn on the server
+   *  (weightedSample); omitted → the latest LEAD_COUNT. */
+  leadKeys?: string[];
 }
 
 type View = "grid" | "list";
-
-/** How many of the latest reports the carousel cycles through. */
-const LEAD_COUNT = 5;
 
 const GROUP_LABELS: Record<FeedFilterKind, string> = {
   topic: "主題",
@@ -97,9 +99,11 @@ export function ReportFeed({
   initialSelection = EMPTY_SELECTION,
   basePath = "/c",
   homeHref = "/",
+  leadKeys,
 }: ReportFeedProps) {
   const [selection, setSelection] = React.useState<FeedSelection>(initialSelection);
   const [panelOpen, setPanelOpen] = React.useState(false);
+  const [allTopics, setAllTopics] = React.useState(false);
   const filterRef = React.useRef<HTMLElement>(null);
 
   // the header's 「更多主題」 opens the panel: an event on this page, or the
@@ -123,9 +127,18 @@ export function ReportFeed({
   const facets = React.useMemo(() => feedFacets(reportItems), [reportItems]);
   const count = selectionCount(selection);
   const filtered = reportItems.filter((r) => matchesFeedSelection(r, selection));
+  const topics = allTopics
+    ? { shown: facets.topic, hiddenCount: 0 }
+    : visibleTopics(facets.topic, selection.topic);
   // the carousel only on the unfiltered feed (as in the prototype); the grid
   // below always lists every match, so it agrees with 「共 N 篇」
-  const lead = count > 0 ? [] : filtered.slice(0, LEAD_COUNT);
+  const byKey = new Map(reportItems.map((r) => [`${r.courseSlug}/${r.slug}`, r]));
+  const lead =
+    count > 0
+      ? []
+      : leadKeys
+        ? leadKeys.flatMap((k) => byKey.get(k) ?? [])
+        : filtered.slice(0, LEAD_COUNT);
   const selectionKey = feedSelectionHref(selection);
 
   const applySelection = (next: FeedSelection) => {
@@ -206,7 +219,7 @@ export function ReportFeed({
                         {GROUP_LABELS[kind]}
                       </p>
                       <div className="flex flex-wrap justify-center gap-2">
-                        {facets[kind].map((value) => (
+                        {(kind === "topic" ? topics.shown : facets[kind]).map((value) => (
                           <Chip
                             key={value}
                             kind={kind}
@@ -217,6 +230,23 @@ export function ReportFeed({
                           </Chip>
                         ))}
                       </div>
+                      {kind === "topic" && (allTopics || topics.hiddenCount > 0) && (
+                        <button
+                          type="button"
+                          aria-expanded={allTopics}
+                          onClick={() => setAllTopics((a) => !a)}
+                          className="text-subtle hover:text-accent flex items-center gap-1 text-xs transition-colors"
+                        >
+                          {allTopics ? "收起主題" : `顯示全部主題（還有 ${topics.hiddenCount} 個）`}
+                          <ChevronDown
+                            aria-hidden="true"
+                            className={cn(
+                              "size-3 transition-transform duration-150",
+                              allTopics && "rotate-180",
+                            )}
+                          />
+                        </button>
+                      )}
                     </div>
                   ),
                 )}

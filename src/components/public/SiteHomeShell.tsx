@@ -20,6 +20,8 @@ interface SiteHomeShellProps {
   basePath?: string; // default "/c"; preview passes "/preview/c"
   homeHref?: string; // default "/"; preview passes "/preview"
   stickyTop?: string; // default "top-0"; preview passes "top-8" to sit below PreviewBanner
+  /** Carousel picks (see ReportFeed); preview omits it and shows the latest. */
+  leadKeys?: string[];
 }
 
 export function SiteHomeShell({
@@ -28,6 +30,7 @@ export function SiteHomeShell({
   basePath = "/c",
   homeHref = "/",
   stickyTop = "top-0",
+  leadKeys,
 }: SiteHomeShellProps) {
   return (
     <div className="bg-background min-h-screen">
@@ -39,6 +42,7 @@ export function SiteHomeShell({
           initialSelection={initialSelection}
           basePath={basePath}
           homeHref={homeHref}
+          leadKeys={leadKeys}
         />
       </main>
 

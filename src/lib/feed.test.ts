@@ -9,6 +9,8 @@ import {
   parseFeedSelection,
   selectionCount,
   toggleSelection,
+  visibleTopics,
+  weightedSample,
 } from "@/lib/feed";
 
 describe("parseFeedSelection", () => {
@@ -116,5 +118,57 @@ describe("feedFacets", () => {
       course: ["X", "Y"],
       semester: ["115-1", "114-2", "114-1"],
     });
+  });
+});
+
+describe("visibleTopics", () => {
+  const topics = ["a", "b", "c", "d", "e"];
+
+  it("shows the first `max` and counts the rest", () => {
+    expect(visibleTopics(topics, [], 3)).toEqual({ shown: ["a", "b", "c"], hiddenCount: 2 });
+  });
+
+  it("keeps a selected topic past the cut, in its usual order", () => {
+    expect(visibleTopics(topics, ["e"], 2)).toEqual({ shown: ["a", "b", "e"], hiddenCount: 2 });
+  });
+
+  it("hides nothing when there are few topics", () => {
+    expect(visibleTopics(["a"], [], 6)).toEqual({ shown: ["a"], hiddenCount: 0 });
+  });
+});
+
+describe("weightedSample", () => {
+  // deterministic stream of "random" numbers
+  const seq = (...xs: number[]) => {
+    let i = 0;
+    return () => xs[i++ % xs.length]!;
+  };
+
+  it("returns k distinct items", () => {
+    const out = weightedSample([1, 2, 3, 4, 5, 6], () => 1, 5, seq(0.3, 0.9, 0.1, 0.5, 0.7, 0.2));
+    expect(out).toHaveLength(5);
+    expect(new Set(out).size).toBe(5);
+  });
+
+  it("returns everything when there are fewer than k items", () => {
+    expect(weightedSample(["x", "y"], () => 1, 5).sort()).toEqual(["x", "y"]);
+  });
+
+  it("with equal draws, the heavier item wins", () => {
+    expect(
+      weightedSample(["light", "heavy"], (s) => (s === "heavy" ? 10 : 1), 1, seq(0.5)),
+    ).toEqual(["heavy"]);
+  });
+
+  it("favours heavy items over many draws without excluding light ones", () => {
+    const hits = { heavy: 0, light: 0 };
+    for (let i = 0; i < 4000; i++) {
+      const [pick] = weightedSample(["heavy", "light"] as const, (s) => (s === "heavy" ? 3 : 1), 1);
+      hits[pick!]++;
+    }
+    // P(heavy) = 3/4
+    expect(hits.heavy / 4000).toBeGreaterThan(0.7);
+    expect(hits.heavy / 4000).toBeLessThan(0.8);
+    expect(hits.light).toBeGreaterThan(0);
   });
 });

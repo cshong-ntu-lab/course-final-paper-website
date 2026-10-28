@@ -18,6 +18,7 @@ import {
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
 import { ReaderShell } from "@/components/ReaderShell";
+import { ViewCounter } from "@/components/public/ViewCounter";
 
 export const revalidate = 60;
 
@@ -100,6 +101,7 @@ export default async function ReportPage({ params }: Props) {
         backHref="/"
         backLabel="返回首頁"
       />
+      <ViewCounter reportId={rid} />
       <Footer />
     </>
   );

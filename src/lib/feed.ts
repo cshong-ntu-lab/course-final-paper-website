@@ -86,3 +86,40 @@ export function feedFacets(entries: FeedEntry[]): FeedSelection {
  *  on the home page an event, from other pages the hash on the home URL. */
 export const FEED_FILTER_HASH = "#filter";
 export const OPEN_FEED_FILTER_EVENT = "feed:open-filter";
+
+/** Topic chips the filter panel shows before 「顯示全部主題」 — §4.2. */
+export const TOPIC_FOLD_MAX = 6;
+
+/** The topics shown while the panel's topic list is folded: the `max` most
+ *  used, plus any selected topic further down so a selection never hides. */
+export function visibleTopics(
+  topics: string[],
+  selected: string[],
+  max: number = TOPIC_FOLD_MAX,
+): { shown: string[]; hiddenCount: number } {
+  const shown = topics.filter((t, i) => i < max || selected.includes(t));
+  return { shown, hiddenCount: topics.length - shown.length };
+}
+
+/** How many reports the home carousel cycles through. */
+export const LEAD_COUNT = 5;
+
+/** Carousel weight: more-viewed reports come up more often, without crowding
+ *  out the rest (100 views ≈ 11× as likely as 0). */
+export const leadWeight = (viewCount: number | undefined) => 1 + Math.sqrt(viewCount ?? 0);
+
+/** Draws `k` distinct items, each with probability proportional to its weight
+ *  (Efraimidis–Spirakis: key = u^(1/w), keep the k largest). Returned in draw
+ *  order, heaviest-keyed first. */
+export function weightedSample<T>(
+  items: readonly T[],
+  weight: (item: T) => number,
+  k: number,
+  random: () => number = Math.random,
+): T[] {
+  return items
+    .map((item) => ({ item, key: random() ** (1 / Math.max(weight(item), 1e-9)) }))
+    .sort((a, b) => b.key - a.key)
+    .slice(0, k)
+    .map(({ item }) => item);
+}
