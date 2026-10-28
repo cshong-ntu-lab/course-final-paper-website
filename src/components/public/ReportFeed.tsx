@@ -1,11 +1,13 @@
 "use client";
 // docs/design-v2.md §4.2 — home: centred heading, tag filter panel, then the
 // feed (a carousel of picked reports, then every report as cards or rows).
-// Several tags can be selected (OR within a group, AND across groups); the
-// selection is mirrored in the URL with history.replaceState, so no server
-// round-trip per click.
+// Several tags can be selected (OR within a group, AND across groups). The
+// URL is the only copy of the selection: chips write it with
+// history.replaceState (no server round-trip), tag links elsewhere navigate to
+// it, and both reach this component through useSearchParams.
 
 import { ChevronDown } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { LeadCarousel } from "@/components/public/LeadCarousel";
@@ -20,6 +22,7 @@ import {
   feedFacets,
   feedSelectionHref,
   matchesFeedSelection,
+  parseFeedSelection,
   selectionCount,
   toggleSelection,
   visibleTopics,
@@ -35,7 +38,6 @@ interface FeedReportItem extends ReportItem {
 
 interface ReportFeedProps {
   reportItems: FeedReportItem[];
-  initialSelection?: FeedSelection;
   basePath?: string; // default "/c"
   homeHref?: string; // default "/"; preview passes "/preview"
   /** Carousel reports as `${courseSlug}/${slug}`, drawn on the server
@@ -96,12 +98,19 @@ function selectionLabel(sel: FeedSelection): string {
 
 export function ReportFeed({
   reportItems,
-  initialSelection = EMPTY_SELECTION,
   basePath = "/c",
   homeHref = "/",
   leadKeys,
 }: ReportFeedProps) {
-  const [selection, setSelection] = React.useState<FeedSelection>(initialSelection);
+  // from the URL, so the header's 文章分類 links work while already on the home page
+  const searchParams = useSearchParams();
+  const selection = React.useMemo(
+    () =>
+      parseFeedSelection(
+        Object.fromEntries(FEED_FILTER_KINDS.map((k) => [k, searchParams.getAll(k)])),
+      ),
+    [searchParams],
+  );
   const [panelOpen, setPanelOpen] = React.useState(false);
   const [allTopics, setAllTopics] = React.useState(false);
   const filterRef = React.useRef<HTMLElement>(null);
@@ -143,7 +152,6 @@ export function ReportFeed({
 
   const applySelection = (next: FeedSelection) => {
     setEntrance("stagger-in");
-    setSelection(next);
     window.history.replaceState(null, "", feedSelectionHref(next, homeHref));
   };
 

@@ -9,7 +9,7 @@ import {
   getPublishedReportsByCourse,
   getUsersByUids,
 } from "@/lib/server/firestore";
-import { LEAD_COUNT, leadWeight, parseFeedSelection, weightedSample } from "@/lib/feed";
+import { LEAD_COUNT, leadWeight, weightedSample } from "@/lib/feed";
 import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
@@ -24,12 +24,7 @@ export const metadata: Metadata = {
     "C.A. Bail, Can Generative AI improve social science?, Proc. Natl. Acad. Sci. U.S.A. 121 (21) e2314021121 (2024).",
 };
 
-export default async function RootPage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const initialSelection = parseFeedSelection(await searchParams);
+export default async function RootPage() {
   const courses = await getCoursesWithPublishedReports();
 
   const reportsByCourse = await Promise.all(
@@ -73,11 +68,5 @@ export default async function RootPage({
     LEAD_COUNT,
   ).map(({ report, course }) => `${courseSlug(course)}/${reportSlug(report.uid)}`);
 
-  return (
-    <SiteHomeShell
-      reportItems={reportItems}
-      initialSelection={initialSelection}
-      leadKeys={leadKeys}
-    />
-  );
+  return <SiteHomeShell reportItems={reportItems} leadKeys={leadKeys} />;
 }

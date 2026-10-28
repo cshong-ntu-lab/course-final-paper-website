@@ -6,7 +6,6 @@ import { Footer } from "@/components/Footer";
 import { ReportFeed } from "@/components/public/ReportFeed";
 import type { ReportItem } from "@/components/public/ReportListItem";
 import { SiteHeader } from "@/components/public/SiteHeader";
-import type { FeedSelection } from "@/lib/feed";
 
 interface FeedReportItem extends ReportItem {
   courseSlug: string;
@@ -15,8 +14,6 @@ interface FeedReportItem extends ReportItem {
 
 interface SiteHomeShellProps {
   reportItems: FeedReportItem[];
-  /** From repeated ?topic= / ?course= / ?semester= (parseFeedSelection). */
-  initialSelection?: FeedSelection;
   basePath?: string; // default "/c"; preview passes "/preview/c"
   homeHref?: string; // default "/"; preview passes "/preview"
   stickyTop?: string; // default "top-0"; preview passes "top-8" to sit below PreviewBanner
@@ -26,7 +23,6 @@ interface SiteHomeShellProps {
 
 export function SiteHomeShell({
   reportItems,
-  initialSelection,
   basePath = "/c",
   homeHref = "/",
   stickyTop = "top-0",
@@ -39,7 +35,6 @@ export function SiteHomeShell({
       <main id="main" className="mx-auto max-w-[1180px] px-6 pt-12">
         <ReportFeed
           reportItems={reportItems}
-          initialSelection={initialSelection}
           basePath={basePath}
           homeHref={homeHref}
           leadKeys={leadKeys}

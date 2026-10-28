@@ -9,7 +9,6 @@ import {
   type ReportDoc,
 } from "@/lib/server/firestore";
 import { semesterLabel } from "@/lib/semester";
-import { parseFeedSelection } from "@/lib/feed";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
 
@@ -21,12 +20,7 @@ function reportBadgeLabel(r: ReportDoc): string | undefined {
   return undefined;
 }
 
-export default async function PreviewHomePage({
-  searchParams,
-}: {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-}) {
-  const initialSelection = parseFeedSelection(await searchParams);
+export default async function PreviewHomePage() {
   const courses = await getAllCourses();
 
   const reportsByCourse = await Promise.all(
@@ -66,7 +60,6 @@ export default async function PreviewHomePage({
   return (
     <SiteHomeShell
       reportItems={reportItems}
-      initialSelection={initialSelection}
       basePath="/preview/c"
       homeHref="/preview"
       stickyTop="top-8"
