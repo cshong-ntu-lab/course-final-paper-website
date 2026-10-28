@@ -96,7 +96,7 @@ repo 現有的 `rounded-[2px]` 方框標籤、`rounded-[5px]` 卡片，移植後
 ### 1.5 陰影、版心
 
 - `--shadow-soft`：`0 1px 2px rgba(28,29,26,.04), 0 8px 24px -8px rgba(28,29,26,.12)`（卡片靜止）。
-- `--shadow-hover`：`0 2px 4px rgba(28,29,26,.05), 0 14px 30px -10px rgba(28,29,26,.18)`（卡片 / 列表列 hover，搭配上移 2px）。
+- `--shadow-hover`：`0 2px 4px rgba(28,29,26,.05), 0 14px 30px -10px rgba(28,29,26,.18)`（卡片 hover 搭配上移 3px、列表列上移 2px）。
 - 版心最大寬 1180px（同 repo），左右留白 `clamp(16px, 4vw, 64px)`。
 
 ---
@@ -299,7 +299,7 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 **卡片（`ReportListItem` default）**
 
 - 結構：封面 16:9 → 作者列（`Avatar sm` + `姓名 · 屆數`，`text-xs` `subtle`）→ 標題（serif `text-[1.08rem]` 700）→ 摘要（`text-sm` `muted`，**3 行**截斷）→ 標籤列（貼底，§2.2 收合）。
-- 卡片：`surface` 底、1px `border`、`radius-card`、`shadow-soft`；hover 上移 2px + `shadow-hover`。
+- 卡片：`surface` 底、1px `border`、`radius-card`、`shadow-soft`；hover 上移 3px + `shadow-hover`，位移與陰影一起以 200ms `ease-enter` 過渡（2026-10-29）。
 - 無封面：`MarkSlice` (a)。
 - 格線 `repeat(auto-fill, minmax(300px, 1fr))`、gap 22px。
 
@@ -382,6 +382,7 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 - `prefers-reduced-motion: reduce`：所有動畫與過場縮到 0.01ms（等於直接切換）、不跑 View Transition、不做卡片依序進場、枝條直接畫好、連續動畫（呼吸燈、進度條）停止。
 - **只在換頁時播進場**（卡片依序、文章標題依序）；切換檢視、重畫局部時不播，避免每次操作都在動。
 - 會跟 hover 位移衝突的進場動畫，`animation-fill-mode` 用 `backwards`（不用 `both`），動畫結束後不再佔住 `transform`。
+- Tailwind 4 的 `translate-*` 寫的是 CSS `translate` 屬性，不是 `transform`：自訂 `transition-[…]` 清單要列 `translate`，否則位移不會過渡、一幀跳到位（`transition-transform` 已包含 `translate`）。
 
 ### 5.2 逐項規格
 

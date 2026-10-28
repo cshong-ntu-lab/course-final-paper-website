@@ -79,7 +79,7 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        "rounded-full border border-transparent px-[15px] py-[7px] text-sm transition-[transform,background-color,color] duration-150 hover:-translate-y-px",
+        "rounded-full border border-transparent px-[15px] py-[7px] text-sm transition-[translate,background-color,color] duration-150 hover:-translate-y-px",
         active ? CHIP_CLASSES[kind].active : CHIP_CLASSES[kind].rest,
       )}
     >
