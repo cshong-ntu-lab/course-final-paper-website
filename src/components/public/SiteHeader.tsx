@@ -1,7 +1,7 @@
 "use client";
 // docs/design-v2.md §4.0 — the one header for every public page (home, preview,
 // reader, author, about, legal). Crest + wordmark left, 關於本站 / 文章分類 in
-// the middle, account right. Topics and the signed-in user come from
+// the middle, account right. Courses, topics and the signed-in user come from
 // /api/site-nav after mount, so the pages themselves stay static / ISR.
 // Below `sm` the nav and account fold into one 選單 menu to keep a single row
 // (the reader's sticky offsets assume a 56px header).
@@ -15,7 +15,13 @@ import { useCallback, useEffect, useState } from "react";
 import type { SiteNavData } from "@/app/api/site-nav/route";
 import { Avatar } from "@/components/Avatar";
 import { Crest } from "@/components/Crest";
-import { FEED_FILTER_HASH, OPEN_FEED_FILTER_EVENT, feedFilterHref } from "@/lib/feed";
+import {
+  EMPTY_SELECTION,
+  FEED_FILTER_HASH,
+  OPEN_FEED_FILTER_EVENT,
+  feedFilterHref,
+  feedSelectionHref,
+} from "@/lib/feed";
 import { cn } from "@/lib/utils";
 
 const MENU_CONTENT = cn(
@@ -28,9 +34,10 @@ const MENU_ITEM =
   "text-muted data-[highlighted]:bg-canvas data-[highlighted]:text-accent block cursor-pointer rounded-lg px-3.5 py-2 text-sm whitespace-nowrap outline-none";
 const MENU_LABEL = "text-subtle px-3.5 pt-2 pb-1 text-2xs font-semibold tracking-[0.12em]";
 const MENU_SEPARATOR = "bg-border mx-1 my-1.5 h-px";
-/** Topics listed in 文章分類 (most used first); the rest are one click away in
- *  the home filter panel via 「更多主題」. */
-const NAV_TOPIC_MAX = 8;
+/** 文章分類 leads with courses (each offering, newest semester first); below
+ *  them this many popular topics, the rest one click away in the home filter
+ *  panel via 「更多主題」. */
+const NAV_TOPIC_MAX = 5;
 const NAV_LINK = "text-muted hover:text-accent text-sm font-medium transition-colors";
 
 export interface SiteHeaderProps {
@@ -81,6 +88,7 @@ export function SiteHeader({
   const { data, logout } = useSiteNav();
   const pathname = usePathname();
   const router = useRouter();
+  const courses = data?.courses ?? [];
   const topics = data?.topics ?? [];
   const user = data?.user;
 
@@ -89,15 +97,39 @@ export function SiteHeader({
       <DropdownMenu.Item asChild className={MENU_ITEM}>
         <Link href={homeHref}>全部文章</Link>
       </DropdownMenu.Item>
-      {topics.length > 0 && <DropdownMenu.Separator className={MENU_SEPARATOR} />}
+      {courses.length > 0 && (
+        <>
+          <DropdownMenu.Separator className={MENU_SEPARATOR} />
+          <DropdownMenu.Label className={MENU_LABEL}>課程</DropdownMenu.Label>
+          {courses.map((c) => (
+            <DropdownMenu.Item key={`${c.semester}-${c.name}`} asChild className={MENU_ITEM}>
+              <Link
+                href={feedSelectionHref(
+                  { ...EMPTY_SELECTION, course: [c.name], semester: [c.semester] },
+                  homeHref,
+                )}
+                className="flex items-baseline gap-2.5"
+              >
+                <span className="font-semibold">{c.name}</span>
+                <span className="text-subtle text-xs">{c.semester}</span>
+              </Link>
+            </DropdownMenu.Item>
+          ))}
+        </>
+      )}
+      {topics.length > 0 && (
+        <>
+          <DropdownMenu.Separator className={MENU_SEPARATOR} />
+          <DropdownMenu.Label className={MENU_LABEL}>熱門主題</DropdownMenu.Label>
+        </>
+      )}
       {topics.slice(0, NAV_TOPIC_MAX).map((t) => (
         <DropdownMenu.Item key={t} asChild className={MENU_ITEM}>
-          <Link href={feedFilterHref({ kind: "topic", value: t }, homeHref)}>{t}</Link>
+          <Link href={feedFilterHref({ kind: "topic", value: t }, homeHref)}>#{t}</Link>
         </DropdownMenu.Item>
       ))}
       {topics.length > NAV_TOPIC_MAX && (
         <>
-          <DropdownMenu.Separator className={MENU_SEPARATOR} />
           <DropdownMenu.Item
             className={cn(MENU_ITEM, "text-accent font-semibold")}
             onSelect={() => {

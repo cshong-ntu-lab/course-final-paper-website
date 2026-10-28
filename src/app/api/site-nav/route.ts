@@ -1,21 +1,24 @@
-// docs/design-v2.md §4.0 — data for the public site header: the 文章分類 topics
-// and who is signed in. Fetched by SiteHeader on mount so the public pages can
+// docs/design-v2.md §4.0 — data for the public site header: the 文章分類
+// courses and topics, and who is signed in. Fetched by SiteHeader on mount so the public pages can
 // stay static / ISR (reading the session cookie in the page would make them
 // dynamic, and `next build` has no Firestore access).
 
 import { unstable_cache } from "next/cache";
 import { NextResponse } from "next/server";
 
-import { feedFacets } from "@/lib/feed";
+import { feedFacets, navCourses, type NavCourse } from "@/lib/feed";
 import { getCurrentUser } from "@/lib/server/auth";
 import {
   getCoursesWithPublishedReports,
   getPublishedReportsByCourse,
 } from "@/lib/server/firestore";
+import { semesterLabel } from "@/lib/semester";
 
 export const dynamic = "force-dynamic";
 
 export interface SiteNavData {
+  /** Course offerings with published reports, newest semester first. */
+  courses: NavCourse[];
   /** Topic tags of published reports, most used first. */
   topics: string[];
   user: {
@@ -25,19 +28,25 @@ export interface SiteNavData {
   } | null;
 }
 
-const getNavTopics = unstable_cache(
+const getNavCategories = unstable_cache(
   async () => {
     const courses = await getCoursesWithPublishedReports();
     const reports = await Promise.all(courses.map((c) => getPublishedReportsByCourse(c.id)));
-    return feedFacets(reports.flat().map((r) => ({ tags: r.tags }))).topic;
+    return {
+      courses: navCourses(
+        courses.map((c) => ({ name: c.name, semester: semesterLabel(c.year, c.semester) })),
+      ),
+      topics: feedFacets(reports.flat().map((r) => ({ tags: r.tags }))).topic,
+    };
   },
-  ["site-nav-topics"],
+  ["site-nav-categories"],
   { revalidate: 300 },
 );
 
 export async function GET() {
-  const [topics, user] = await Promise.all([getNavTopics(), getCurrentUser()]);
+  const [{ courses, topics }, user] = await Promise.all([getNavCategories(), getCurrentUser()]);
   const body: SiteNavData = {
+    courses,
     topics,
     user: user && {
       name: user.profileDisplayName || user.displayName || user.email,

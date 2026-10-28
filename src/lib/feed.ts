@@ -123,3 +123,25 @@ export function weightedSample<T>(
     .slice(0, k)
     .map(({ item }) => item);
 }
+
+export interface NavCourse {
+  name: string;
+  semester: string;
+}
+
+/** Courses for the header's 文章分類: one entry per course offering, newest
+ *  semester first, then by name. */
+export function navCourses(courses: NavCourse[]): NavCourse[] {
+  const seen = new Set<string>();
+  return courses
+    .filter((c) => {
+      const key = `${c.semester}\u0000${c.name}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort(
+      (a, b) =>
+        b.semester.localeCompare(a.semester) || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0),
+    );
+}

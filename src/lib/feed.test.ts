@@ -5,6 +5,7 @@ import {
   feedFacets,
   feedFilterHref,
   feedSelectionHref,
+  navCourses,
   matchesFeedSelection,
   parseFeedSelection,
   selectionCount,
@@ -170,5 +171,22 @@ describe("weightedSample", () => {
     expect(hits.heavy / 4000).toBeGreaterThan(0.7);
     expect(hits.heavy / 4000).toBeLessThan(0.8);
     expect(hits.light).toBeGreaterThan(0);
+  });
+});
+
+describe("navCourses", () => {
+  it("lists newest semester first, then by name, without duplicates", () => {
+    expect(
+      navCourses([
+        { name: "計算社會學", semester: "114-2" },
+        { name: "AI工作坊", semester: "115-1" },
+        { name: "計算社會學", semester: "115-1" },
+        { name: "計算社會學", semester: "114-2" },
+      ]),
+    ).toEqual([
+      { name: "AI工作坊", semester: "115-1" },
+      { name: "計算社會學", semester: "115-1" },
+      { name: "計算社會學", semester: "114-2" },
+    ]);
   });
 });
