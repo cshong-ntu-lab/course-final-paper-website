@@ -9,7 +9,7 @@ import {
   getPublishedReportsByCourse,
   getUsersByUids,
 } from "@/lib/server/firestore";
-import { parseFeedSelection } from "@/lib/feed";
+import { LEAD_COUNT, leadWeight, parseFeedSelection, weightedSample } from "@/lib/feed";
 import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
@@ -65,5 +65,19 @@ export default async function RootPage({
     courseSlug: courseSlug(course),
   }));
 
-  return <SiteHomeShell reportItems={reportItems} initialSelection={initialSelection} />;
+  // a fresh draw per request (the page is dynamic): more-viewed reports come
+  // up more often, but the carousel isn't the same five every time
+  const leadKeys = weightedSample(
+    allReports,
+    ({ report }) => leadWeight(report.viewCount),
+    LEAD_COUNT,
+  ).map(({ report, course }) => `${courseSlug(course)}/${reportSlug(report.uid)}`);
+
+  return (
+    <SiteHomeShell
+      reportItems={reportItems}
+      initialSelection={initialSelection}
+      leadKeys={leadKeys}
+    />
+  );
 }

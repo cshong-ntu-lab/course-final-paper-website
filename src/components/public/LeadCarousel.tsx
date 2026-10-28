@@ -1,5 +1,6 @@
 "use client";
-// docs/design-v2.md §4.2 — the lead block as a carousel of the latest reports.
+// docs/design-v2.md §4.2 — the lead block as a carousel of picked reports
+// (weighted by views on the public home, the latest on /preview).
 // The card frame stays put; only its content slides. Advances left every 6s; after the last slide it moves on to a copy of the
 // first and then jumps back without a transition, so it always slides left.
 // Swipe and the dots move it by hand. Auto-advance pauses on hover, on focus
@@ -109,7 +110,7 @@ export function LeadCarousel({ items, basePath }: { items: LeadItem[]; basePath:
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="最新發表"
+      aria-label="精選文章"
       className="rise-once"
       onMouseEnter={() => setHeld(true)}
       onMouseLeave={() => setHeld(false)}

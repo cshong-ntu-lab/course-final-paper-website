@@ -151,7 +151,7 @@ export function ReportListItem({
         <Cover report={report} id={coverId} className="rounded-thumb aspect-video" />
         <div className="min-w-0">
           <span className="bg-gold-soft text-gold-ink text-2xs mb-4 inline-flex rounded-full px-3 py-1 font-bold tracking-[0.2em]">
-            最新發表
+            精選文章
           </span>
           {byline}
           <h3 className={cn(TITLE, "mt-2.5 mb-2.5 text-3xl leading-[1.45]")}>

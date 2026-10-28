@@ -97,6 +97,7 @@ export interface Report {
   coverCaption?: string;
   coAuthors?: CoAuthor[];
   authorUid?: string; // UID of the selected primary author (for profile lookup at publish)
+  viewCount?: number; // public reader opens, one per browser session (/api/reports/view)
 }
 
 export interface PublishSnapshot {
