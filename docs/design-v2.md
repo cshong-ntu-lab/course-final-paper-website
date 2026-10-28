@@ -123,16 +123,17 @@ repo 現有的 `rounded-[2px]` 方框標籤、`rounded-[5px]` 卡片，移植後
 
 ### 2.2 標籤 — `src/components/TagPill.tsx`（新）＋ `src/lib/tags.ts`
 
-三類三色，膠囊形（`rounded-full`），`text-xs`，padding 4×10：
+課程與學期是純文字，主題是空心 hashtag 膠囊（2026-10-29 改版，取代原本的三色實底膠囊）：
 
-| 類型          | 資料來源                                  | 底            | 字         |
-| ------------- | ----------------------------------------- | ------------- | ---------- |
-| topic 主題    | `Report.tags[]`                           | `accent-soft` | `accent`   |
-| course 課程   | `Course.name`                             | `gold-soft`   | `gold-ink` |
-| semester 學期 | `` `${Course.year}-${Course.semester}` `` | `stone-soft`  | `stone`    |
+| 類型          | 資料來源                                  | 樣式                                                                                     |
+| ------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------- |
+| course 課程   | `Course.name`                             | 純文字，`font-bold`、`gold-ink`                                                          |
+| semester 學期 | `` `${Course.year}-${Course.semester}` `` | 純文字，`font-normal`、`gold-ink`，與課程間距 10px                                       |
+| topic 主題    | `Report.tags[]`                           | `#` 前綴，`rounded-full`、`border-border-strong` 邊框、無底色、`subtle` 字，padding 2×10 |
 
-- 顯示順序固定 topic → course → semester。點任一標籤 → 首頁並套用該標籤篩選。
-- **卡片收合規則**（加到 `src/lib/tags.ts`，純函式 + 測試）：卡片最多 3 個 pill；**課程與學期一定顯示**，只收起多的主題標籤（至少留 1 個主題），收起的變成 `+N`（`canvas` 底、`subtle` 字，`title` 列出被收的標籤）。文章頁顯示全部。
+- 字級：卡片 `text-xs`；文章頁課程與學期 `text-sm`、獨佔一行，主題 hashtag 另起一行。
+- 顯示順序固定 course → semester → topic。點任一標籤 → 首頁並套用該標籤篩選。主題 hover 時邊框與字轉 `accent`，課程與學期 hover 加底線。
+- **卡片收合規則**（加到 `src/lib/tags.ts`，純函式 + 測試）：卡片最多 3 個 pill；**課程與學期一定顯示**，只收起多的主題標籤（至少留 1 個主題），收起的變成 `+N`（與主題同樣的空心膠囊，`title` 列出被收的標籤）。文章頁顯示全部。
 
   ```ts
   export function foldCardTags(topics: string[], fixedCount: number, max = 3) {
