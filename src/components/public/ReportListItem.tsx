@@ -177,7 +177,7 @@ export function ReportListItem({
       <article
         style={style}
         className={cn(
-          "group border-border bg-surface rounded-card hover:shadow-hover relative flex items-stretch gap-[18px] border p-3.5 transition-[transform,box-shadow] duration-150 hover:-translate-y-px max-[560px]:gap-3 max-[560px]:p-3",
+          "group border-border bg-surface rounded-card hover:shadow-hover ease-enter relative flex items-stretch gap-[18px] border p-3.5 transition-[translate,box-shadow] duration-200 hover:-translate-y-0.5 max-[560px]:gap-3 max-[560px]:p-3",
           focusRing,
           className,
         )}
@@ -208,7 +208,7 @@ export function ReportListItem({
     <article
       style={style}
       className={cn(
-        "group border-border bg-surface rounded-card shadow-soft hover:shadow-hover relative flex flex-col overflow-hidden border transition-[transform,box-shadow] duration-150 hover:-translate-y-0.5",
+        "group border-border bg-surface rounded-card shadow-soft hover:shadow-hover ease-enter relative flex flex-col overflow-hidden border transition-[translate,box-shadow] duration-200 hover:-translate-y-[3px]",
         focusRing,
         className,
       )}
