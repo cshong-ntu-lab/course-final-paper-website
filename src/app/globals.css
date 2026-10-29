@@ -225,20 +225,10 @@
   --text-6xl--line-height: 3rem;
   --text-6xl--letter-spacing: -0.03em;
 
-  --animate-banner-slide: banner-slide 200ms ease-out;
   --animate-saving: saving 2s ease-in-out infinite;
   --animate-pulse-dot: pulse-dot 2.4s ease-in-out infinite;
   --animate-draw-line: draw-line 900ms ease-out 200ms both;
   --animate-fade-up: fade-up 600ms ease-out both;
-}
-
-@keyframes banner-slide {
-  from {
-    transform: translateY(-100%);
-  }
-  to {
-    transform: translateY(0);
-  }
 }
 
 @keyframes saving {

@@ -31,7 +31,7 @@ When running `gcloud` / `firebase` commands, always target `avid-factor-496115-d
 ## Architecture decisions (post-Phase 0)
 
 - **Single deployment** — one Cloud Run service only. No separate staging Cloud Run service.
-- **Preview route** — `/preview` (login-gated) shows all reports including unpublished drafts for course members to review before publishing. No `APP_MODE` env var toggle needed.
+- **Preview route** — `/preview` (login-gated) shows published reports plus the viewer's own drafts (admins see every draft), so students can check how their draft looks on the site before publishing. Other students' drafts stay private (`src/lib/preview.ts`). No `APP_MODE` env var toggle needed.
 - **Auth gates** — `src/proxy.ts` (Next.js edge proxy, replaces `middleware.ts`) gates `/workspace`, `/admin`, and `/preview`. Cookie presence check only; full verification in Server Components via `getCurrentUser()`.
 - **Firebase connection** — controlled by `.env.local`: `FIREBASE_USE_EMULATOR=1` / `NEXT_PUBLIC_FIREBASE_USE_EMULATOR=1` for local emulator; `0` for cloud (`avid-factor-496115-d6`). Currently set to cloud (`0`).
 

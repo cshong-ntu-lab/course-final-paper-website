@@ -45,7 +45,10 @@ interface AuthoredReport {
 }
 
 /** The primary author is `authorUid` (falls back to the report owner); co-authors count too. */
-export function isReportByAuthor(report: AuthoredReport, uid: string): boolean {
+export function isReportByAuthor(
+  report: Pick<AuthoredReport, "uid" | "authorUid" | "coAuthors">,
+  uid: string,
+): boolean {
   return (
     (report.authorUid ?? report.uid) === uid || (report.coAuthors ?? []).some((c) => c.uid === uid)
   );

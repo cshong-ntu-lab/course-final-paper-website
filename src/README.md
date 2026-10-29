@@ -130,7 +130,7 @@ reports/{reportId}/uploads/{uploadId}
 | `/c/[courseSlug]/r/[reportSlug]`         | 否       | 閱讀已發布報告                             |
 | `/login`                                 | 否       | Google 登入頁面                            |
 | `/privacy`、`/tos`                       | 否       | 隱私政策與服務條款                         |
-| `/preview`                               | 需登入   | 預覽所有草稿（含未發布）                   |
+| `/preview`                               | 需登入   | 已發布文章＋自己的草稿（管理員看全部）     |
 | `/workspace`                             | 需登入   | 學生工作區，顯示已選修課程                 |
 | `/workspace/onboarding`                  | 需登入   | 初次使用引導（輸入選課代碼、設定名稱）     |
 | `/workspace/settings`                    | 需登入   | 修改個人顯示名稱                           |

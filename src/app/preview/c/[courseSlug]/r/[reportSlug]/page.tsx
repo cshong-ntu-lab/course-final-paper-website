@@ -1,14 +1,17 @@
 // /preview/c/[courseSlug]/r/[reportSlug] — renders the latest draft using the
-// same ReaderShell as the public reader, with previewMode=true.
+// same ReaderShell as the public reader, with previewMode=true. Only admins and
+// the report's own authors see the draft; anyone else gets the public page.
 
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import { ReaderShell } from "@/components/ReaderShell";
 import { Footer } from "@/components/Footer";
 import { authorName } from "@/lib/authors";
 import { extractToc } from "@/lib/markdown/extractToc";
 import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
+import { canPreviewDraft } from "@/lib/preview";
 import { semesterLabel } from "@/lib/semester";
+import { getCurrentUser } from "@/lib/server/auth";
 import { getCourseBySlug, getReportDoc, getUsersByUids } from "@/lib/server/firestore";
 import { estimateReadingMinutes } from "@/lib/slug";
 import { reportId } from "@/lib/types";
@@ -28,6 +31,13 @@ export default async function PreviewReportPage({ params }: Props) {
   const rid = reportId(course.id, reportSlug);
   const report = await getReportDoc(rid);
   if (!report) notFound();
+
+  const viewer = await getCurrentUser();
+  if (!viewer) redirect(`/login?from=/preview/c/${courseSlug}/r/${reportSlug}`);
+  if (!canPreviewDraft(report, viewer)) {
+    if (report.publishedAt) redirect(`/c/${courseSlug}/r/${reportSlug}`);
+    notFound();
+  }
 
   const updatedTs = report.updatedAt as unknown as { toDate?: () => Date } | null;
   const updatedIso = updatedTs?.toDate?.().toISOString() ?? new Date().toISOString();
