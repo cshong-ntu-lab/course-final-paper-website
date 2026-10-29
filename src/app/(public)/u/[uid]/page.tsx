@@ -53,7 +53,7 @@ export default async function AuthorPage({ params }: Props) {
         slug: reportSlug(r.uid),
         courseSlug: courseSlug(course),
         title: r.title || "（無標題）",
-        author: r.author,
+        author: name,
         summary: r.summary,
         coverImageUrl: r.coverImageUrl,
         publishedAt: r.publishedAt.toDate().toISOString(),

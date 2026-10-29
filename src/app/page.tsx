@@ -9,6 +9,7 @@ import {
   getPublishedReportsByCourse,
   getUsersByUids,
 } from "@/lib/server/firestore";
+import { authorName } from "@/lib/authors";
 import { LEAD_COUNT, leadWeight, weightedSample } from "@/lib/feed";
 import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
@@ -43,7 +44,7 @@ export default async function RootPage() {
   const reportItems = allReports.map(({ report: r, course }) => ({
     slug: reportSlug(r.uid),
     title: r.title || "（無標題）",
-    author: r.author,
+    author: authorName(profileMap.get(r.authorUid ?? r.uid), r.author),
     summary: r.summary,
     coverImageUrl: r.coverImageUrl,
     publishedAt: r.publishedAt!.toDate().toISOString(),

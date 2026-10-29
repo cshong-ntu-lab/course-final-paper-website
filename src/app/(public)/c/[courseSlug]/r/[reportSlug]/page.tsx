@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Footer } from "@/components/Footer";
+import { authorName } from "@/lib/authors";
 import { extractToc } from "@/lib/markdown/extractToc";
 import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
 import { semesterCitationYear, semesterLabel } from "@/lib/semester";
@@ -78,7 +79,7 @@ export default async function ReportPage({ params }: Props) {
         citationYear={semesterCitationYear(course.year, course.semester)}
         snap={{
           title: snap.title || "（無標題）",
-          author: snap.author || "（未署名）",
+          author: authorName(authorProfiles[0], snap.author) || "（未署名）",
           summary: snap.summary,
           coverImageUrl: snap.coverImageUrl,
           contentMd,

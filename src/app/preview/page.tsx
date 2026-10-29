@@ -8,6 +8,7 @@ import {
   getUsersByUids,
   type ReportDoc,
 } from "@/lib/server/firestore";
+import { authorName } from "@/lib/authors";
 import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
@@ -39,7 +40,7 @@ export default async function PreviewHomePage() {
   const reportItems = allReports.map(({ report: r, course }) => ({
     slug: reportSlug(r.uid),
     title: r.title || "（無標題）",
-    author: r.author || "（未署名）",
+    author: authorName(profileMap.get(r.authorUid ?? r.uid), r.author) || "（未署名）",
     summary: r.summary,
     coverImageUrl: r.coverImageUrl,
     publishedAt: (r.publishedAt ?? r.updatedAt).toDate().toISOString(),
