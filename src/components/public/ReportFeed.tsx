@@ -163,7 +163,7 @@ export function ReportFeed({
         className="mb-12 flex scroll-mt-20 flex-col items-center text-center"
       >
         <h1 className="m-0 mb-4 font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] font-extrabold">
-          AI課程期末論文
+          AI課程成果發表
         </h1>
         {/* the quote the site has carried since v1 */}
         <blockquote className="text-muted m-0 max-w-[44ch] font-serif text-[1.05rem] leading-[1.6] italic text-pretty">
