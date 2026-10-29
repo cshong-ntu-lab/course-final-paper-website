@@ -2,6 +2,7 @@
 
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 
+import { authorLineOf } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { reportConverter, userConverter } from "@/lib/firestore/converters";
 import { requireAdmin } from "@/lib/server/auth";
@@ -14,8 +15,7 @@ export type PublishResult =
   | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
 export type WithdrawResult =
-  | { ok: true }
-  | { ok: false; error: "not_found" | "forbidden" | "internal" };
+  { ok: true } | { ok: false; error: "not_found" | "forbidden" | "internal" };
 
 export async function publishReportAction(reportId: string): Promise<PublishResult> {
   const admin = await requireAdmin();
@@ -43,6 +43,7 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
 
       const report = snap.data()!;
       const authorProfile = userSnap.data();
+      const authorAffiliation = authorLineOf(authorProfile);
       const now = Timestamp.now();
 
       // Enrich co-authors with their profile data.
@@ -50,16 +51,17 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
         report.coAuthors && report.coAuthors.length > 0
           ? report.coAuthors.map((a) => {
               const profile = coAuthorProfileMap.get(a.uid);
+              const line = authorLineOf(profile);
               return {
                 uid: a.uid,
                 name: a.name,
-                ...(profile?.title && { title: profile.title }),
+                ...(line && { title: line }),
                 ...(profile?.bio && { bio: profile.bio }),
               };
             })
           : undefined;
 
-      // Write publish snapshot — authorAffiliation/authorBio come from the author's profile.
+      // Write publish snapshot — authorAffiliation (系所 line) and authorBio come from the author's profile.
       const snapshotRef = snapshotsCol.doc();
       const snapshot: PublishSnapshot = {
         type: "publish",
@@ -73,7 +75,7 @@ export async function publishReportAction(reportId: string): Promise<PublishResu
         ...(report.subtitle !== undefined && { subtitle: report.subtitle }),
         ...(report.tags !== undefined && { tags: report.tags }),
         ...(report.pullQuote !== undefined && { pullQuote: report.pullQuote }),
-        ...(authorProfile?.title && { authorAffiliation: authorProfile.title }),
+        ...(authorAffiliation && { authorAffiliation }),
         ...(authorProfile?.bio && { authorBio: authorProfile.bio }),
         ...(report.coverCaption !== undefined && { coverCaption: report.coverCaption }),
         ...(enrichedCoAuthors && { coAuthors: enrichedCoAuthors }),

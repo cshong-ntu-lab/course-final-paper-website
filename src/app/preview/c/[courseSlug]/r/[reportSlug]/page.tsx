@@ -6,7 +6,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { ReaderShell } from "@/components/ReaderShell";
 import { Footer } from "@/components/Footer";
-import { authorName } from "@/lib/authors";
+import { authorLineOf, authorName } from "@/lib/authors";
 import { extractToc } from "@/lib/markdown/extractToc";
 import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
 import { canPreviewDraft } from "@/lib/preview";
@@ -58,7 +58,7 @@ export default async function PreviewReportPage({ params }: Props) {
   const enrichedCoAuthors = (report.coAuthors ?? []).map((a) => ({
     uid: a.uid,
     name: a.name,
-    title: profileMap.get(a.uid)?.title,
+    title: authorLineOf(profileMap.get(a.uid)) || undefined,
     bio: profileMap.get(a.uid)?.bio,
   }));
 
@@ -79,9 +79,10 @@ export default async function PreviewReportPage({ params }: Props) {
           subtitle: report.subtitle,
           tags: report.tags,
           authorBio: primaryProfile?.bio,
-          authorAffiliation: primaryProfile?.title,
+          authorAffiliation: authorLineOf(primaryProfile) || undefined,
           authorAvatarUrl: primaryProfile?.avatarUrl ?? null,
           authorUid: primaryAuthorUid,
+          authorDepartment: primaryProfile?.department ?? null,
           authorDegree: primaryProfile?.degree ?? null,
           authorCohort: primaryProfile?.cohort ?? null,
           coverCaption: report.coverCaption,

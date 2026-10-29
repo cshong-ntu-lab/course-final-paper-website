@@ -545,7 +545,8 @@ const OBSERVABLE_SECTIONS = SECTIONS.slice(6);
 
 export function MarkdownCheatsheet() {
   return (
-    <section>
+    // the editor walkthrough links here (#markdown-cheatsheet)
+    <section id="markdown-cheatsheet" className="scroll-mt-8">
       <div className="text-2xs text-subtle mb-2 font-mono uppercase tracking-[0.12em]">
         語法指南
       </div>

@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { foldCardTags, normalizeTags, parseTags } from "@/lib/tags";
+import {
+  addTags,
+  foldCardTags,
+  matchTagSuggestions,
+  normalizeTags,
+  parseTags,
+  rankTags,
+} from "@/lib/tags";
 
 describe("normalizeTags", () => {
   it("splits a tag that holds several comma-joined keywords", () => {
@@ -84,5 +91,44 @@ describe("parseTags", () => {
   it("returns an empty array for blank input", () => {
     expect(parseTags("")).toEqual([]);
     expect(parseTags("   ")).toEqual([]);
+  });
+});
+
+describe("addTags", () => {
+  it("adds one keyword, or several from a pasted list", () => {
+    expect(addTags(["勞動"], "性別")).toEqual(["勞動", "性別"]);
+    expect(addTags([], "勞動、性別，AI")).toEqual(["勞動", "性別", "AI"]);
+  });
+
+  it("skips duplicates regardless of case, and blanks", () => {
+    expect(addTags(["AI"], "ai, 勞動 ,  ")).toEqual(["AI", "勞動"]);
+  });
+
+  it("stops at the limit and drops over-long keywords", () => {
+    expect(addTags(["a", "b", "c", "d"], "e, f")).toEqual(["a", "b", "c", "d", "e"]);
+    expect(addTags([], "x".repeat(31))).toEqual([]);
+  });
+});
+
+describe("rankTags", () => {
+  it("orders keywords by how many reports use them, ties in first-seen order", () => {
+    expect(rankTags([["性別", "勞動"], ["勞動"], undefined, ["AI，勞動"]])).toEqual([
+      "勞動",
+      "性別",
+      "AI",
+    ]);
+  });
+});
+
+describe("matchTagSuggestions", () => {
+  const all = ["勞動研究", "平台經濟", "AI", "勞動"];
+
+  it("matches substrings case-insensitively and hides picked tags", () => {
+    expect(matchTagSuggestions("勞動", all, ["勞動"])).toEqual(["勞動研究"]);
+    expect(matchTagSuggestions("ai", all, [])).toEqual(["AI"]);
+  });
+
+  it("lists everything not picked for an empty query, up to the limit", () => {
+    expect(matchTagSuggestions("", all, ["AI"], 2)).toEqual(["勞動研究", "平台經濟"]);
   });
 });

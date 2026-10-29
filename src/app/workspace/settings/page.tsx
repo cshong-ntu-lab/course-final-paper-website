@@ -33,9 +33,9 @@ export default async function SettingsPage() {
           <SettingsForm
             currentName={user.profileDisplayName || user.displayName}
             email={user.email}
-            currentTitle={user.title ?? ""}
             currentBio={user.bio ?? ""}
             currentAvatarUrl={user.avatarUrl}
+            currentDepartment={user.department}
             currentDegree={user.degree}
             currentCohort={user.cohort}
           />

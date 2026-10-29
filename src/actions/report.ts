@@ -7,7 +7,7 @@ import { reportConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
 import { syncReportToDrive } from "@/lib/server/drive";
 import { deleteStorageObject } from "@/lib/server/storage";
-import { normalizeTags } from "@/lib/tags";
+import { normalizeTags, TAG_MAX_LEN, TAGS_MAX_COUNT } from "@/lib/tags";
 import type { CoAuthor, Report } from "@/lib/types";
 
 const TITLE_MAX = 120;
@@ -19,8 +19,6 @@ const PULL_QUOTE_MAX = 200;
 const AUTHOR_BIO_MAX = 400;
 const AUTHOR_AFFILIATION_MAX = 100;
 const COVER_CAPTION_MAX = 200;
-const TAG_MAX_LEN = 30;
-const TAGS_MAX_COUNT = 5;
 
 export interface SaveReportPatch {
   contentMd?: string;

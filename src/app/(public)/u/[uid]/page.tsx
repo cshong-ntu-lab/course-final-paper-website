@@ -11,7 +11,7 @@ import { Footer } from "@/components/Footer";
 import { AuthorWorks, type AuthorWork } from "@/components/public/AuthorWorks";
 import { SiteHeader } from "@/components/public/SiteHeader";
 import { TagPill } from "@/components/TagPill";
-import { authorLine, authorStats } from "@/lib/authors";
+import { authorLineOf, authorStats } from "@/lib/authors";
 import { feedFilterHref } from "@/lib/feed";
 import { semesterLabel } from "@/lib/semester";
 import { getAllCourses, getPublishedReportsByAuthor, getUsersByUids } from "@/lib/server/firestore";
@@ -40,9 +40,8 @@ export default async function AuthorPage({ params }: Props) {
 
   const name = user.profileDisplayName || user.displayNameGoogle || "（未署名）";
   const avatarUrl = user.avatarUrl ?? user.photoURLGoogle ?? null;
-  // "社會系碩士班 · 112級" once filled in; until then the free-text title
-  const line =
-    user.degree || user.cohort ? authorLine(user.degree, user.cohort) : user.title || authorLine();
+  // "社會學系碩士班 · 112級"; older profiles may only have the retired free-text title
+  const line = authorLineOf(user) || user.title;
   const stats = authorStats(reports);
 
   const works: AuthorWork[] = reports.flatMap((r) => {
@@ -82,7 +81,7 @@ export default async function AuthorPage({ params }: Props) {
             <h1 className="text-title text-foreground m-0 mt-1 mb-1.5 font-serif font-bold">
               {name}
             </h1>
-            <p className="text-subtle m-0 text-base">{line}</p>
+            {line && <p className="text-subtle m-0 text-base">{line}</p>}
             {user.bio && (
               <p className="text-ink-read m-0 mt-4 text-base leading-[1.9] text-pretty">
                 {user.bio}

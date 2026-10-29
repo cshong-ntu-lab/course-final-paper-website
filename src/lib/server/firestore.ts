@@ -6,7 +6,7 @@ import "server-only";
 import { isReportByAuthor } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter, reportConverter, userConverter } from "@/lib/firestore/converters";
-import { normalizeTags } from "@/lib/tags";
+import { normalizeTags, rankTags } from "@/lib/tags";
 import { courseSlug } from "@/lib/slug";
 import type { Course, PublishSnapshot, Report, User } from "@/lib/types";
 
@@ -76,6 +76,14 @@ export async function getPublishedReportsByAuthor(uid: string): Promise<ReportDo
     .orderBy("publishedAt", "desc")
     .get();
   return snap.docs.map((d) => ({ ...d.data(), id: d.id })).filter((r) => isReportByAuthor(r, uid));
+}
+
+/** Keywords on published reports, most-used first — the editor's tag picker
+ *  offers these. Drafts are left out so other students' work stays private. */
+export async function getPublishedTags(): Promise<string[]> {
+  const { db } = getFirebaseAdmin();
+  const snap = await db.collection("reports").where("publishedAt", "!=", null).select("tags").get();
+  return rankTags(snap.docs.map((d) => d.get("tags") as string[] | undefined));
 }
 
 /** Latest publish snapshot for a report, or null if never published. */
