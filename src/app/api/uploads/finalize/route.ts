@@ -19,7 +19,7 @@ const Body = z.object({
   filename: z.string().min(1).max(200),
   contentType: z
     .string()
-    .regex(/^(image\/(png|jpeg|webp|gif|svg\+xml)|text\/csv|application\/json)$/),
+    .regex(/^(image\/(png|jpeg|webp|gif|svg\+xml)|text\/(csv|html)|application\/json)$/),
   sizeBytes: z.number().int().positive().max(UPLOAD_MAX_BYTES),
   downloadUrl: z.string().url(),
 });

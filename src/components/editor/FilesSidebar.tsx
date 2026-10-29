@@ -1,7 +1,7 @@
 "use client";
 // design.md §3.3 + §2.2 — list student's uploaded images/data, allow insert / delete / upload.
 
-import { FileJson, FileSpreadsheet, Loader2, Trash2, Upload } from "lucide-react";
+import { FileCode, FileJson, FileSpreadsheet, Loader2, Trash2, Upload } from "lucide-react";
 import * as React from "react";
 
 import { deleteUploadAction } from "@/actions/report";
@@ -11,6 +11,7 @@ import {
   type UploadResult,
   type UploadState,
 } from "@/lib/client/useImageUpload";
+import { artifactMarkdown } from "@/lib/markdown/artifactBlock";
 import { cn } from "@/lib/utils";
 
 export interface UploadedFile {
@@ -57,8 +58,16 @@ function isImageType(contentType: string): boolean {
   return contentType.startsWith("image/");
 }
 
+function isHtmlType(contentType: string): boolean {
+  return contentType === "text/html";
+}
+
 function DataFileIcon({ contentType }: { contentType: string }) {
-  const Icon = contentType === "application/json" ? FileJson : FileSpreadsheet;
+  const Icon = isHtmlType(contentType)
+    ? FileCode
+    : contentType === "application/json"
+      ? FileJson
+      : FileSpreadsheet;
   return (
     <span className="bg-canvas border-border flex h-7 w-7 shrink-0 items-center justify-center rounded border">
       <Icon className="text-subtle h-3.5 w-3.5" />
@@ -93,7 +102,11 @@ export function FilesSidebar({
   };
 
   const handleInsert = (f: UploadedFile) => {
-    onInsert(imageMarkdown({ filename: f.filename, downloadUrl: f.downloadURL }));
+    onInsert(
+      isHtmlType(f.contentType)
+        ? artifactMarkdown({ url: f.downloadURL, title: f.filename.replace(/.html?$/i, "") })
+        : imageMarkdown({ filename: f.filename, downloadUrl: f.downloadURL }),
+    );
   };
 
   const handleCopyUrl = async (f: UploadedFile) => {
@@ -134,7 +147,7 @@ export function FilesSidebar({
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,text/csv,application/json"
+          accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml,text/csv,application/json,text/html,.html,.htm"
           multiple
           className="hidden"
           onChange={handleFileSelect}
@@ -182,7 +195,7 @@ export function FilesSidebar({
                   <div className="text-2xs text-subtle font-mono">{bytesToKb(f.sizeBytes)}</div>
                 </div>
                 <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                  {isImg ? (
+                  {isImg || isHtmlType(f.contentType) ? (
                     <button
                       type="button"
                       onClick={() => handleInsert(f)}

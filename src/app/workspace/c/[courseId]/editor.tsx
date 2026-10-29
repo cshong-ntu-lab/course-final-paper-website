@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { toast } from "sonner";
 
 import { getAllUsersForSearchAction, type UserSearchResult } from "@/actions/user";
 import {
@@ -22,6 +23,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { imageMarkdown, useImageUpload } from "@/lib/client/useImageUpload";
+import {
+  ARTIFACT_MAX_BYTES,
+  artifactMarkdown,
+  extractHtmlTitle,
+  findRelativeAssetRefs,
+  isHtmlFile,
+  removeArtifactBlocks,
+} from "@/lib/markdown/artifactBlock";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import { parseTags } from "@/lib/tags";
 import { cn } from "@/lib/utils";
@@ -365,13 +374,22 @@ export function ReportEditor({
     return { offset, indicatorY };
   }
 
+  // Uploads insert their snippet after an await; reading the latest draft
+  // through a ref keeps text typed during the upload from being overwritten.
+  const draftRef = React.useRef(draft);
+  React.useEffect(() => {
+    draftRef.current = draft;
+  }, [draft]);
+
   const insertAt = React.useCallback(
     (snippet: string, offset: number) => {
-      const before = draft.slice(0, offset);
-      const after = draft.slice(offset);
+      const current = draftRef.current;
+      const before = current.slice(0, offset);
+      const after = current.slice(offset);
       const lead = before.length === 0 || before.endsWith("\n") ? "" : "\n";
       const trail = after.startsWith("\n") || after.length === 0 ? "" : "\n";
       const next = `${before}${lead}${snippet}${trail}${after}`;
+      draftRef.current = next;
       setDraft(next);
       queueAutosave({ contentMd: next });
       const ta = getActiveTextarea();
@@ -384,16 +402,16 @@ export function ReportEditor({
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draft],
+    [],
   );
 
   const insertAtCursor = React.useCallback(
     (snippet: string) => {
       const ta = getActiveTextarea();
-      const offset = ta ? ta.selectionStart : draft.length;
+      const offset = ta ? ta.selectionStart : draftRef.current.length;
       insertAt(snippet, offset);
     },
-    [insertAt, draft],
+    [insertAt],
   );
 
   // Uploader specifically for paste/drag-drop. The sidebar has its own.
@@ -401,18 +419,56 @@ export function ReportEditor({
   // Dedicated uploader for the cover image slot.
   const coverUpload = useImageUpload({ reportId: initial.id });
 
+  // Check, upload and build the ```artifact block for a dropped HTML page
+  // (docs/html-artifact-embed.md §2). Returns null when nothing was uploaded.
+  const uploadHtmlArtifact = React.useCallback(
+    async (f: File): Promise<string | null> => {
+      if (f.size > ARTIFACT_MAX_BYTES) {
+        toast.error(`「${f.name}」超過 10MB，無法上傳。`);
+        return null;
+      }
+      const html = await f.text();
+      const res = await inlineUpload.upload(f);
+      if (!res) {
+        toast.error(`「${f.name}」上傳失敗，請稍後再試。`);
+        return null;
+      }
+      const refs = findRelativeAssetRefs(html);
+      if (refs.length > 0) {
+        toast.warning(
+          `這個檔案引用了 ${refs.length} 個本機檔案（例如 ${refs[0]}），它們不會跟著上傳，嵌入後會顯示不出來。請把圖片改成網址或直接嵌進 HTML。`,
+          { duration: 12000 },
+        );
+      }
+      return artifactMarkdown({
+        url: res.downloadUrl,
+        title: extractHtmlTitle(html) ?? f.name.replace(/\.html?$/i, ""),
+      });
+    },
+    [inlineUpload],
+  );
+
   const uploadFilesAndInsert = React.useCallback(
     async (fileList: FileList | File[], dropOffset?: number) => {
-      const files = Array.from(fileList).filter((f) => f.type.startsWith("image/"));
+      const files = Array.from(fileList).filter(
+        (f) => f.type.startsWith("image/") || isHtmlFile(f),
+      );
       if (files.length === 0) return;
       setOptimisticUploadCount((n) => n + files.length);
       // For drop-with-offset, accumulate inserts at the drop point — each
       // successive image lands right after the previous one.
       let cursorOffset = dropOffset ?? null;
       for (const f of files) {
-        const res = await inlineUpload.upload(f);
-        if (res) {
-          const snippet = imageMarkdown({ filename: res.filename, downloadUrl: res.downloadUrl });
+        let snippet: string | null = null;
+        if (isHtmlFile(f)) {
+          snippet = await uploadHtmlArtifact(f);
+        } else {
+          const res = await inlineUpload.upload(f);
+          if (res) {
+            snippet = imageMarkdown({ filename: res.filename, downloadUrl: res.downloadUrl });
+          }
+        }
+        if (snippet) {
           if (cursorOffset !== null) {
             insertAt(snippet, cursorOffset);
             cursorOffset += snippet.length + 1; // approximate; ok for ordering
@@ -423,7 +479,7 @@ export function ReportEditor({
       }
       refreshUploads();
     },
-    [inlineUpload, insertAt, insertAtCursor, refreshUploads],
+    [inlineUpload, insertAt, insertAtCursor, refreshUploads, uploadHtmlArtifact],
   );
 
   // Native capture-phase drop handlers — @uiw/react-md-editor's textarea has
@@ -1014,7 +1070,7 @@ export function ReportEditor({
                     `^!\\[[^\\]]*\\]\\(${escaped}(?:\\s+"[^"]*")?\\)\\s*$\\n?`,
                     "gm",
                   );
-                  const scrubbed = draft.replace(pattern, "");
+                  const scrubbed = removeArtifactBlocks(draft.replace(pattern, ""), deletedUrl);
                   if (scrubbed !== draft) {
                     setDraft(scrubbed);
                     queueAutosave({ contentMd: scrubbed });
