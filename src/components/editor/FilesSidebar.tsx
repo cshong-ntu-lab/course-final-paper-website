@@ -5,6 +5,7 @@ import { FileCode, FileJson, FileSpreadsheet, Loader2, Trash2, Upload } from "lu
 import * as React from "react";
 
 import { deleteUploadAction } from "@/actions/report";
+import { InfoTip } from "@/components/ui/InfoTip";
 import {
   imageMarkdown,
   useImageUpload,
@@ -133,8 +134,14 @@ export function FilesSidebar({
   return (
     <section className="space-y-3 p-4">
       <div className="flex items-center justify-between">
-        <div className="text-2xs text-subtle font-mono uppercase tracking-[0.08em]">
-          檔案資源 · {files.length}
+        <div className="flex items-center gap-1">
+          <div className="text-2xs text-subtle font-mono uppercase tracking-[0.08em]">
+            檔案資源 · {files.length}
+          </div>
+          <InfoTip label="檔案資源">
+            上傳圖片或 .html
+            互動網頁後，滑到檔案上按「插入」，會放進原始碼游標所在的位置。也可以直接把檔案拖進原始碼區。刪除檔案時，內文裡引用它的那一行會一起移除。
+          </InfoTip>
         </div>
         <button
           type="button"

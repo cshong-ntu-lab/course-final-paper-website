@@ -7,7 +7,14 @@ import { Avatar } from "@/components/Avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { authorLine, COHORT_MAX, COHORT_MIN, DEGREES, isDegree } from "@/lib/authors";
+import {
+  authorLine,
+  COHORT_MAX,
+  COHORT_MIN,
+  DEGREES,
+  DEPARTMENT_MAX,
+  isDegree,
+} from "@/lib/authors";
 import { useAvatarUpload } from "@/lib/client/useImageUpload";
 import type { Degree } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -15,9 +22,9 @@ import { cn } from "@/lib/utils";
 interface Props {
   currentName: string;
   email: string;
-  currentTitle: string;
   currentBio: string;
   currentAvatarUrl: string | null | undefined;
+  currentDepartment: string;
   currentDegree: Degree | null;
   currentCohort: number | null;
 }
@@ -25,16 +32,16 @@ interface Props {
 export function SettingsForm({
   currentName,
   email,
-  currentTitle,
   currentBio,
   currentAvatarUrl,
+  currentDepartment,
   currentDegree,
   currentCohort,
 }: Props) {
   const [name, setName] = useState(currentName);
-  const [title, setTitle] = useState(currentTitle);
   const [bio, setBio] = useState(currentBio);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(currentAvatarUrl ?? null);
+  const [department, setDepartment] = useState(currentDepartment);
   const [degree, setDegree] = useState<Degree | null>(currentDegree);
   // kept as text while typing; parsed on save
   const [cohort, setCohort] = useState(currentCohort ? String(currentCohort) : "");
@@ -45,11 +52,16 @@ export function SettingsForm({
   const avatarUpload = useAvatarUpload();
 
   const cohortValue = cohort.trim() === "" ? null : Number(cohort);
+  const programmeLine = authorLine(
+    department,
+    degree,
+    cohortValue && Number.isInteger(cohortValue) ? cohortValue : null,
+  );
   const isDirty =
     name.trim() !== currentName ||
-    title !== currentTitle ||
     bio !== currentBio ||
     avatarUrl !== (currentAvatarUrl ?? null) ||
+    department.trim() !== currentDepartment ||
     degree !== currentDegree ||
     cohortValue !== currentCohort;
 
@@ -67,9 +79,9 @@ export function SettingsForm({
     setError(null);
     const res = await updateProfileAction({
       profileDisplayName: name,
-      title,
       bio,
       avatarUrl,
+      department,
       degree,
       cohort: cohortValue,
     });
@@ -77,7 +89,7 @@ export function SettingsForm({
     if (res.ok) {
       setSaved(true);
     } else if (res.error === "invalid_input") {
-      setError("作者名稱須介於 2–30 個字元之間。");
+      setError(`作者名稱須介於 2–30 個字元之間，系所最多 ${DEPARTMENT_MAX} 字。`);
     } else {
       setError("儲存失敗，請稍後再試。");
     }
@@ -168,6 +180,20 @@ export function SettingsForm({
         {saved && <p className="text-success-fg mt-1.5 text-xs">已儲存。</p>}
       </div>
 
+      <div>
+        <Label htmlFor="profile-department">系所</Label>
+        <Input
+          id="profile-department"
+          value={department}
+          onChange={(e) => {
+            setDepartment(e.target.value);
+            setSaved(false);
+          }}
+          placeholder="如：社會學系、國家發展研究所"
+          maxLength={DEPARTMENT_MAX}
+        />
+      </div>
+
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="profile-degree">學制</Label>
@@ -203,24 +229,10 @@ export function SettingsForm({
           />
         </div>
         <p className="text-subtle col-span-2 m-0 -mt-2 text-xs">
-          作者頁與文章頁顯示為「
-          {authorLine(degree, cohortValue && Number.isInteger(cohortValue) ? cohortValue : null)}
-          」。
+          {programmeLine
+            ? `作者頁與文章頁顯示為「${programmeLine}」。`
+            : "填寫後會顯示在作者頁與文章頁的作者名稱下方。"}
         </p>
-      </div>
-
-      <div>
-        <Label htmlFor="profile-title">稱謂</Label>
-        <Input
-          id="profile-title"
-          value={title}
-          onChange={(e) => {
-            setTitle(e.target.value);
-            setSaved(false);
-          }}
-          placeholder="如：社會學系碩士生"
-          maxLength={60}
-        />
       </div>
 
       <div>

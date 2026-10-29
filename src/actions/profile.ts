@@ -2,7 +2,7 @@
 
 import { FieldValue } from "firebase-admin/firestore";
 
-import { isCohort, isDegree } from "@/lib/authors";
+import { DEPARTMENT_MAX, isCohort, isDegree } from "@/lib/authors";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { userConverter } from "@/lib/firestore/converters";
 import { requireUser } from "@/lib/server/auth";
@@ -11,14 +11,14 @@ import type { Degree, User } from "@/lib/types";
 
 const NAME_MIN = 2;
 const NAME_MAX = 30;
-const TITLE_MAX = 60;
 const BIO_MAX = 400;
 
 export interface UpdateProfilePatch {
   profileDisplayName?: string;
-  title?: string;
   bio?: string;
   avatarUrl?: string | null;
+  /** "" clears the field */
+  department?: string;
   /** null clears the field */
   degree?: Degree | null;
   /** null clears the field */
@@ -30,7 +30,8 @@ export type UpdateProfileResult = { ok: true } | { ok: false; error: "invalid_in
 export async function updateProfileAction(patch: UpdateProfilePatch): Promise<UpdateProfileResult> {
   const u = await requireUser();
 
-  const update: Partial<Omit<User, "degree" | "cohort">> & {
+  const update: Partial<Omit<User, "department" | "degree" | "cohort">> & {
+    department?: string | FieldValue;
     degree?: Degree | FieldValue;
     cohort?: number | FieldValue;
   } = {};
@@ -41,12 +42,6 @@ export async function updateProfileAction(patch: UpdateProfilePatch): Promise<Up
       return { ok: false, error: "invalid_input" };
     }
     update.profileDisplayName = name;
-  }
-  if (patch.title !== undefined) {
-    if (typeof patch.title !== "string" || patch.title.length > TITLE_MAX) {
-      return { ok: false, error: "invalid_input" };
-    }
-    update.title = patch.title;
   }
   if (patch.bio !== undefined) {
     if (typeof patch.bio !== "string" || patch.bio.length > BIO_MAX) {
@@ -59,6 +54,12 @@ export async function updateProfileAction(patch: UpdateProfilePatch): Promise<Up
       return { ok: false, error: "invalid_input" };
     }
     update.avatarUrl = patch.avatarUrl;
+  }
+  if (patch.department !== undefined) {
+    if (typeof patch.department !== "string") return { ok: false, error: "invalid_input" };
+    const department = patch.department.trim();
+    if (department.length > DEPARTMENT_MAX) return { ok: false, error: "invalid_input" };
+    update.department = department || FieldValue.delete();
   }
   if (patch.degree !== undefined) {
     if (patch.degree !== null && !isDegree(patch.degree)) {
@@ -93,6 +94,22 @@ export async function updateProfileAction(patch: UpdateProfilePatch): Promise<Up
     return { ok: true };
   } catch {
     return { ok: false, error: "internal" };
+  }
+}
+
+/** Records that the user finished or skipped the editor walkthrough, so it
+ *  doesn't open again on their next visit (or on another device). */
+export async function markEditorTourSeenAction(): Promise<{ ok: boolean }> {
+  const u = await requireUser();
+  const { db } = getFirebaseAdmin();
+  try {
+    await db
+      .collection("users")
+      .doc(u.uid)
+      .set({ editorTourSeen: true, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { ok: true };
+  } catch {
+    return { ok: false };
   }
 }
 

@@ -25,11 +25,12 @@ export interface CurrentUser {
   profileDisplayName: string;
   isOnboarded: boolean; // true once profileDisplayName is set (i.e. not empty)
   // v4 extended profile fields
-  title: string;
   bio: string;
   avatarUrl: string | null;
+  department: string;
   degree: Degree | null;
   cohort: number | null;
+  editorTourSeen: boolean;
 }
 
 export function isAdminEmail(email: string | undefined | null): boolean {
@@ -67,11 +68,12 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     role,
     profileDisplayName: userDoc?.profileDisplayName ?? "",
     isOnboarded: Boolean(userDoc?.profileDisplayName),
-    title: userDoc?.title ?? "",
     bio: userDoc?.bio ?? "",
     avatarUrl: userDoc?.avatarUrl ?? null,
+    department: userDoc?.department ?? "",
     degree: userDoc?.degree ?? null,
     cohort: userDoc?.cohort ?? null,
+    editorTourSeen: userDoc?.editorTourSeen === true,
   };
 }
 

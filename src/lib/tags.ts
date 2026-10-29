@@ -30,3 +30,46 @@ export function foldCardTags(
   const slots = Math.max(1, max - fixedCount);
   return { shown: topics.slice(0, slots), hidden: topics.slice(slots) };
 }
+
+/** Keywords one report can carry; the save action enforces the same limits. */
+export const TAGS_MAX_COUNT = 5;
+export const TAG_MAX_LEN = 30;
+
+/** Adds the keywords typed or pasted into the tag picker. A paste such as
+ *  「勞動、性別」 becomes two tags; duplicates (case-insensitive), over-long
+ *  keywords and anything past the limit are dropped. */
+export function addTags(current: string[], raw: string, max = TAGS_MAX_COUNT): string[] {
+  const next = [...current];
+  const seen = new Set(current.map((t) => t.toLowerCase()));
+  for (const tag of parseTags(raw)) {
+    if (next.length >= max) break;
+    if (tag.length > TAG_MAX_LEN || seen.has(tag.toLowerCase())) continue;
+    seen.add(tag.toLowerCase());
+    next.push(tag);
+  }
+  return next;
+}
+
+/** Every keyword used across reports, most-used first (ties in first-seen order) —
+ *  the picker's list of existing tags. */
+export function rankTags(tagLists: (string[] | undefined)[]): string[] {
+  const counts = new Map<string, number>();
+  for (const tags of tagLists) {
+    for (const tag of normalizeTags(tags) ?? []) counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort(([, ca], [, cb]) => cb - ca).map(([tag]) => tag);
+}
+
+/** Existing tags that match what's being typed, minus the ones already picked. */
+export function matchTagSuggestions(
+  query: string,
+  suggestions: string[],
+  selected: string[],
+  limit = 8,
+): string[] {
+  const q = query.trim().toLowerCase();
+  const picked = new Set(selected.map((t) => t.toLowerCase()));
+  return suggestions
+    .filter((t) => !picked.has(t.toLowerCase()) && t.toLowerCase().includes(q))
+    .slice(0, limit);
+}

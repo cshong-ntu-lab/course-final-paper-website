@@ -6,8 +6,8 @@ export type Role = "student" | "admin";
 
 export type Semester = "1" | "2";
 
-/** NTU Sociology has no research groups — only degree programmes (design-v2 D10). */
-export type Degree = "學士班" | "碩士班" | "博士班";
+/** Degree programme; the department itself is free text (`User.department`). */
+export type Degree = "學士班" | "碩士班" | "碩士在職專班" | "博士班";
 
 export type ReportStatus =
   | "unpublished"
@@ -28,12 +28,15 @@ export interface User {
   createdAt: Timestamp;
   updatedAt: Timestamp;
   // Extended profile fields (v4)
+  /** @deprecated 稱謂 is no longer edited; older docs may still carry it. */
   title?: string;
   bio?: string;
   avatarUrl?: string | null;
-  // v2: shown as "社會系碩士班 · 112級"
+  // shown as "社會學系碩士班 · 112級" (authorLine)
+  department?: string; // 系所, free text
   degree?: Degree;
   cohort?: number; // entering class (ROC year), e.g. 112
+  editorTourSeen?: boolean; // the editor walkthrough opens until this is set
 }
 
 export interface Course {

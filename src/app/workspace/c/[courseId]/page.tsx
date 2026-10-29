@@ -10,6 +10,8 @@ import type { UploadedFile } from "@/components/editor/FilesSidebar";
 import { getFirebaseAdmin } from "@/lib/firebase/admin";
 import { courseConverter, reportConverter } from "@/lib/firestore/converters";
 import { getCurrentUser } from "@/lib/server/auth";
+import { getPublishedTags } from "@/lib/server/firestore";
+import { normalizeTags } from "@/lib/tags";
 import { reportId as makeReportId } from "@/lib/types";
 
 interface Params {
@@ -24,13 +26,15 @@ export default async function EditorPage({ params }: Params) {
   const { courseId } = await params;
   const { db } = getFirebaseAdmin();
 
-  const [courseSnap, reportSnap] = await Promise.all([
+  const [courseSnap, reportSnap, tagSuggestions] = await Promise.all([
     db.collection("courses").withConverter(courseConverter).doc(courseId).get(),
     db
       .collection("reports")
       .withConverter(reportConverter)
       .doc(makeReportId(courseId, user.uid))
       .get(),
+    // suggestions are a convenience — the editor still works without them
+    getPublishedTags().catch(() => [] as string[]),
   ]);
 
   const course = courseSnap.data();
@@ -76,7 +80,7 @@ export default async function EditorPage({ params }: Params) {
     updatedAtIso: (report.updatedAt as unknown as { toDate(): Date }).toDate().toISOString(),
     // v4 extended fields
     subtitle: report.subtitle ?? "",
-    tags: (report.tags ?? []).join(", "),
+    tags: normalizeTags(report.tags) ?? [],
     coAuthors: report.coAuthors ?? [],
     // Default to the report owner so the chip shows immediately on first edit.
     authorUid: report.authorUid ?? user.uid,
@@ -87,6 +91,8 @@ export default async function EditorPage({ params }: Params) {
       initial={initial}
       initialUploads={initialUploads}
       isAdmin={user.role === "admin"}
+      tagSuggestions={tagSuggestions}
+      showTour={!user.editorTourSeen}
     />
   );
 }

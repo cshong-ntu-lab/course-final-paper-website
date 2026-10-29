@@ -90,6 +90,7 @@ export default async function ReportPage({ params }: Props) {
           authorAffiliation: snap.authorAffiliation,
           authorAvatarUrl,
           authorUid,
+          authorDepartment: authorProfiles[0]?.department ?? null,
           authorDegree: authorProfiles[0]?.degree ?? null,
           authorCohort: authorProfiles[0]?.cohort ?? null,
           coverCaption: snap.coverCaption,

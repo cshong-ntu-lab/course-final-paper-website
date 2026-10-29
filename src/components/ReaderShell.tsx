@@ -52,6 +52,7 @@ interface ReaderShellProps {
     authorAvatarUrl?: string | null;
     // v2 author identity, from the live profile; the card links to /u/{authorUid}
     authorUid?: string;
+    authorDepartment?: string | null;
     authorDegree?: Degree | null;
     authorCohort?: number | null;
     coverCaption?: string;
@@ -251,11 +252,10 @@ export function ReaderShell({
     {
       uid: snap.authorUid,
       name: snap.author,
-      // "社會系碩士班 · 112級" once the author has filled it in; until then their title
+      // "社會學系碩士班 · 112級" from the current profile; older snapshots carry it frozen
       line:
-        snap.authorDegree || snap.authorCohort
-          ? authorLine(snap.authorDegree, snap.authorCohort)
-          : snap.authorAffiliation,
+        authorLine(snap.authorDepartment, snap.authorDegree, snap.authorCohort) ||
+        snap.authorAffiliation,
       avatarUrl: snap.authorAvatarUrl,
     },
     ...(snap.coAuthors ?? []).map((ca) => ({

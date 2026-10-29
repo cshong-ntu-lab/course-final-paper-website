@@ -2,7 +2,7 @@
 
 import type { Degree } from "@/lib/types";
 
-export const DEGREES: readonly Degree[] = ["學士班", "碩士班", "博士班"];
+export const DEGREES: readonly Degree[] = ["學士班", "碩士班", "碩士在職專班", "博士班"];
 
 export function isDegree(value: unknown): value is Degree {
   return typeof value === "string" && (DEGREES as readonly string[]).includes(value);
@@ -18,10 +18,24 @@ export function isCohort(value: unknown): value is number {
   );
 }
 
-/** "社會系碩士班 · 112級"; unknown parts are dropped, down to just "社會系". */
-export function authorLine(degree?: Degree | null, cohort?: number | null): string {
-  const programme = `社會系${degree ?? ""}`;
-  return cohort ? `${programme} · ${cohort}級` : programme;
+/** 系所 is free text — students come from any department. */
+export const DEPARTMENT_MAX = 30;
+
+/** "社會學系碩士班 · 112級"; unknown parts are dropped, down to "" when nothing is filled in. */
+export function authorLine(
+  department?: string | null,
+  degree?: Degree | null,
+  cohort?: number | null,
+): string {
+  const programme = `${department?.trim() ?? ""}${degree ?? ""}`;
+  return [programme, cohort ? `${cohort}級` : ""].filter(Boolean).join(" · ");
+}
+
+/** authorLine for a stored profile. */
+export function authorLineOf(
+  profile: { department?: string; degree?: Degree; cohort?: number } | undefined,
+): string {
+  return profile ? authorLine(profile.department, profile.degree, profile.cohort) : "";
 }
 
 /**

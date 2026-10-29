@@ -4,22 +4,26 @@
 // - 30s-debounced autosave + Ctrl-S manual save + localStorage mirror
 // - File upload UX is added in task F (this file leaves the slot open)
 
-import { ArrowLeft, PanelRight } from "lucide-react";
+import { ArrowLeft, CircleHelp, PanelRight } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { toast } from "sonner";
 
+import { markEditorTourSeenAction } from "@/actions/profile";
 import { getAllUsersForSearchAction, type UserSearchResult } from "@/actions/user";
 import {
   saveReportDraftAction,
   setReviewRequestedAction,
   type SaveReportPatch,
 } from "@/actions/report";
+import { EditorTour } from "@/components/editor/EditorTour";
 import { FilesSidebar, type UploadedFile } from "@/components/editor/FilesSidebar";
 import { SaveStatusIndicator, type SaveState } from "@/components/editor/SaveStatusIndicator";
+import { TagPicker } from "@/components/editor/TagPicker";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/InfoTip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { imageMarkdown, useImageUpload } from "@/lib/client/useImageUpload";
@@ -32,7 +36,6 @@ import {
   removeArtifactBlocks,
 } from "@/lib/markdown/artifactBlock";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
-import { parseTags } from "@/lib/tags";
 import { cn } from "@/lib/utils";
 import type { CoAuthor } from "@/lib/types";
 
@@ -62,7 +65,7 @@ export interface EditorReport {
   updatedAtIso: string;
   // v4 extended fields
   subtitle: string;
-  tags: string; // stored as comma-separated string in the editor
+  tags: string[];
   coAuthors: CoAuthor[];
   authorUid: string | null;
 }
@@ -105,6 +108,26 @@ function writeLocalDraft(reportId: string, draft: LocalDraft) {
   }
 }
 
+/** Sidebar field label with its circled-i usage note. */
+function FieldLabel({
+  htmlFor,
+  children,
+  tip,
+}: {
+  htmlFor?: string;
+  children: string;
+  tip: React.ReactNode;
+}) {
+  return (
+    <div className="mb-1.5 flex items-center gap-1">
+      <Label htmlFor={htmlFor} className="mb-0">
+        {children}
+      </Label>
+      <InfoTip label={children}>{tip}</InfoTip>
+    </div>
+  );
+}
+
 function clearLocalDraft(reportId: string) {
   if (typeof window === "undefined") return;
   try {
@@ -118,10 +141,16 @@ export function ReportEditor({
   initial,
   initialUploads,
   isAdmin = false,
+  tagSuggestions = [],
+  showTour = false,
 }: {
   initial: EditorReport;
   initialUploads: UploadedFile[];
   isAdmin?: boolean;
+  /** Keywords used on published reports, for the tag picker. */
+  tagSuggestions?: string[];
+  /** Open the walkthrough on load (first visit). */
+  showTour?: boolean;
 }) {
   const router = useRouter();
 
@@ -134,13 +163,15 @@ export function ReportEditor({
   const [author, setAuthor] = React.useState(initial.author);
   const [summary, setSummary] = React.useState(initial.summary);
   const [subtitle, setSubtitle] = React.useState(initial.subtitle);
-  const [tags, setTags] = React.useState(initial.tags);
+  const [tags, setTags] = React.useState<string[]>(initial.tags);
   const [coverImageUrl, setCoverImageUrl] = React.useState<string | null>(initial.coverImageUrl);
   const [coAuthors, setCoAuthors] = React.useState<CoAuthor[]>(initial.coAuthors);
   const [authorUid, setAuthorUid] = React.useState<string | null>(initial.authorUid);
   const [optimisticUploadCount, setOptimisticUploadCount] = React.useState(0);
   const [reviewRequested, setReviewRequested] = React.useState(initial.reviewRequested);
   const [reviewTogglePending, setReviewTogglePending] = React.useState(false);
+  const [tourOpen, setTourOpen] = React.useState(false);
+  const tourSeenRef = React.useRef(!showTour);
 
   // Author / co-author search state (shared user list)
   const [showAuthorSearch, setShowAuthorSearch] = React.useState(false);
@@ -181,6 +212,28 @@ export function ReportEditor({
       window.removeEventListener("online", goOnline);
       window.removeEventListener("offline", goOffline);
     };
+  }, []);
+
+  // --- first-visit walkthrough -------------------------------------------
+  // Opened after mount (the tour measures the DOM) and only once per user;
+  // finishing or skipping it records that on the profile.
+  const openTour = React.useCallback(() => {
+    setMode("both");
+    setSidebarOpen(true);
+    setTourOpen(true);
+  }, []);
+  const closeTour = React.useCallback(() => {
+    setTourOpen(false);
+    if (!tourSeenRef.current) {
+      tourSeenRef.current = true;
+      void markEditorTourSeenAction();
+    }
+  }, []);
+  React.useEffect(() => {
+    // one-shot on mount, like the draft-recovery prompt below
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (showTour) openTour();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- localStorage recovery prompt on mount ----------------------------
@@ -553,9 +606,9 @@ export function ReportEditor({
     setSubtitle(e.target.value);
     queueAutosave({ subtitle: e.target.value });
   };
-  const handleTagsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTags(e.target.value);
-    queueAutosave({ tags: parseTags(e.target.value) });
+  const handleTagsChange = (next: string[]) => {
+    setTags(next);
+    queueAutosave({ tags: next });
   };
   const handleCoverImageUpload = async (file: File) => {
     const res = await coverUpload.upload(file);
@@ -702,6 +755,9 @@ export function ReportEditor({
         <div className="flex items-center gap-3">
           <SaveStatusIndicator state={effectiveSaveState} since={save.since} />
           <span className="bg-border h-5 w-px" />
+          <Button variant="ghost" size="sm" onClick={openTour} data-tour="help">
+            <CircleHelp className="mr-1.5 h-4 w-4" /> 教學
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -722,6 +778,7 @@ export function ReportEditor({
           {(mode === "write" || mode === "both") && (
             <div
               ref={editorContainerRef}
+              data-tour="source"
               className={cn(
                 "relative min-w-0",
                 mode === "both" ? "border-border flex-1 border-r" : "flex-1",
@@ -773,6 +830,7 @@ export function ReportEditor({
           {(mode === "preview" || mode === "both") && (
             <div
               ref={previewPanelRef}
+              data-tour="preview"
               tabIndex={-1}
               className="bg-background min-w-0 flex-1 overflow-auto focus:outline-none"
               onPointerEnter={() => previewPanelRef.current?.focus({ preventScroll: true })}
@@ -787,7 +845,7 @@ export function ReportEditor({
         {sidebarOpen && (
           <aside className="border-border bg-canvas hidden w-72 shrink-0 overflow-y-auto border-l md:block">
             {/* Review request toggle */}
-            <div className="border-border border-b p-4">
+            <div className="border-border flex items-center gap-2 border-b p-4">
               <button
                 type="button"
                 onClick={() => void handleToggleReviewRequested()}
@@ -814,16 +872,29 @@ export function ReportEditor({
                   準備好了，請求教師審核
                 </span>
               </button>
+              <InfoTip label="請求審核">
+                寫完後勾選，教師會收到審核請求並決定是否發布。勾選後仍可繼續修改，也可以取消勾選。
+              </InfoTip>
             </div>
 
-            <section className="space-y-4 p-4">
+            <section className="space-y-4 p-4" data-tour="meta">
               <div>
-                <Label htmlFor="meta-title">標題</Label>
+                <FieldLabel
+                  htmlFor="meta-title"
+                  tip="文章的主標題，會顯示在首頁卡片與文章頁最上方。"
+                >
+                  標題
+                </FieldLabel>
                 <Input id="meta-title" value={title} onChange={handleTitleChange} />
               </div>
 
               <div>
-                <Label htmlFor="meta-subtitle">副標題</Label>
+                <FieldLabel
+                  htmlFor="meta-subtitle"
+                  tip="選填。顯示在標題下方，補充說明研究主題或對象。"
+                >
+                  副標題
+                </FieldLabel>
                 <Input
                   id="meta-subtitle"
                   value={subtitle}
@@ -833,7 +904,9 @@ export function ReportEditor({
               </div>
 
               <div>
-                <Label>作者</Label>
+                <FieldLabel tip="預設是你自己。作者名稱、系所與學制來自「個人資料」，在那裡修改後，文章頁會一起更新。">
+                  作者
+                </FieldLabel>
                 {authorUid ? (
                   <div className="border-border bg-surface mt-1 flex items-center justify-between rounded border px-2.5 py-1.5 text-[13px]">
                     <span className="font-serif font-medium">{author || "（未署名）"}</span>
@@ -905,7 +978,9 @@ export function ReportEditor({
               {/* Co-authors */}
               <div>
                 <div className="flex items-center justify-between">
-                  <Label>共同作者</Label>
+                  <FieldLabel tip="和你一起完成報告的同學。按「＋ 新增」搜尋登入過網站的使用者，他們也會列在文章頁的作者欄。">
+                    共同作者
+                  </FieldLabel>
                   <button
                     type="button"
                     onClick={() => void openCoAuthorSearch()}
@@ -984,7 +1059,12 @@ export function ReportEditor({
               </div>
 
               <div>
-                <Label htmlFor="meta-summary">摘要</Label>
+                <FieldLabel
+                  htmlFor="meta-summary"
+                  tip="300 字內的研究摘要，顯示在文章頁開頭，首頁卡片會截取前幾行。內文不需要再寫「摘要」一節。"
+                >
+                  摘要
+                </FieldLabel>
                 <textarea
                   id="meta-summary"
                   value={summary}
@@ -995,17 +1075,24 @@ export function ReportEditor({
               </div>
 
               <div>
-                <Label htmlFor="meta-tags">關鍵字</Label>
-                <Input
+                <FieldLabel
+                  htmlFor="meta-tags"
+                  tip="最多 5 個。點欄位可以選網站上已有的關鍵字，或輸入新的後按 Enter。用相同的關鍵字，讀者比較容易找到同主題的文章。"
+                >
+                  關鍵字
+                </FieldLabel>
+                <TagPicker
                   id="meta-tags"
                   value={tags}
                   onChange={handleTagsChange}
-                  placeholder="以逗號或、分隔，最多 5 個"
+                  suggestions={tagSuggestions}
                 />
               </div>
 
               <div>
-                <Label>封面圖</Label>
+                <FieldLabel tip="顯示在首頁卡片與文章頁頂端，建議用 3:2 橫式圖片。沒有上傳時，會自動產生系徽色塊封面。">
+                  封面圖
+                </FieldLabel>
                 {coverImageUrl ? (
                   <div className="relative overflow-hidden rounded ring-1 ring-border-strong">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1057,7 +1144,7 @@ export function ReportEditor({
               </div>
             </section>
 
-            <div className="border-border border-t">
+            <div className="border-border border-t" data-tour="files">
               <FilesSidebar
                 reportId={initial.id}
                 files={initialUploads}
@@ -1086,6 +1173,8 @@ export function ReportEditor({
           </aside>
         )}
       </div>
+
+      {tourOpen && <EditorTour onClose={closeTour} />}
     </div>
   );
 }

@@ -21,20 +21,22 @@ describe("authorName", () => {
 });
 
 describe("authorLine", () => {
-  it("joins degree and cohort", () => {
-    expect(authorLine("碩士班", 112)).toBe("社會系碩士班 · 112級");
+  it("joins department, degree and cohort", () => {
+    expect(authorLine("社會學系", "碩士班", 112)).toBe("社會學系碩士班 · 112級");
+    expect(authorLine(" 國家發展研究所 ", "博士班", null)).toBe("國家發展研究所博士班");
   });
 
-  it("drops whatever is missing", () => {
-    expect(authorLine("博士班", null)).toBe("社會系博士班");
-    expect(authorLine(null, 113)).toBe("社會系 · 113級");
-    expect(authorLine(undefined, undefined)).toBe("社會系");
+  it("drops whatever is missing, without assuming a department", () => {
+    expect(authorLine(null, "博士班", null)).toBe("博士班");
+    expect(authorLine("", null, 113)).toBe("113級");
+    expect(authorLine(undefined, undefined, undefined)).toBe("");
   });
 });
 
 describe("isDegree / isCohort", () => {
-  it("accepts only the three programmes", () => {
+  it("accepts only the listed programmes", () => {
     expect(isDegree("學士班")).toBe(true);
+    expect(isDegree("碩士在職專班")).toBe(true);
     expect(isDegree("空間社會學組")).toBe(false);
     expect(isDegree(null)).toBe(false);
   });
