@@ -5,7 +5,7 @@
 
 import { Check, Printer, Quote, Share2, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Avatar } from "@/components/Avatar";
 import { MarkSliceCorner } from "@/components/MarkSlice";
@@ -16,7 +16,7 @@ import { authorLine } from "@/lib/authors";
 import { feedFilterHref } from "@/lib/feed";
 import { MarkdownRenderer } from "@/lib/markdown/Renderer";
 import type { TocEntry } from "@/lib/markdown/extractToc";
-import { activeHeading, parentH2Indices } from "@/lib/scrollSpy";
+import { activeHeading } from "@/lib/scrollSpy";
 import type { Degree } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -135,12 +135,6 @@ export function ReaderShell({
   const year = citationYear ?? new Date(snap.publishedAt).getFullYear();
   const citationText = `${snap.author} (${year}). 〈${snap.title}〉. 《台大社會系研究筆記》, ${courseCode}.`;
 
-  const chipOf = useMemo(() => parentH2Indices(toc.map((h) => h.level)), [toc]);
-  const chips = useMemo(
-    () => toc.map((h, i) => ({ h, i })).filter(({ h }) => h.level === 2),
-    [toc],
-  );
-
   // --- current section ---------------------------------------------------
   useEffect(() => {
     if (toc.length === 0) return;
@@ -182,14 +176,14 @@ export function ReaderShell({
     trunk?.style.setProperty("--fill", li ? `${li.offsetTop + li.offsetHeight / 2}px` : "0px");
 
     const row = chipsRef.current;
-    const chip = row?.children[chipOf[current] ?? -1] as HTMLElement | undefined;
+    const chip = row?.children[current] as HTMLElement | undefined;
     if (row && chip && row.offsetParent) {
       row.scrollTo({
         left: chip.offsetLeft - (row.clientWidth - chip.offsetWidth) / 2,
         behavior: prefersReducedMotion() ? "auto" : "smooth",
       });
     }
-  }, [current, chipOf]);
+  }, [current]);
 
   // fade whichever edge of the chip row still hides chips
   const updateFades = useCallback(() => {
@@ -449,16 +443,16 @@ export function ReaderShell({
           </div>
         </aside>
 
-        {/* Narrow screens: sticky row of h2 chips */}
-        {chips.length > 0 && (
+        {/* Narrow screens: sticky row of chips, same entries as the TOC rail */}
+        {toc.length > 0 && (
           <nav className="reader-chips" aria-label="目錄">
             <ol
               ref={chipsRef}
               onScroll={updateFades}
               className="m-0 flex list-none gap-1 overflow-x-auto overscroll-x-contain p-0 py-1.5 [scrollbar-width:none] [@media(hover:hover)_and_(pointer:fine)]:[scrollbar-width:thin]"
             >
-              {chips.map(({ h, i }, k) => {
-                const isCurrent = k === chipOf[current];
+              {toc.map((h, i) => {
+                const isCurrent = i === current;
                 return (
                   <li key={h.id} className="shrink-0">
                     <a
@@ -590,10 +584,7 @@ export function ReaderShell({
                       href={`#${headingDomId(h.id)}`}
                       onClick={jumpTo(i)}
                       aria-current={i === current ? "location" : undefined}
-                      className={cn(
-                        "toc-link text-subtle hover:text-foreground relative block py-1.5 pl-3.5 text-xs leading-[1.6] no-underline transition-colors",
-                        h.level === 3 && "text-2xs pl-[26px]",
-                      )}
+                      className="toc-link text-subtle hover:text-foreground relative block py-1.5 pl-3.5 text-xs leading-[1.6] no-underline transition-colors"
                     >
                       {h.title}
                     </a>

@@ -26,13 +26,3 @@ export function activeHeading(
   });
   return current;
 }
-
-/**
- * For each TOC entry, the index of the h2 it belongs to (an h2 maps to itself).
- * The mobile chip row lists only h2s, so a current h3 lights its parent chip.
- * Entries before the first h2 map to -1.
- */
-export function parentH2Indices(levels: number[]): number[] {
-  let h2 = -1;
-  return levels.map((level) => (level === 2 ? ++h2 : h2));
-}
