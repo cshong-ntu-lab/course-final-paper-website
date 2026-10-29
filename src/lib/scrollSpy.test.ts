@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { activeHeading, parentH2Indices } from "@/lib/scrollSpy";
+import { activeHeading } from "@/lib/scrollSpy";
 
 const VH = 900;
 
@@ -40,15 +40,5 @@ describe("activeHeading", () => {
     const docTops = [0, 3000, 3200];
     const maxScroll = 3500 - VH;
     expect(activeHeading(topsAt(docTops, maxScroll), VH, 0)).toBe(2);
-  });
-});
-
-describe("parentH2Indices", () => {
-  it("maps h3s to their preceding h2", () => {
-    expect(parentH2Indices([2, 3, 3, 2, 2, 3])).toEqual([0, 0, 0, 1, 2, 2]);
-  });
-
-  it("maps entries before the first h2 to -1", () => {
-    expect(parentH2Indices([3, 2])).toEqual([-1, 0]);
   });
 });

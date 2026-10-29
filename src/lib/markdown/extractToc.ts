@@ -1,7 +1,7 @@
 export interface TocEntry {
   id: string;
   title: string;
-  level: 2 | 3;
+  level: number;
 }
 
 function slugify(text: string): string {
@@ -13,15 +13,39 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/**
+ * One flat level of headings: the highest level the body uses for its
+ * sections, nothing below it. A body that opens with an h1 (the report title
+ * written into the Markdown again) skips that heading, so `# 標題` + `## 節`
+ * lists the h2s and `# 標題` + `# 1. 節` lists the other h1s. Headings inside
+ * fenced code blocks are ignored.
+ */
 export function extractToc(markdown: string): TocEntry[] {
-  const entries: TocEntry[] = [];
-  const lines = markdown.split("\n");
-  for (const line of lines) {
-    const m = line.match(/^(#{2,3})\s+(.+)/);
-    if (!m) continue;
-    const level = m[1]!.length as 2 | 3;
+  const headings: TocEntry[] = [];
+  let fence: string | null = null;
+  let seenContent = false;
+  for (const line of markdown.split("\n")) {
+    const f = line.match(/^\s*(`{3,}|~{3,})/);
+    if (f) {
+      const mark = f[1]!;
+      if (fence === null) fence = mark;
+      else if (mark[0] === fence[0] && mark.length >= fence.length) fence = null;
+      seenContent = true;
+      continue;
+    }
+    if (fence !== null) continue;
+    const m = line.match(/^(#{1,6})\s+(.+?)(?:\s+#+)?\s*$/);
+    if (!m) {
+      if (line.trim()) seenContent = true;
+      continue;
+    }
+    const level = m[1]!.length;
     const title = m[2]!.trim();
-    entries.push({ id: slugify(title), title, level });
+    const isDocTitle = level === 1 && !seenContent;
+    seenContent = true;
+    if (isDocTitle) continue; // already shown in the page header
+    headings.push({ id: slugify(title), title, level });
   }
-  return entries;
+  const top = Math.min(...headings.map((h) => h.level));
+  return headings.filter((h) => h.level === top);
 }
