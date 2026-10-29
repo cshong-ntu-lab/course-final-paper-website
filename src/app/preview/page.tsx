@@ -1,6 +1,8 @@
 // /preview — mirrors the public homepage (/) via the shared SiteHomeShell, but
-// aggregates ALL reports (draft + published) across all courses and links into
+// adds the viewer's own drafts (admins see every draft) and links into
 // /preview/c/... report pages. Do not duplicate SiteHomeShell's markup here.
+
+import { redirect } from "next/navigation";
 
 import {
   getAllCourses,
@@ -9,6 +11,8 @@ import {
   type ReportDoc,
 } from "@/lib/server/firestore";
 import { authorName } from "@/lib/authors";
+import { getCurrentUser } from "@/lib/server/auth";
+import { canPreviewDraft, isInPreviewFeed } from "@/lib/preview";
 import { semesterLabel } from "@/lib/semester";
 import { courseSlug, estimateReadingMinutes, reportSlug } from "@/lib/slug";
 import { SiteHomeShell } from "@/components/public/SiteHomeShell";
@@ -22,6 +26,8 @@ function reportBadgeLabel(r: ReportDoc): string | undefined {
 }
 
 export default async function PreviewHomePage() {
+  const viewer = await getCurrentUser();
+  if (!viewer) redirect("/login?from=/preview");
   const courses = await getAllCourses();
 
   const reportsByCourse = await Promise.all(
@@ -29,7 +35,10 @@ export default async function PreviewHomePage() {
   );
 
   const allReports = courses.flatMap((course, i) =>
-    reportsByCourse[i]!.map((r) => ({ report: r, course })),
+    reportsByCourse[i]!.filter((r) => isInPreviewFeed(r, viewer)).map((r) => ({
+      report: r,
+      course,
+    })),
   );
   allReports.sort((a, b) => b.report.updatedAt.toMillis() - a.report.updatedAt.toMillis());
 
@@ -55,7 +64,7 @@ export default async function PreviewHomePage() {
     courseName: course.name,
     semesterTag: semesterLabel(course.year, course.semester),
     courseSlug: courseSlug(course),
-    badgeLabel: reportBadgeLabel(r),
+    badgeLabel: canPreviewDraft(r, viewer) ? reportBadgeLabel(r) : undefined,
   }));
 
   return (
