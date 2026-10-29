@@ -150,9 +150,7 @@ export function ReportListItem({
       >
         <Cover report={report} id={coverId} className="rounded-thumb aspect-video" />
         <div className="min-w-0">
-          <span className="bg-gold-soft text-gold-ink text-2xs mb-4 inline-flex rounded-full px-3 py-1 font-bold tracking-[0.2em]">
-            精選文章
-          </span>
+          <p className="text-gold-ink m-0 mb-3 text-sm font-medium">精選文章</p>
           {byline}
           <h3 className={cn(TITLE, "mt-2.5 mb-2.5 text-3xl leading-[1.45]")}>
             <Link href={href} className={STRETCHED}>
