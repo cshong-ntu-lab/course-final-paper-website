@@ -17,6 +17,7 @@ import remarkMath from "remark-math";
 import ReactMarkdown, { type Components } from "react-markdown";
 
 import { HeadingWithAnchor } from "@/components/markdown/HeadingWithAnchor";
+import { ArtifactFrame } from "@/lib/markdown/ArtifactFrame";
 import { embedComponents, EmbedNodeFromHast } from "@/lib/markdown/embeds";
 import { embedSanitizeSchema } from "@/lib/markdown/embedSchema";
 import { ObservableSandbox } from "@/lib/markdown/ObservableSandbox";
@@ -131,13 +132,19 @@ const components: Components = {
   pre: ({ node, children, ...rest }: any) => {
     const codeChild = node?.children?.[0];
     const classes: string[] = (codeChild?.properties?.className as string[]) ?? [];
-    if (classes.includes("language-observable")) return <>{children}</>;
+    if (classes.includes("language-observable") || classes.includes("language-artifact")) {
+      return <>{children}</>;
+    }
     return <pre {...rest}>{children}</pre>;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   code: ({ className, children }: any) => {
     if (className === "language-observable") {
       return <ObservableSandbox code={String(children).replace(/\n$/, "")} />;
+    }
+    // ```artifact — uploaded single-file HTML page (docs/html-artifact-embed.md).
+    if (className === "language-artifact") {
+      return <ArtifactFrame body={String(children)} />;
     }
     return <code className={className}>{children}</code>;
   },

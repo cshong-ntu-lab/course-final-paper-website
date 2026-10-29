@@ -565,6 +565,129 @@
   font-family: var(--font-sans);
 }
 
+/* HTML artifact window — docs/html-artifact-embed.md §3 */
+.embed-artifact {
+  font-family: var(--font-sans);
+}
+.embed-artifact-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px 6px 14px;
+  border-bottom: 1px solid hsl(var(--border));
+  background: hsl(var(--surface));
+}
+.embed-artifact-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: hsl(var(--foreground));
+}
+.embed-artifact-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: hsl(var(--accent));
+  transition: background-color var(--dur-xs);
+}
+.embed-artifact-btn:hover {
+  background: hsl(var(--canvas));
+}
+.embed-artifact-btn:focus-visible,
+.embed-artifact-card:focus-visible {
+  outline: 2px solid hsl(var(--accent));
+  outline-offset: 2px;
+}
+.embed-artifact-viewport {
+  position: relative;
+  width: 100%;
+  background: #fff;
+}
+.embed-artifact[data-ratio="9:16"] .embed-artifact-viewport {
+  max-height: 80vh;
+  margin-inline: auto;
+}
+.embed-artifact-viewport iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  border: 0;
+}
+.embed-artifact-message {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  padding: 16px;
+  text-align: center;
+  font-size: 13px;
+  color: hsl(var(--subtle));
+}
+.embed-artifact > .embed-artifact-message {
+  position: static;
+}
+.embed-artifact-card {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 16px;
+  text-align: left;
+}
+.embed-artifact-kicker {
+  font-size: 12px;
+  color: hsl(var(--subtle));
+}
+.embed-artifact-card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+.embed-artifact-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: hsl(var(--accent));
+}
+/* fullscreen: native (Fullscreen API) or overlay (CSS fallback, iPhone Safari) */
+.prose-research .embed-artifact[data-full],
+.embed-artifact[data-full] {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+}
+.embed-artifact[data-full="overlay"] {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.embed-artifact[data-full] .embed-artifact-viewport {
+  flex: 1;
+  aspect-ratio: auto !important;
+  max-height: none;
+}
+
 /* ─── motion (docs/design-v2.md §5) ─── */
 @keyframes rise-in {
   from {

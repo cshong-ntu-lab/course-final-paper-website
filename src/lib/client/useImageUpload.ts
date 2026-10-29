@@ -59,6 +59,7 @@ const ALLOWED_CTYPES = [
   "image/svg+xml",
   "text/csv",
   "application/json",
+  "text/html",
 ];
 
 export interface ImageUploadOptions {
@@ -92,8 +93,14 @@ function sanitizeFilename(name: string): string {
     .slice(0, 80);
 }
 
-async function uploadOne(file: File, opts: ImageUploadOptions): Promise<UploadResult> {
+async function uploadOne(input: File, opts: ImageUploadOptions): Promise<UploadResult> {
   const setProg = opts.onProgress ?? (() => undefined);
+
+  // Some OS / browser combos drop .html files with an empty type.
+  const file =
+    input.type === "" && /\.html?$/i.test(input.name)
+      ? new File([input], input.name, { type: "text/html" })
+      : input;
 
   if (!ALLOWED_CTYPES.includes(file.type)) {
     throw new Error(`disallowed_content_type:${file.type}`);
@@ -138,7 +145,12 @@ async function uploadOne(file: File, opts: ImageUploadOptions): Promise<UploadRe
 
   setProg({ phase: "uploading", filename: prepared.name, percent: 0 });
   const fileRef = storageRef(storage, storagePath);
-  const task = uploadBytesResumable(fileRef, prepared, { contentType: prepared.type });
+  // HTML is served as a download (storage.rules requires it) so the raw URL
+  // never renders the page on its own — see docs/html-artifact-embed.md §3.2.
+  const task = uploadBytesResumable(fileRef, prepared, {
+    contentType: prepared.type,
+    ...(prepared.type === "text/html" ? { contentDisposition: "attachment" } : {}),
+  });
   await new Promise<void>((resolve, reject) => {
     task.on(
       "state_changed",

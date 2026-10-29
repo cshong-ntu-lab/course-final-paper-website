@@ -105,6 +105,17 @@ ${T}`,
     code: `https://www.youtube.com/watch?v=OaTKaHKCAFg`,
   },
 
+  // ── 6b. HTML artifact (docs/html-artifact-embed.md) ──────────────────────
+  {
+    title: "互動網頁嵌入",
+    note: "把單一 .html 檔拖到原始碼區要放的位置，上傳後會自動插入這段。title 是視窗標題；ratio 可用 16:9、4:3、1:1、9:16。讀者可放大為全螢幕，手機上會顯示成點擊開啟的卡片。下方是格式示意，網址不是真的檔案，所以預覽只會顯示提示訊息。",
+    code: `${T}artifact
+https://firebasestorage.googleapis.com/v0/b/…/o/reports%2F…%2Fpage.html?alt=media
+title: 我的互動網頁
+ratio: 16:9
+${T}`,
+  },
+
   // ── 7. Observable: load CSV via URL (bar chart) ───────────────────────────
   {
     title: "上傳資料：透過 URL 載入 CSV",
