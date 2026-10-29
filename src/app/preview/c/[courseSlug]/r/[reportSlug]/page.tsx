@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ReaderShell } from "@/components/ReaderShell";
 import { Footer } from "@/components/Footer";
+import { authorName } from "@/lib/authors";
 import { extractToc } from "@/lib/markdown/extractToc";
 import { stripAbstractSection } from "@/lib/markdown/stripAbstract";
 import { semesterLabel } from "@/lib/semester";
@@ -60,7 +61,7 @@ export default async function PreviewReportPage({ params }: Props) {
         semesterTag={semesterLabel(course.year, course.semester)}
         snap={{
           title: report.title || "（無標題）",
-          author: report.author || "（未署名）",
+          author: authorName(primaryProfile, report.author) || "（未署名）",
           summary: report.summary,
           coverImageUrl: report.coverImageUrl,
           contentMd,

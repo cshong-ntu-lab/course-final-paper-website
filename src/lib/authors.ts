@@ -24,6 +24,18 @@ export function authorLine(degree?: Degree | null, cohort?: number | null): stri
   return cohort ? `${programme} · ${cohort}級` : programme;
 }
 
+/**
+ * The name to print for an author: their current profile name, so a rename in
+ * 個人設定 shows everywhere at once. The name copied onto the report when it was
+ * created (or when the author was picked in the editor) is only the fallback.
+ */
+export function authorName(
+  profile: { profileDisplayName?: string } | undefined,
+  stored: string,
+): string {
+  return profile?.profileDisplayName?.trim() || stored;
+}
+
 interface AuthoredReport {
   uid: string;
   authorUid?: string;

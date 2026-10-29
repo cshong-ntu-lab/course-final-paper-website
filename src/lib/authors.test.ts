@@ -1,6 +1,24 @@
 import { describe, expect, it } from "vitest";
 
-import { authorLine, authorStats, isCohort, isDegree, isReportByAuthor } from "@/lib/authors";
+import {
+  authorLine,
+  authorName,
+  authorStats,
+  isCohort,
+  isDegree,
+  isReportByAuthor,
+} from "@/lib/authors";
+
+describe("authorName", () => {
+  it("prefers the current profile name over the one stored on the report", () => {
+    expect(authorName({ profileDisplayName: "曾于瀞" }, "曾于")).toBe("曾于瀞");
+  });
+
+  it("falls back to the stored name without a usable profile name", () => {
+    expect(authorName(undefined, "王小明")).toBe("王小明");
+    expect(authorName({ profileDisplayName: "  " }, "王小明")).toBe("王小明");
+  });
+});
 
 describe("authorLine", () => {
   it("joins degree and cohort", () => {
