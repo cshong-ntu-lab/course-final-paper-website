@@ -18,6 +18,9 @@ const STEM_PROPS = {
   pathLength: 1,
 } as const;
 
+// the login panel is several times a card's size; 9px would read as a hairline there
+const PANEL_STEM_WIDTH = 26;
+
 // fa / fb / fc rotate through the three tints
 const PALETTES = [
   ["fill-tint-green", "fill-tint-khaki", "fill-tint-grey"],
@@ -88,6 +91,40 @@ export function MarkSliceCorner({ className }: { className?: string }) {
       <path className={STEM} {...STEM_PROPS} d="M84 178 C 110 124, 156 84, 262 58" />
       <path className={STEM} {...STEM_PROPS} d="M127.4 119.9 C 152 116, 205 114, 264 130" />
       <path className={STEM} {...STEM_PROPS} d="M181.7 85.2 C 188 66, 196 44, 192 -12" />
+    </svg>
+  );
+}
+
+/** Full-height panel for the login page. The parent needs `relative isolate
+ *  overflow-hidden`; this fills it behind the text (-z-10).
+ *
+ *  It stretches (preserveAspectRatio="none") instead of cropping, so the stems
+ *  keep the same relative course in every window shape and stay off the site name
+ *  (top left) and the small print (bottom left). Stretching is affine, so forks
+ *  stay on the main stem, and non-scaling-stroke keeps the stem width constant.
+ *  Animate with .mark-grow-panel, not .mark-grow: see globals.css. */
+export function MarkSlicePanel({ className }: { className?: string }) {
+  const stem = { ...STEM_PROPS, className: STEM, strokeWidth: PANEL_STEM_WIDTH };
+  return (
+    <svg
+      viewBox="0 0 640 800"
+      preserveAspectRatio="none"
+      aria-hidden="true"
+      className={cn("absolute inset-0 -z-10 size-full", className)}
+    >
+      <path className="fill-tint-green" d="M-60 -60 H720 V880 H-60 Z" />
+      <path
+        className="fill-tint-khaki"
+        d="M-40 660 C 150 440, 380 340, 690 120 L720 120 L720 880 L-40 880 Z"
+      />
+      <path
+        className="fill-tint-grey"
+        d="M-40 660 C 28.4 580.8, 102 517.2, 182.6 457.9 C 320 440, 520 560, 660 880 L-40 880 Z"
+      />
+      {/* main stem; side branch forks at t = .36, twig at t = .66 */}
+      <path {...stem} d="M-40 660 C 150 440, 380 340, 690 120" />
+      <path {...stem} d="M182.6 457.9 C 320 440, 520 560, 660 880" />
+      <path {...stem} d="M400.0 312.2 C 440 240, 510 110, 530 -60" />
     </svg>
   );
 }

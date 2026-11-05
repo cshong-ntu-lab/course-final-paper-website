@@ -147,7 +147,7 @@ repo 現有的 `rounded-[2px]` 方框標籤、`rounded-[5px]` 卡片，移植後
 
 ### 2.3 系徽切片 — `src/components/MarkSlice.tsx`（新）＋ `src/lib/cover.ts`
 
-全站唯一的裝飾元素，取自系徽：綠 / 卡其 / 灰三塊色面，被白色粗莖線切開，莖線像植物一樣分岔。兩種用法：
+全站唯一的裝飾元素，取自系徽：綠 / 卡其 / 灰三塊色面，被白色粗莖線切開，莖線像植物一樣分岔。三種用法：
 
 **(a) 無封面的封面圖**（取代 repo 的斜線紋 `repeating-linear-gradient`）— 16:9，`viewBox="0 0 320 180"`、`preserveAspectRatio="xMidYMid slice"`：
 
@@ -172,6 +172,8 @@ repo 現有的 `rounded-[2px]` 方框標籤、`rounded-[5px]` 卡片，移植後
 <path class="stem" d="M127.4 119.9 C 152 116, 205 114, 264 130"/>     <!-- 起點 = 主幹 t=.4 -->
 <path class="stem" d="M181.7 85.2 C 188 66, 196 44, 192 -12"/>         <!-- 起點 = 主幹 t=.7 -->
 ```
+
+**(c) 登入頁左欄**（`MarkSlicePanel`）— `viewBox="0 0 640 800"`、`preserveAspectRatio="none"`，隨左欄拉伸而不裁切，莖線在任何長寬比都走相同的相對路徑，不會壓到左上的站名和左下的版權列。莖線與右欄同為 `surface` 色，看起來從表單欄長進來。面積是卡片的數倍，莖線粗細用 26px（同一張圖內仍全部一樣粗）。生長動畫用 `.mark-grow-panel`：`non-scaling-stroke` 下虛線長度不隨圖放大，沿用 `.mark-grow` 會讓線停在 1/縮放倍率處。
 
 **繪製規則**（使用者逐條確認過，改圖時不能破壞）
 
@@ -314,7 +316,7 @@ export function activeHeading(headingTops: number[], vh: number, remainingScroll
 
 **卡片 / 列表切換**：結果列右側，`canvas` 底的分段切換器。
 
-**待決 — 首頁上半部**：repo 現在是「台大社會系 人工智慧課程成果」大標 + Bail (2024) 引言 + 課程下拉；原型是「課程期末論文」+ 標籤篩選面板（主題 / 課程 / 學期三組 chip）+ 入口頁（粒子場）。卡片部分照本節移植；上半部要不要換、入口頁要不要做，移植前要決定。
+**待決 — 首頁上半部**：repo 現在是「台大社會系 人工智慧課程成果」大標 + 課程下拉；原型是「課程期末論文」+ 標籤篩選面板（主題 / 課程 / 學期三組 chip）+ 入口頁（粒子場）。卡片部分照本節移植；上半部要不要換、入口頁要不要做，移植前要決定。
 
 ### 4.3 作者頁 — `src/app/(public)/u/[uid]/page.tsx`（新）
 

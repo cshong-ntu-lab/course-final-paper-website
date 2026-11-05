@@ -21,8 +21,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "台大社會系 人工智慧課程成果",
-  description:
-    "C.A. Bail, Can Generative AI improve social science?, Proc. Natl. Acad. Sci. U.S.A. 121 (21) e2314021121 (2024).",
+  description: "台大社會系人工智慧課程的期末成果發表",
 };
 
 export default async function RootPage() {
