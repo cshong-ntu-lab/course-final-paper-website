@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Crest } from "@/components/Crest";
+import { MarkSlicePanel } from "@/components/MarkSlice";
 import { getCurrentUser } from "@/lib/server/auth";
 
 export const metadata: Metadata = {
@@ -25,24 +26,15 @@ export default async function LoginPage() {
 
   return (
     <div className="bg-background grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left editorial column (md+) */}
-      <aside className="border-border bg-background hidden flex-col justify-between border-r p-16 md:flex">
-        <Link href="/" className="font-sans text-xl font-semibold">
+      {/* Left department-mark panel (md+); its stems run into the form column */}
+      <aside className="relative isolate hidden flex-col justify-between overflow-hidden p-16 md:flex">
+        <MarkSlicePanel className="mark-grow-panel" />
+
+        <Link href="/" className="self-start font-sans text-xl font-semibold">
           臺灣大學社會學系
         </Link>
 
-        <div>
-          <blockquote className="font-serif text-2xl leading-[1.45] font-medium tracking-tight text-pretty">
-            &ldquo;The future of AI research will require training models to better understand the
-            science of social relationships.&rdquo;
-          </blockquote>
-          <footer className="text-subtle mt-5 text-xs leading-relaxed">
-            —— C.A. Bail, <cite>Can Generative AI improve social science?</cite>, Proc. Natl. Acad.
-            Sci. U.S.A. 121 (21) e2314021121 (2024).
-          </footer>
-        </div>
-
-        <div className="text-subtle text-xs">© 2026 NTU Sociology</div>
+        <div className="text-muted text-xs">© 2026 NTU Sociology</div>
       </aside>
 
       {/* Right form column */}

@@ -162,18 +162,9 @@ export function ReportFeed({
         ref={filterRef}
         className="mb-12 flex scroll-mt-20 flex-col items-center text-center"
       >
-        <h1 className="m-0 mb-4 font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] font-extrabold">
+        <h1 className="m-0 mb-6 font-serif text-[clamp(1.7rem,3.2vw,2.3rem)] font-extrabold">
           AI課程成果發表
         </h1>
-        {/* the quote the site has carried since v1 */}
-        <blockquote className="text-muted m-0 max-w-[44ch] font-serif text-[1.05rem] leading-[1.6] italic text-pretty">
-          &ldquo;The future of AI research will require training models to better understand the
-          science of social relationships.&rdquo;
-        </blockquote>
-        <p className="text-subtle m-0 mt-2 mb-6 max-w-[52ch] text-xs leading-[1.6] text-pretty">
-          C.A. Bail, Can Generative AI improve social science?, Proc. Natl. Acad. Sci. U.S.A. 121
-          (21) e2314021121 (2024).
-        </p>
         <button
           type="button"
           aria-expanded={panelOpen}
