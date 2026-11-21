@@ -175,6 +175,8 @@ repo 現有的 `rounded-[2px]` 方框標籤、`rounded-[5px]` 卡片，移植後
 
 **(c) 登入頁左欄**（`MarkSlicePanel`）— `viewBox="0 0 640 800"`、`preserveAspectRatio="none"`，隨左欄拉伸而不裁切，莖線在任何長寬比都走相同的相對路徑，不會壓到左上的站名和左下的版權列。莖線與右欄同為 `surface` 色，看起來從表單欄長進來。面積是卡片的數倍，莖線粗細用 26px（同一張圖內仍全部一樣粗）。生長動畫用 `.mark-grow-panel`：`non-scaling-stroke` 下虛線長度不隨圖放大，沿用 `.mark-grow` 會讓線停在 1/縮放倍率處。
 
+> **版本 B（`feat/login-painting`）**：左欄改放系館手繪畫作（`src/assets/login-painting.jpg`，由原照片縮至 2000px 並移除 EXIF/GPS），`object-cover` 偏向入口裁切，上下各一層黑色漸層讓白色站名與版權列可讀。`MarkSlicePanel` 保留在程式碼中，方便切回。
+
 **繪製規則**（使用者逐條確認過，改圖時不能破壞）
 
 - 莖線全部一樣粗：9px、`stroke: surface`、`stroke-linecap: round`、`vector-effect: non-scaling-stroke`（圖放大縮小粗細不變）。

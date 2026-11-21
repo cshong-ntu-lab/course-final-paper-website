@@ -2,13 +2,15 @@
 // Login is a public page; the server-action / route handler does the actual exchange.
 
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
 import { Crest } from "@/components/Crest";
-import { MarkSlicePanel } from "@/components/MarkSlice";
 import { getCurrentUser } from "@/lib/server/auth";
+
+import loginPainting from "@/assets/login-painting.jpg";
 
 export const metadata: Metadata = {
   title: "登入",
@@ -26,15 +28,33 @@ export default async function LoginPage() {
 
   return (
     <div className="bg-background grid min-h-screen grid-cols-1 md:grid-cols-2">
-      {/* Left department-mark panel (md+); its stems run into the form column */}
-      <aside className="relative isolate hidden flex-col justify-between overflow-hidden p-16 md:flex">
-        <MarkSlicePanel className="mark-grow-panel" />
+      {/* Left painting panel (md+): the department building */}
+      <aside className="relative isolate hidden flex-col justify-between overflow-hidden p-16 text-white md:flex">
+        <Image
+          src={loginPainting}
+          alt="社會科學院大樓的手繪畫作"
+          fill
+          priority
+          placeholder="blur"
+          sizes="50vw"
+          className="-z-20 object-cover object-[55%_center]"
+        />
+        {/* scrims keep the site name and small print legible over the painting */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 -z-10 bg-linear-to-b from-black/45 via-transparent via-35% to-black/45"
+        />
 
-        <Link href="/" className="self-start font-sans text-xl font-semibold">
+        <Link
+          href="/"
+          className="self-start font-sans text-xl font-semibold [text-shadow:0_1px_8px_rgb(0_0_0/0.4)]"
+        >
           臺灣大學社會學系
         </Link>
 
-        <div className="text-muted text-xs">© 2026 NTU Sociology</div>
+        <div className="text-xs text-white/85 [text-shadow:0_1px_6px_rgb(0_0_0/0.5)]">
+          © 2026 NTU Sociology
+        </div>
       </aside>
 
       {/* Right form column */}
