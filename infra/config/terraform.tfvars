@@ -11,6 +11,6 @@ sa_account_id     = "course-paper-sa"
 # GitHub
 github_repo = "cshong-ntu-lab/course-final-paper-website"
 
-# Admins
+# Admins (take effect on the deploy after terraform-apply; see README)
 admin_emails      = "cshong.ntu@gmail.com,cshong@g.ntu.edu.tw,yechen.taipei@gmail.com,tycemily@gmail.com"
 admin_emails_test = "cshong.ntu@gmail.com,cshong@g.ntu.edu.tw,1026oscar1@gmail.com,yechen.taipei@gmail.com,tycemily@gmail.com"
